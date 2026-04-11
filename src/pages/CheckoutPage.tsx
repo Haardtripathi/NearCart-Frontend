@@ -1,14 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { Link, useNavigate } from 'react-router-dom'
 
+import { getCustomerAddresses, getCustomerProfile } from '@/api/customer'
 import { createOrder } from '@/api/orders'
 import { PageHeader } from '@/components/PageHeader'
+import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
+import type { Address } from '@/types/customer'
 import type { CheckoutFormValues } from '@/types/order'
+import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { addGuestOrderId } from '@/utils/guestOrders'
 
 const initialFormValues: CheckoutFormValues = {
+  addressId: '',
   customerName: '',
   customerPhone: '',
   customerEmail: '',
@@ -17,6 +23,7 @@ const initialFormValues: CheckoutFormValues = {
   city: '',
   area: '',
   pincode: '',
+  landmark: '',
   notes: '',
   paymentMethod: 'COD',
 }
@@ -57,10 +64,12 @@ function validateCheckoutForm(values: CheckoutFormValues) {
 
 export function CheckoutPage() {
   const navigate = useNavigate()
+  const user = useAuthStore((state) => state.user)
   const { shopId, shopName, items, getCartCount, getCartSubtotal, clearCart } =
     useCartStore((state) => state)
   const [formValues, setFormValues] =
     useState<CheckoutFormValues>(initialFormValues)
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof CheckoutFormValues, string>>
   >({})
@@ -70,6 +79,60 @@ export function CheckoutPage() {
   const hasItems = items.length > 0
   const subtotal = getCartSubtotal()
   const cartCount = getCartCount()
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadCustomerContext() {
+      if (user?.role !== 'CUSTOMER') {
+        return
+      }
+
+      try {
+        const [profileResponse, addressesResponse] = await Promise.all([
+          getCustomerProfile(),
+          getCustomerAddresses(),
+        ])
+
+        if (!isMounted) {
+          return
+        }
+
+        const defaultAddress =
+          profileResponse.item.profile.defaultAddress ||
+          addressesResponse.items.find((address) => address.isDefault) ||
+          null
+
+        setSavedAddresses(addressesResponse.items)
+        setFormValues((currentState) => ({
+          ...currentState,
+          addressId: defaultAddress?.id || currentState.addressId,
+          customerName: currentState.customerName || profileResponse.item.user.fullName,
+          customerPhone:
+            currentState.customerPhone || profileResponse.item.user.phone || '',
+          customerEmail: currentState.customerEmail || profileResponse.item.user.email,
+          deliveryAddressLine1:
+            currentState.deliveryAddressLine1 || defaultAddress?.line1 || '',
+          deliveryAddressLine2:
+            currentState.deliveryAddressLine2 || defaultAddress?.line2 || '',
+          city: currentState.city || defaultAddress?.city || '',
+          area: currentState.area || defaultAddress?.area || '',
+          pincode: currentState.pincode || defaultAddress?.pincode || '',
+          landmark: currentState.landmark || defaultAddress?.landmark || '',
+        }))
+      } catch {
+        if (isMounted) {
+          setSavedAddresses([])
+        }
+      }
+    }
+
+    void loadCustomerContext()
+
+    return () => {
+      isMounted = false
+    }
+  }, [user])
 
   function updateField<Key extends keyof CheckoutFormValues>(
     field: Key,
@@ -103,6 +166,7 @@ export function CheckoutPage() {
       const response = await createOrder({
         shopId,
         shopName,
+        addressId: formValues.addressId,
         customerName: formValues.customerName,
         customerPhone: formValues.customerPhone,
         customerEmail: formValues.customerEmail,
@@ -111,6 +175,7 @@ export function CheckoutPage() {
         city: formValues.city,
         area: formValues.area,
         pincode: formValues.pincode,
+        landmark: formValues.landmark,
         notes: formValues.notes,
         paymentMethod: formValues.paymentMethod,
         items: items.map((item) => ({
@@ -127,6 +192,10 @@ export function CheckoutPage() {
         })),
       })
 
+      if (user?.role !== 'CUSTOMER') {
+        addGuestOrderId(response.item.id)
+      }
+
       clearCart()
       navigate(`/order-success/${response.item.id}`, {
         state: {
@@ -135,7 +204,7 @@ export function CheckoutPage() {
       })
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        setSubmitError(error.response?.data?.message ?? 'Unable to place order.')
+        setSubmitError(getApiErrorMessage(error, 'Unable to place order.'))
       } else {
         setSubmitError('Unable to place order.')
       }
@@ -187,7 +256,71 @@ export function CheckoutPage() {
           className="space-y-4 rounded-[1.75rem] border border-white/80 bg-white/95 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]"
           onSubmit={handleSubmit}
         >
+          {user?.role === 'CUSTOMER' ? (
+            <div className="rounded-[1.4rem] bg-nearcart-50/80 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-ink-900">
+                    Signed in as {user.fullName}
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    Your checkout is linked to your NearCart customer account.
+                  </p>
+                </div>
+                <Link
+                  className="text-sm font-semibold text-nearcart-700"
+                  to="/dashboard/customer/addresses"
+                >
+                  Manage saved addresses
+                </Link>
+              </div>
+            </div>
+          ) : null}
+
           <div className="grid gap-4 sm:grid-cols-2">
+            {savedAddresses.length > 0 ? (
+              <label className="space-y-2 sm:col-span-2">
+                <span className="text-sm font-medium text-slate-700">
+                  Saved address
+                </span>
+                <select
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  onChange={(event) => {
+                    const selectedAddress = savedAddresses.find(
+                      (address) => address.id === event.target.value,
+                    )
+
+                    updateField('addressId', event.target.value)
+
+                    if (!selectedAddress) {
+                      return
+                    }
+
+                    setFormValues((currentState) => ({
+                      ...currentState,
+                      addressId: selectedAddress.id,
+                      customerName: currentState.customerName || selectedAddress.fullName,
+                      customerPhone: currentState.customerPhone || selectedAddress.phone,
+                      deliveryAddressLine1: selectedAddress.line1,
+                      deliveryAddressLine2: selectedAddress.line2 || '',
+                      city: selectedAddress.city,
+                      area: selectedAddress.area || '',
+                      pincode: selectedAddress.pincode,
+                      landmark: selectedAddress.landmark || '',
+                    }))
+                  }}
+                  value={formValues.addressId}
+                >
+                  <option value="">Choose a saved address</option>
+                  {savedAddresses.map((address) => (
+                    <option key={address.id} value={address.id}>
+                      {address.label} • {address.line1}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
             <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">
                 Full name
@@ -306,6 +439,19 @@ export function CheckoutPage() {
                   {fieldErrors.pincode}
                 </span>
               ) : null}
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-slate-700">
+                Landmark
+              </span>
+              <input
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                onChange={(event) =>
+                  updateField('landmark', event.target.value)
+                }
+                value={formValues.landmark}
+              />
             </label>
 
             <label className="space-y-2">

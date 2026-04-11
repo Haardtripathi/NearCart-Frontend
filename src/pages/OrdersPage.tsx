@@ -1,13 +1,51 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { getOrders } from '@/api/orders'
+import { getCustomerOrders } from '@/api/customer'
+import { getOrderById } from '@/api/orders'
 import { PageHeader } from '@/components/PageHeader'
+import { useAuthStore } from '@/store/authStore'
 import type { OrderPreview } from '@/types/order'
+import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDateTime } from '@/utils/formatDateTime'
+import { getGuestOrderIds } from '@/utils/guestOrders'
+
+async function getGuestOrders() {
+  const guestOrderIds = getGuestOrderIds()
+
+  if (guestOrderIds.length === 0) {
+    return [] as OrderPreview[]
+  }
+
+  const orders = await Promise.all(
+    guestOrderIds.map(async (orderId) => {
+      const response = await getOrderById(orderId)
+
+      return {
+        id: response.item.id,
+        orderNumber: response.item.orderNumber,
+        customerUserId: response.item.customerUserId,
+        shopId: response.item.shopId,
+        shopName: response.item.shopName,
+        status: response.item.status,
+        paymentStatus: response.item.paymentStatus,
+        paymentMethod: response.item.paymentMethod,
+        totalAmount: response.item.totalAmount,
+        customerName: response.item.customerName,
+        placedAt: response.item.placedAt,
+        deliveredAt: response.item.deliveredAt,
+      } satisfies OrderPreview
+    }),
+  )
+
+  return orders.sort((left, right) => {
+    return new Date(right.placedAt).getTime() - new Date(left.placedAt).getTime()
+  })
+}
 
 export function OrdersPage() {
+  const user = useAuthStore((state) => state.user)
   const [orders, setOrders] = useState<OrderPreview[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -17,20 +55,32 @@ export function OrdersPage() {
 
     async function loadOrders() {
       try {
-        const response = await getOrders()
+        const nextOrders =
+          user?.role === 'CUSTOMER'
+            ? (await getCustomerOrders()).items
+            : await getGuestOrders()
 
         if (!isMounted) {
           return
         }
 
-        setOrders(response.items)
+        setOrders(nextOrders)
         setErrorMessage(null)
-      } catch {
+      } catch (error) {
         if (!isMounted) {
           return
         }
 
-        setErrorMessage('Unable to load orders right now.')
+        if (user?.role === 'CUSTOMER') {
+          setErrorMessage(
+            getApiErrorMessage(error, 'Unable to load your orders right now.'),
+          )
+          return
+        }
+
+        setErrorMessage(
+          getApiErrorMessage(error, 'Unable to load your saved guest orders right now.'),
+        )
       } finally {
         if (isMounted) {
           setIsLoading(false)
@@ -43,14 +93,18 @@ export function OrdersPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [user])
 
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow="Orders"
         title="Track your recent orders."
-        description="See the latest orders you placed, check their status, and open each order for full details."
+        description={
+          user?.role === 'CUSTOMER'
+            ? 'See the latest signed-in orders attached to your NearCart account.'
+            : 'See the orders saved on this device from your guest storefront flow.'
+        }
       />
 
       {errorMessage ? (
@@ -101,7 +155,9 @@ export function OrdersPage() {
       {!isLoading && orders.length === 0 ? (
         <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-8 text-center shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
           <p className="text-sm leading-7 text-slate-600">
-            No orders yet. Start with a cart, place your first order, and it will show up here.
+            {user?.role === 'CUSTOMER'
+              ? 'No signed-in orders yet. Place your next NearCart order and it will show up here.'
+              : 'No saved guest orders yet. Place an order from the storefront and it will show up here on this device.'}
           </p>
         </article>
       ) : null}

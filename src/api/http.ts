@@ -5,8 +5,18 @@ export const apiBaseUrl =
 
 export const httpClient = axios.create({
   baseURL: apiBaseUrl,
-  timeout: 5000,
+  timeout: 8000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 })
+
+export function setHttpAccessToken(accessToken: string | null) {
+  if (accessToken) {
+    httpClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`
+    return
+  }
+
+  delete httpClient.defaults.headers.common.Authorization
+}

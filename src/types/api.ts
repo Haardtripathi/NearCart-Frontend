@@ -1,3 +1,7 @@
+export interface ApiMeta {
+  timestamp: string
+}
+
 export interface HealthResponse {
   status: string
   appName: string
@@ -39,18 +43,16 @@ export interface ShopDetails extends ShopPreview {
 
 export interface ShopListResponse {
   items: ShopPreview[]
-  meta: {
+  meta: ApiMeta & {
     source: string
     inventory: InventoryBridgeMeta
-    timestamp: string
   }
 }
 
 export interface ShopDetailsResponse {
   item: ShopDetails
-  meta: {
+  meta: ApiMeta & {
     source: string
     inventory: InventoryBridgeMeta
-    timestamp: string
   }
 }

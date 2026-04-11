@@ -1,9 +1,20 @@
 import type { CartItem } from '@/types/cart'
+import type { ApiMeta } from '@/types/api'
 
-export type PaymentMethod = 'COD' | 'PAY_ON_PICKUP'
-export type OrderStatus = 'PENDING'
+export type PaymentMethod = 'COD' | 'ONLINE' | 'PAY_ON_PICKUP'
+export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED'
+export type OrderStatus =
+  | 'PENDING_CONFIRMATION'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'PREPARING'
+  | 'READY_FOR_PICKUP'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED'
+  | 'CANCELLED'
 
 export interface CheckoutFormValues {
+  addressId: string
   customerName: string
   customerPhone: string
   customerEmail: string
@@ -12,6 +23,7 @@ export interface CheckoutFormValues {
   city: string
   area: string
   pincode: string
+  landmark: string
   notes: string
   paymentMethod: PaymentMethod
 }
@@ -53,48 +65,64 @@ export interface OrderItem {
 export interface Order {
   id: string
   orderNumber: string
+  customerUserId: string | null
   shopId: string
+  shopRecordId: string | null
   shopName: string
   status: OrderStatus
+  paymentStatus: PaymentStatus
+  paymentMethod: PaymentMethod
   customerName: string
   customerPhone: string
   customerEmail: string | null
+  deliveryAddressId: string | null
+  deliveryAddressLabel: string | null
   deliveryAddressLine1: string
   deliveryAddressLine2: string | null
   city: string
   area: string | null
   pincode: string
+  landmark: string | null
+  latitude: number | null
+  longitude: number | null
   notes: string | null
-  paymentMethod: PaymentMethod
   subtotal: number
+  deliveryFee: number
+  platformFee: number
   totalAmount: number
-  createdAt: string
   placedAt: string
+  acceptedAt: string | null
+  deliveredAt: string | null
+  createdAt: string
+  updatedAt: string
   items: OrderItem[]
 }
 
 export interface OrderPreview {
   id: string
   orderNumber: string
-  status: OrderStatus
-  totalAmount: number
+  customerUserId: string | null
+  shopId: string
   shopName: string
+  status: OrderStatus
+  paymentStatus: PaymentStatus
+  paymentMethod: PaymentMethod
+  totalAmount: number
   customerName: string
   placedAt: string
+  deliveredAt: string | null
 }
 
 export interface OrderResponse {
   item: Order
-  meta: {
+  meta: ApiMeta & {
     source: string
-    timestamp: string
   }
 }
 
 export interface OrderListResponse {
   items: OrderPreview[]
-  meta: {
+  meta: ApiMeta & {
     source: string
-    timestamp: string
   }
 }
