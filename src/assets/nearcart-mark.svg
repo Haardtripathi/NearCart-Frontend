@@ -1,0 +1,14 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="16" y="16" width="148" height="148" rx="40" fill="#FFFFFF" />
+  <path d="M34 80H56" stroke="#BFDBFE" stroke-width="8" stroke-linecap="round" />
+  <path d="M28 94H50" stroke="#93C5FD" stroke-width="8" stroke-linecap="round" />
+  <path d="M36 108H52" stroke="#DBEAFE" stroke-width="8" stroke-linecap="round" />
+  <path d="M58 67L70 57" stroke="#2563EB" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M56 74H125C127.7 74 129.5 76.6 128.7 79.1L121.2 104.2C120.3 107.2 117.5 109.2 114.4 109.2H73.8C70.7 109.2 67.9 107.2 67 104.3L61.2 85.2H52.5C50 85.2 48 83.2 48 80.7C48 78.2 50 76.2 52.5 76.2H59L56 74Z" fill="#2563EB" />
+  <path d="M110 74H125C127.7 74 129.5 76.6 128.7 79.1L125.4 90.5H106.5L110 74Z" fill="#1D4ED8" />
+  <rect x="80" y="84" width="22" height="18" rx="5" fill="#FFFFFF" />
+  <path d="M79 109L75.5 116.5" stroke="#1E3A8A" stroke-width="5" stroke-linecap="round" />
+  <path d="M107.5 109L111 116.5" stroke="#1E3A8A" stroke-width="5" stroke-linecap="round" />
+  <circle cx="74" cy="123" r="7.5" fill="#0F172A" />
+  <circle cx="112" cy="123" r="7.5" fill="#0F172A" />
+</svg>

@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Space Grotesk', 'Trebuchet MS', sans-serif;
+  --font-body: 'Public Sans', 'Segoe UI', sans-serif;
+
+  --color-nearcart-50: #f4f8ee;
+  --color-nearcart-100: #e4edd3;
+  --color-nearcart-200: #d0dfb0;
+  --color-nearcart-500: #587a2b;
+  --color-nearcart-600: #456220;
+  --color-nearcart-700: #344817;
+  --color-sun-100: #fff2db;
+  --color-sun-200: #f7d59b;
+  --color-sun-400: #f0a640;
+  --color-ink-900: #112117;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    margin: 0;
+    background:
+      radial-gradient(circle at top left, rgba(240, 166, 64, 0.18), transparent 24%),
+      radial-gradient(circle at top right, rgba(88, 122, 43, 0.12), transparent 28%),
+      radial-gradient(circle at center, rgba(255, 255, 255, 0.55), transparent 36%),
+      linear-gradient(180deg, #fcfdf8 0%, #f6f6ef 56%, #f1f3e8 100%);
+    background-attachment: fixed;
+    color: #223127;
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    font: inherit;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
