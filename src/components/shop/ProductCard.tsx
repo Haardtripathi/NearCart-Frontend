@@ -1,10 +1,10 @@
 import { StatusPill } from '@/components/StatusPill'
 import { QuantityControl } from '@/components/cart/QuantityControl'
-import type { StoreProduct } from '@/types/api'
+import type { PublicCatalogProduct } from '@/types/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 interface ProductCardProps {
-  product: StoreProduct
+  product: PublicCatalogProduct
   quantityInCart: number
   onAddToCart: () => void
   onIncreaseQty: () => void
@@ -26,7 +26,7 @@ export function ProductCard({
   onDecreaseQty,
   onUpdateQty,
 }: ProductCardProps) {
-  const showMrp = product.mrp > product.price
+  const showMrp = (product.mrp ?? 0) > product.price
   const isOutOfStock = product.stockStatus === 'OUT_OF_STOCK'
 
   return (
@@ -52,7 +52,7 @@ export function ProductCard({
               {product.name}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              {[product.brand, product.size].filter(Boolean).join(' • ')}
+              {[product.brand?.name, product.unitLabel].filter(Boolean).join(' • ')}
             </p>
           </div>
           <StatusPill
@@ -67,12 +67,12 @@ export function ProductCard({
           </div>
           {showMrp ? (
             <div className="text-sm text-slate-400 line-through">
-              {formatCurrency(product.mrp)}
+              {formatCurrency(product.mrp ?? 0)}
             </div>
           ) : null}
-          {product.stockQty != null && !isOutOfStock ? (
+          {!isOutOfStock ? (
             <div className="text-sm text-slate-500">
-              {product.stockQty} left
+              {product.availableQty} left
             </div>
           ) : null}
         </div>
@@ -81,7 +81,7 @@ export function ProductCard({
           {quantityInCart > 0 ? (
             <div className="space-y-3">
               <QuantityControl
-                max={product.stockQty}
+                max={product.availableQty}
                 onChange={onUpdateQty}
                 onDecrease={onDecreaseQty}
                 onIncrease={onIncreaseQty}

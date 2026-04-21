@@ -9,10 +9,11 @@ interface AddItemOptions {
 
 interface CartStore extends CartSnapshot {
   addItem: (item: CartItem, options?: AddItemOptions) => CartAddResult
-  removeItem: (storeProductId: string) => void
-  increaseQty: (storeProductId: string) => void
-  decreaseQty: (storeProductId: string) => void
-  updateQty: (storeProductId: string, quantity: number) => void
+  removeItem: (cartItemId: string) => void
+  increaseQty: (cartItemId: string) => void
+  decreaseQty: (cartItemId: string) => void
+  updateQty: (cartItemId: string, quantity: number) => void
+  replaceCart: (snapshot: CartSnapshot) => void
   clearCart: () => void
   getCartCount: () => number
   getCartSubtotal: () => number
@@ -30,20 +31,19 @@ function clampQuantity(item: CartItem, quantity: number) {
     ? Math.floor(quantity)
     : minimumQuantity
 
-  if (item.stockQty == null || item.stockQty < minimumQuantity) {
-    return Math.max(minimumQuantity, normalizedQuantity)
-  }
-
-  return Math.min(Math.max(minimumQuantity, normalizedQuantity), item.stockQty)
+  return Math.min(
+    Math.max(minimumQuantity, normalizedQuantity),
+    Math.max(minimumQuantity, item.stockQty),
+  )
 }
 
 function withUpdatedItemQuantity(
   items: CartItem[],
-  storeProductId: string,
+  cartItemId: string,
   updater: (item: CartItem) => number,
 ) {
   return items.map((item) =>
-    item.storeProductId === storeProductId
+    item.cartItemId === cartItemId
       ? {
           ...item,
           quantity: clampQuantity(item, updater(item)),
@@ -57,7 +57,7 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       ...initialCartState,
       addItem: (item, options) => {
-        if (item.stockStatus === 'OUT_OF_STOCK') {
+        if (item.stockStatus === 'OUT_OF_STOCK' || item.stockQty <= 0) {
           return {
             added: false,
             replaced: false,
@@ -87,16 +87,17 @@ export const useCartStore = create<CartStore>()(
         set((currentState) => {
           const baseItems = options?.forceReplace ? [] : currentState.items
           const existingItem = baseItems.find(
-            (cartItem) => cartItem.storeProductId === nextItem.storeProductId,
+            (cartItem) => cartItem.cartItemId === nextItem.cartItemId,
           )
 
           const items = existingItem
             ? baseItems.map((cartItem) =>
-                cartItem.storeProductId === nextItem.storeProductId
+                cartItem.cartItemId === nextItem.cartItemId
                   ? {
                       ...cartItem,
+                      ...nextItem,
                       quantity: clampQuantity(
-                        cartItem,
+                        nextItem,
                         cartItem.quantity + nextItem.quantity,
                       ),
                     }
@@ -118,11 +119,9 @@ export const useCartStore = create<CartStore>()(
           conflictShopName: hasDifferentShopItems ? state.shopName : null,
         }
       },
-      removeItem: (storeProductId) => {
+      removeItem: (cartItemId) => {
         set((state) => {
-          const items = state.items.filter(
-            (item) => item.storeProductId !== storeProductId,
-          )
+          const items = state.items.filter((item) => item.cartItemId !== cartItemId)
 
           if (items.length === 0) {
             return initialCartState
@@ -131,30 +130,33 @@ export const useCartStore = create<CartStore>()(
           return { items }
         })
       },
-      increaseQty: (storeProductId) => {
+      increaseQty: (cartItemId) => {
         set((state) => ({
-          items: withUpdatedItemQuantity(state.items, storeProductId, (item) => {
-            const maximumQuantity = item.stockQty ?? item.quantity + 1
-
-            return Math.min(item.quantity + 1, maximumQuantity)
-          }),
+          items: withUpdatedItemQuantity(state.items, cartItemId, (item) =>
+            Math.min(item.quantity + 1, item.stockQty),
+          ),
         }))
       },
-      decreaseQty: (storeProductId) => {
+      decreaseQty: (cartItemId) => {
         set((state) => ({
-          items: withUpdatedItemQuantity(state.items, storeProductId, (item) =>
+          items: withUpdatedItemQuantity(state.items, cartItemId, (item) =>
             Math.max(1, item.quantity - 1),
           ),
         }))
       },
-      updateQty: (storeProductId, quantity) => {
+      updateQty: (cartItemId, quantity) => {
         set((state) => ({
-          items: withUpdatedItemQuantity(
-            state.items,
-            storeProductId,
-            () => quantity,
-          ),
+          items: withUpdatedItemQuantity(state.items, cartItemId, () => quantity),
         }))
+      },
+      replaceCart: (snapshot) => {
+        set({
+          ...snapshot,
+          items: snapshot.items.map((item) => ({
+            ...item,
+            quantity: clampQuantity(item, item.quantity),
+          })),
+        })
       },
       clearCart: () => {
         set(initialCartState)

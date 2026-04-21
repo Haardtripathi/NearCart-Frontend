@@ -53,7 +53,8 @@ export function DashboardLayout() {
       return [] as NavigationItem[]
     }
 
-    return navigationByRole[user.role]
+    const role = (user.role ?? 'CUSTOMER') as keyof typeof navigationByRole
+    return navigationByRole[role] ?? []
   }, [user])
 
   if (!user) {

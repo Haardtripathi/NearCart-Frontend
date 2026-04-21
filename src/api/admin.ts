@@ -4,6 +4,7 @@ import type {
   AdminOrdersResponse,
   AdminShopsResponse,
   AdminUsersResponse,
+  InventoryOrganizationsResponse,
 } from '@/types/admin'
 import type { ShopResponse, ShopApprovalStatus } from '@/types/shop-owner'
 
@@ -35,6 +36,34 @@ export async function updateShopApproval(
 
 export async function getAdminShops() {
   const { data } = await httpClient.get<AdminShopsResponse>('/admin/shops')
+
+  return data
+}
+
+export async function getInventoryOrganizations(search?: string) {
+  const { data } = await httpClient.get<InventoryOrganizationsResponse>(
+    '/admin/inventory/organizations',
+    {
+      params: search ? { search } : undefined,
+    },
+  )
+
+  return data
+}
+
+export async function updateShopStorefront(
+  shopId: string,
+  payload: {
+    inventoryOrganizationId: string
+    inventoryBranchId: string
+    publicCatalogEnabled: boolean
+    logoImageUrl?: string
+  },
+) {
+  const { data } = await httpClient.patch<ShopResponse>(
+    `/admin/shops/${shopId}/storefront`,
+    payload,
+  )
 
   return data
 }

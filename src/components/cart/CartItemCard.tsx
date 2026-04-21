@@ -17,7 +17,7 @@ export function CartItemCard({
   onQuantityChange,
   onRemove,
 }: CartItemCardProps) {
-  const showMrp = item.mrp > item.price
+  const showMrp = (item.mrp ?? 0) > item.price
 
   return (
     <article className="flex flex-col gap-4 rounded-[1.5rem] border border-white/80 bg-white/95 p-4 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.55)] sm:flex-row sm:items-center sm:p-5">
@@ -39,7 +39,7 @@ export function CartItemCard({
         <div className="space-y-1">
           <h2 className="font-display text-xl text-ink-900">{item.name}</h2>
           <p className="text-sm text-slate-600">
-            {[item.brand, item.size].filter(Boolean).join(' • ')}
+            {[item.brand, item.unitLabel].filter(Boolean).join(' • ')}
           </p>
         </div>
 
@@ -49,7 +49,7 @@ export function CartItemCard({
           </div>
           {showMrp ? (
             <div className="text-sm text-slate-400 line-through">
-              {formatCurrency(item.mrp)}
+              {formatCurrency(item.mrp ?? 0)}
             </div>
           ) : null}
           <div className="text-sm text-slate-500">

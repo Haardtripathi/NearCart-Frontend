@@ -30,19 +30,12 @@ export interface CheckoutFormValues {
 
 export interface CreateOrderPayload extends CheckoutFormValues {
   shopId: string
-  shopName: string
   items: Array<
     Pick<
       CartItem,
-      | 'storeProductId'
+      | 'productId'
+      | 'variantId'
       | 'shopId'
-      | 'shopName'
-      | 'name'
-      | 'brand'
-      | 'size'
-      | 'image'
-      | 'price'
-      | 'mrp'
       | 'quantity'
     >
   >
@@ -52,9 +45,12 @@ export interface OrderItem {
   id: string
   orderId: string
   storeProductId: string
+  inventoryProductId: string | null
+  inventoryVariantId: string | null
   name: string
   brand: string | null
   size: string | null
+  unitLabel: string | null
   image: string | null
   price: number
   mrp: number | null

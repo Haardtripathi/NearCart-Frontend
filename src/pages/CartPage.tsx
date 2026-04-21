@@ -60,14 +60,14 @@ export function CartPage() {
 
               {items.map((item) => (
                 <CartItemCard
-                  key={item.storeProductId}
+                  key={item.cartItemId}
                   item={item}
-                  onDecrease={() => decreaseQty(item.storeProductId)}
-                  onIncrease={() => increaseQty(item.storeProductId)}
+                  onDecrease={() => decreaseQty(item.cartItemId)}
+                  onIncrease={() => increaseQty(item.cartItemId)}
                   onQuantityChange={(quantity) =>
-                    updateQty(item.storeProductId, quantity)
+                    updateQty(item.cartItemId, quantity)
                   }
-                  onRemove={() => removeItem(item.storeProductId)}
+                  onRemove={() => removeItem(item.cartItemId)}
                 />
               ))}
             </>

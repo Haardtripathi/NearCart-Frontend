@@ -1,16 +1,20 @@
 import type { StockStatus } from '@/types/api'
 
 export interface CartItem {
-  storeProductId: string
+  cartItemId: string
+  productId: string
+  variantId: string | null
   shopId: string
   shopName: string
   name: string
-  brand: string
-  size: string
-  image: string
+  description: string | null
+  brand: string | null
+  category: string | null
+  unitLabel: string | null
+  image: string | null
   price: number
-  mrp: number
-  stockQty: number | null
+  mrp: number | null
+  stockQty: number
   stockStatus: StockStatus
   quantity: number
 }

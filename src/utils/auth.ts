@@ -15,7 +15,11 @@ export function getDashboardPathForRole(role: UserRole) {
   }
 }
 
-export function formatRoleLabel(role: UserRole) {
+export function formatRoleLabel(role?: UserRole | string) {
+  if (!role) {
+    return 'Unknown'
+  }
+
   return role
     .toLowerCase()
     .split('_')

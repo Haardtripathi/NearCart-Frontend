@@ -12,6 +12,7 @@ import { getApiErrorMessage } from '@/utils/api'
 const initialFormValues: ShopFormValues = {
   name: '',
   description: '',
+  logoImageUrl: '',
   category: '',
   phone: '',
   email: '',
@@ -22,6 +23,11 @@ const initialFormValues: ShopFormValues = {
   pincode: '',
   openingTime: '',
   closingTime: '',
+  deliveryEnabled: true,
+  minimumOrderAmount: 0,
+  deliveryFeeDefault: 0,
+  estimatedDeliveryMinutes: null,
+  serviceRadiusKm: null,
   isActive: true,
 }
 
@@ -33,6 +39,7 @@ function getFormValues(shop?: ManagedShop): ShopFormValues {
   return {
     name: shop.name,
     description: shop.description || '',
+    logoImageUrl: shop.logoImageUrl || '',
     category: shop.category,
     phone: shop.phone,
     email: shop.email || '',
@@ -43,6 +50,11 @@ function getFormValues(shop?: ManagedShop): ShopFormValues {
     pincode: shop.pincode,
     openingTime: shop.openingTime || '',
     closingTime: shop.closingTime || '',
+    deliveryEnabled: shop.deliveryEnabled,
+    minimumOrderAmount: shop.minimumOrderAmount,
+    deliveryFeeDefault: shop.deliveryFeeDefault,
+    estimatedDeliveryMinutes: shop.estimatedDeliveryMinutes,
+    serviceRadiusKm: shop.serviceRadiusKm,
     isActive: shop.isActive,
   }
 }
@@ -81,6 +93,7 @@ function buildPayload(values: ShopFormValues): ShopPayload {
   return {
     name: values.name,
     description: values.description,
+    logoImageUrl: values.logoImageUrl,
     category: values.category,
     phone: values.phone,
     email: values.email,
@@ -91,6 +104,11 @@ function buildPayload(values: ShopFormValues): ShopPayload {
     pincode: values.pincode,
     openingTime: values.openingTime,
     closingTime: values.closingTime,
+    deliveryEnabled: values.deliveryEnabled,
+    minimumOrderAmount: values.minimumOrderAmount,
+    deliveryFeeDefault: values.deliveryFeeDefault,
+    estimatedDeliveryMinutes: values.estimatedDeliveryMinutes,
+    serviceRadiusKm: values.serviceRadiusKm,
     isActive: values.isActive,
   }
 }
@@ -279,6 +297,20 @@ export function ShopOwnerShopFormPage() {
               />
             </label>
 
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-slate-700">
+                Logo image URL
+              </span>
+              <input
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                onChange={(event) =>
+                  updateField('logoImageUrl', event.target.value)
+                }
+                placeholder="https://..."
+                value={formValues.logoImageUrl}
+              />
+            </label>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">Phone</span>
@@ -400,6 +432,98 @@ export function ShopOwnerShopFormPage() {
               </label>
             </div>
 
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-slate-700">
+                  Minimum order amount
+                </span>
+                <input
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  min={0}
+                  onChange={(event) =>
+                    updateField(
+                      'minimumOrderAmount',
+                      Number.parseInt(event.target.value || '0', 10),
+                    )
+                  }
+                  type="number"
+                  value={formValues.minimumOrderAmount}
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-slate-700">
+                  Default delivery fee
+                </span>
+                <input
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  min={0}
+                  onChange={(event) =>
+                    updateField(
+                      'deliveryFeeDefault',
+                      Number.parseInt(event.target.value || '0', 10),
+                    )
+                  }
+                  type="number"
+                  value={formValues.deliveryFeeDefault}
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-slate-700">
+                  Estimated delivery minutes
+                </span>
+                <input
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  min={0}
+                  onChange={(event) =>
+                    updateField(
+                      'estimatedDeliveryMinutes',
+                      event.target.value
+                        ? Number.parseInt(event.target.value, 10)
+                        : null,
+                    )
+                  }
+                  type="number"
+                  value={formValues.estimatedDeliveryMinutes ?? ''}
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-slate-700">
+                  Service radius (km)
+                </span>
+                <input
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  min={0}
+                  onChange={(event) =>
+                    updateField(
+                      'serviceRadiusKm',
+                      event.target.value
+                        ? Number.parseFloat(event.target.value)
+                        : null,
+                    )
+                  }
+                  step="0.1"
+                  type="number"
+                  value={formValues.serviceRadiusKm ?? ''}
+                />
+              </label>
+            </div>
+
+            <label className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              <input
+                checked={formValues.deliveryEnabled}
+                onChange={(event) =>
+                  updateField('deliveryEnabled', event.target.checked)
+                }
+                type="checkbox"
+              />
+              <span>Enable delivery for the public storefront</span>
+            </label>
+
             <label className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
               <input
                 checked={formValues.isActive}
@@ -458,6 +582,10 @@ export function ShopOwnerShopFormPage() {
                   label={shop.isActive ? 'Active' : 'Inactive'}
                   tone={shop.isActive ? 'success' : 'neutral'}
                 />
+                <StatusPill
+                  label={shop.publicCatalogEnabled ? 'Public catalog on' : 'Public catalog off'}
+                  tone={shop.publicCatalogEnabled ? 'success' : 'warning'}
+                />
               </div>
               <div className="rounded-[1.35rem] bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
                 <p>
@@ -472,6 +600,12 @@ export function ShopOwnerShopFormPage() {
                   <span className="font-semibold text-ink-900">Address:</span>{' '}
                   {shop.addressLine1}
                   {shop.addressLine2 ? `, ${shop.addressLine2}` : ''}
+                </p>
+                <p>
+                  <span className="font-semibold text-ink-900">Inventory mapping:</span>{' '}
+                  {shop.inventoryOrganizationId && shop.inventoryBranchId
+                    ? 'Connected by admin'
+                    : 'Pending admin mapping'}
                 </p>
               </div>
               <div className="rounded-[1.35rem] bg-nearcart-50 px-4 py-4 text-sm leading-7 text-slate-600">

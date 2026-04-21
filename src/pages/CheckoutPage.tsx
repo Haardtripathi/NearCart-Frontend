@@ -4,9 +4,11 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { getCustomerAddresses, getCustomerProfile } from '@/api/customer'
 import { createOrder } from '@/api/orders'
+import { validateCart } from '@/api/shops'
 import { PageHeader } from '@/components/PageHeader'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
+import type { ValidatedCartItem } from '@/types/api'
 import type { Address } from '@/types/customer'
 import type { CheckoutFormValues } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
@@ -62,11 +64,43 @@ function validateCheckoutForm(values: CheckoutFormValues) {
   return errors
 }
 
+function buildCartItemFromValidatedItem(
+  shopId: string,
+  shopName: string,
+  item: ValidatedCartItem & { quantity: number },
+) {
+  return {
+    cartItemId: `${item.productId}:${item.variantId ?? 'default'}`,
+    productId: item.productId,
+    variantId: item.variantId,
+    shopId,
+    shopName,
+    name: item.name ?? 'Unavailable item',
+    description: item.description ?? null,
+    brand: item.brand?.name ?? null,
+    category: item.category?.name ?? null,
+    unitLabel: item.unitLabel ?? null,
+    image: item.image ?? null,
+    price: item.price ?? 0,
+    mrp: item.mrp ?? null,
+    stockQty: item.availableQty,
+    stockStatus: item.stockStatus,
+    quantity: item.quantity,
+  }
+}
+
 export function CheckoutPage() {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
-  const { shopId, shopName, items, getCartCount, getCartSubtotal, clearCart } =
-    useCartStore((state) => state)
+  const {
+    shopId,
+    shopName,
+    items,
+    getCartCount,
+    getCartSubtotal,
+    clearCart,
+    replaceCart,
+  } = useCartStore((state) => state)
   const [formValues, setFormValues] =
     useState<CheckoutFormValues>(initialFormValues)
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
@@ -74,6 +108,8 @@ export function CheckoutPage() {
     Partial<Record<keyof CheckoutFormValues, string>>
   >({})
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [validationMessage, setValidationMessage] = useState<string | null>(null)
+  const [isValidatingCart, setIsValidatingCart] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const hasItems = items.length > 0
@@ -134,6 +170,75 @@ export function CheckoutPage() {
     }
   }, [user])
 
+  useEffect(() => {
+    let isMounted = true
+
+    async function runInitialCartValidation() {
+      if (!shopId || !shopName || items.length === 0) {
+        return
+      }
+
+      setIsValidatingCart(true)
+
+      try {
+        const response = await validateCart({
+          shopId,
+          items: items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: item.quantity,
+            expectedPrice: item.price,
+            expectedMrp: item.mrp,
+          })),
+        })
+
+        if (!isMounted) {
+          return
+        }
+
+        replaceCart({
+          shopId: response.item.shop.id,
+          shopName: response.item.shop.name,
+          items: response.item.appliedItems.map((item) =>
+            buildCartItemFromValidatedItem(
+              response.item.shop.id,
+              response.item.shop.name,
+              item,
+            ),
+          ),
+        })
+
+        if (
+          response.item.invalidItems.length > 0 ||
+          response.item.outOfStockItems.length > 0 ||
+          response.item.changedPriceItems.length > 0
+        ) {
+          setValidationMessage(
+            'Your cart was refreshed with live stock and pricing. Please review the updated quantities before placing the order.',
+          )
+        } else {
+          setValidationMessage(null)
+        }
+      } catch (error) {
+        if (isMounted) {
+          setSubmitError(
+            getApiErrorMessage(error, 'Unable to validate the live cart right now.'),
+          )
+        }
+      } finally {
+        if (isMounted) {
+          setIsValidatingCart(false)
+        }
+      }
+    }
+
+    void runInitialCartValidation()
+
+    return () => {
+      isMounted = false
+    }
+  }, [items.length, replaceCart, shopId, shopName])
+
   function updateField<Key extends keyof CheckoutFormValues>(
     field: Key,
     value: CheckoutFormValues[Key],
@@ -155,7 +260,7 @@ export function CheckoutPage() {
     const nextErrors = validateCheckoutForm(formValues)
     setFieldErrors(nextErrors)
 
-    if (Object.keys(nextErrors).length > 0 || !shopId || !shopName) {
+    if (Object.keys(nextErrors).length > 0 || !shopId || items.length === 0) {
       return
     }
 
@@ -163,9 +268,36 @@ export function CheckoutPage() {
     setSubmitError(null)
 
     try {
-      const response = await createOrder({
+      const validationResponse = await validateCart({
         shopId,
-        shopName,
+        items: items.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          expectedPrice: item.price,
+          expectedMrp: item.mrp,
+        })),
+      })
+
+      replaceCart({
+        shopId: validationResponse.item.shop.id,
+        shopName: validationResponse.item.shop.name,
+        items: validationResponse.item.appliedItems.map((item) =>
+          buildCartItemFromValidatedItem(
+            validationResponse.item.shop.id,
+            validationResponse.item.shop.name,
+            item,
+          ),
+        ),
+      })
+
+      if (validationResponse.item.appliedItems.length === 0) {
+        setSubmitError('Your cart is empty after live validation. Please add items again.')
+        return
+      }
+
+      const response = await createOrder({
+        shopId: validationResponse.item.shop.id,
         addressId: formValues.addressId,
         customerName: formValues.customerName,
         customerPhone: formValues.customerPhone,
@@ -178,16 +310,10 @@ export function CheckoutPage() {
         landmark: formValues.landmark,
         notes: formValues.notes,
         paymentMethod: formValues.paymentMethod,
-        items: items.map((item) => ({
-          storeProductId: item.storeProductId,
-          shopId: item.shopId,
-          shopName: item.shopName,
-          name: item.name,
-          brand: item.brand,
-          size: item.size,
-          image: item.image,
-          price: item.price,
-          mrp: item.mrp,
+        items: validationResponse.item.appliedItems.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          shopId: validationResponse.item.shop.id,
           quantity: item.quantity,
         })),
       })
@@ -242,8 +368,14 @@ export function CheckoutPage() {
       <PageHeader
         eyebrow="Checkout"
         title="Enter delivery details and place your order."
-        description="Share your delivery details, review the cart total, and place your order when everything looks right."
+        description="Checkout now validates against the live inventory bridge before an order is created."
       />
+
+      {validationMessage ? (
+        <section className="rounded-[1.75rem] border border-amber-200 bg-amber-50/90 p-6 text-sm text-amber-900">
+          {validationMessage}
+        </section>
+      ) : null}
 
       {submitError ? (
         <section className="rounded-[1.75rem] border border-rose-200 bg-rose-50/80 p-6 text-sm text-rose-700">
@@ -321,176 +453,71 @@ export function CheckoutPage() {
               </label>
             ) : null}
 
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
-                Full name
-              </span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
-                onChange={(event) =>
-                  updateField('customerName', event.target.value)
-                }
-                value={formValues.customerName}
-              />
-              {fieldErrors.customerName ? (
-                <span className="text-sm text-rose-600">
-                  {fieldErrors.customerName}
-                </span>
-              ) : null}
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">Phone</span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
-                onChange={(event) =>
-                  updateField('customerPhone', event.target.value)
-                }
-                value={formValues.customerPhone}
-              />
-              {fieldErrors.customerPhone ? (
-                <span className="text-sm text-rose-600">
-                  {fieldErrors.customerPhone}
-                </span>
-              ) : null}
-            </label>
-
-            <label className="space-y-2 sm:col-span-2">
-              <span className="text-sm font-medium text-slate-700">
-                Email address
-              </span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
-                onChange={(event) =>
-                  updateField('customerEmail', event.target.value)
-                }
-                value={formValues.customerEmail}
-              />
-              {fieldErrors.customerEmail ? (
-                <span className="text-sm text-rose-600">
-                  {fieldErrors.customerEmail}
-                </span>
-              ) : null}
-            </label>
-
-            <label className="space-y-2 sm:col-span-2">
-              <span className="text-sm font-medium text-slate-700">
-                Address line 1
-              </span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
-                onChange={(event) =>
-                  updateField('deliveryAddressLine1', event.target.value)
-                }
-                value={formValues.deliveryAddressLine1}
-              />
-              {fieldErrors.deliveryAddressLine1 ? (
-                <span className="text-sm text-rose-600">
-                  {fieldErrors.deliveryAddressLine1}
-                </span>
-              ) : null}
-            </label>
-
-            <label className="space-y-2 sm:col-span-2">
-              <span className="text-sm font-medium text-slate-700">
-                Address line 2
-              </span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
-                onChange={(event) =>
-                  updateField('deliveryAddressLine2', event.target.value)
-                }
-                value={formValues.deliveryAddressLine2}
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">City</span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
-                onChange={(event) => updateField('city', event.target.value)}
-                value={formValues.city}
-              />
-              {fieldErrors.city ? (
-                <span className="text-sm text-rose-600">{fieldErrors.city}</span>
-              ) : null}
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">Area</span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
-                onChange={(event) => updateField('area', event.target.value)}
-                value={formValues.area}
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
-                Pincode
-              </span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
-                onChange={(event) => updateField('pincode', event.target.value)}
-                value={formValues.pincode}
-              />
-              {fieldErrors.pincode ? (
-                <span className="text-sm text-rose-600">
-                  {fieldErrors.pincode}
-                </span>
-              ) : null}
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
-                Landmark
-              </span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
-                onChange={(event) =>
-                  updateField('landmark', event.target.value)
-                }
-                value={formValues.landmark}
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
-                Payment method
-              </span>
-              <select
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
-                onChange={(event) =>
-                  updateField(
-                    'paymentMethod',
-                    event.target.value as CheckoutFormValues['paymentMethod'],
-                  )
-                }
-                value={formValues.paymentMethod}
+            {(
+              [
+                ['customerName', 'Full name'],
+                ['customerPhone', 'Phone number'],
+                ['customerEmail', 'Email address'],
+                ['deliveryAddressLine1', 'Address line 1'],
+                ['deliveryAddressLine2', 'Address line 2'],
+                ['city', 'City'],
+                ['area', 'Area'],
+                ['pincode', 'Pincode'],
+                ['landmark', 'Landmark'],
+              ] as Array<[keyof CheckoutFormValues, string]>
+            ).map(([field, label]) => (
+              <label
+                className={field === 'deliveryAddressLine1' ? 'space-y-2 sm:col-span-2' : 'space-y-2'}
+                key={field}
               >
-                <option value="COD">Cash on delivery</option>
-                <option value="PAY_ON_PICKUP">Pay on pickup</option>
-              </select>
-            </label>
+                <span className="text-sm font-medium text-slate-700">{label}</span>
+                <input
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  onChange={(event) => updateField(field, event.target.value)}
+                  type={field === 'customerEmail' ? 'email' : 'text'}
+                  value={formValues[field]}
+                />
+                {fieldErrors[field] ? (
+                  <span className="text-sm text-rose-600">{fieldErrors[field]}</span>
+                ) : null}
+              </label>
+            ))}
 
             <label className="space-y-2 sm:col-span-2">
-              <span className="text-sm font-medium text-slate-700">
-                Delivery notes
-              </span>
+              <span className="text-sm font-medium text-slate-700">Notes</span>
               <textarea
                 className="min-h-28 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
                 onChange={(event) => updateField('notes', event.target.value)}
                 value={formValues.notes}
               />
             </label>
+
+            <label className="space-y-2 sm:col-span-2">
+              <span className="text-sm font-medium text-slate-700">Payment method</span>
+              <select
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                onChange={(event) =>
+                  updateField('paymentMethod', event.target.value as CheckoutFormValues['paymentMethod'])
+                }
+                value={formValues.paymentMethod}
+              >
+                <option value="COD">Cash on delivery</option>
+                <option value="PAY_ON_PICKUP">Pay on pickup</option>
+                <option value="ONLINE">Online payment</option>
+              </select>
+            </label>
           </div>
 
           <button
-            className="inline-flex w-full items-center justify-center rounded-full bg-nearcart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearcart-700 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isSubmitting}
+            className="inline-flex w-full items-center justify-center rounded-full bg-nearcart-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-nearcart-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+            disabled={isSubmitting || isValidatingCart}
             type="submit"
           >
-            {isSubmitting ? 'Placing order...' : 'Place order'}
+            {isSubmitting
+              ? 'Placing order...'
+              : isValidatingCart
+                ? 'Validating cart...'
+                : 'Place order'}
           </button>
         </form>
 
@@ -499,34 +526,10 @@ export function CheckoutPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearcart-600">
               Order summary
             </p>
-            <h2 className="mt-3 font-display text-2xl text-ink-900">
-              {shopName}
-            </h2>
-            <div className="mt-5 space-y-3">
-              {items.map((item) => (
-                <div
-                  key={item.storeProductId}
-                  className="flex items-center justify-between gap-3 rounded-[1.35rem] bg-slate-50/80 px-4 py-3 text-sm text-slate-700"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-ink-900">
-                      {item.name}
-                    </p>
-                    <p className="text-slate-500">
-                      {item.quantity} x {formatCurrency(item.price)}
-                    </p>
-                  </div>
-                  <div className="font-semibold text-ink-900">
-                    {formatCurrency(item.price * item.quantity)}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 space-y-3 border-t border-slate-100 pt-4">
+            <div className="mt-5 space-y-4">
               <div className="flex items-center justify-between text-sm text-slate-600">
                 <span>Total quantity</span>
-                <span className="font-semibold text-ink-900">{cartCount}</span>
+                <span className="font-semibold text-slate-800">{cartCount}</span>
               </div>
               <div className="flex items-center justify-between text-base text-slate-700">
                 <span>Subtotal</span>
@@ -534,6 +537,15 @@ export function CheckoutPage() {
                   {formatCurrency(subtotal)}
                 </span>
               </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+                to="/cart"
+              >
+                Back to cart
+              </Link>
             </div>
           </article>
         </aside>

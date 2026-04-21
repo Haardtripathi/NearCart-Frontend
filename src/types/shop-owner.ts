@@ -19,6 +19,7 @@ export interface ManagedShop {
   name: string
   slug: string
   description: string | null
+  logoImageUrl: string | null
   category: string
   phone: string
   email: string | null
@@ -31,6 +32,15 @@ export interface ManagedShop {
   longitude: number | null
   openingTime: string | null
   closingTime: string | null
+  publicCatalogEnabled: boolean
+  inventoryOrganizationId: string | null
+  inventoryBranchId: string | null
+  deliveryEnabled: boolean
+  minimumOrderAmount: number
+  deliveryFeeDefault: number
+  estimatedDeliveryMinutes: number | null
+  serviceRadiusKm: number | null
+  lastCatalogSyncAt: string | null
   isActive: boolean
   approvalStatus: ShopApprovalStatus
   createdAt: string
@@ -60,6 +70,7 @@ export interface ShopOwnerProfileUpdatePayload {
 export interface ShopFormValues {
   name: string
   description: string
+  logoImageUrl: string
   category: string
   phone: string
   email: string
@@ -70,12 +81,18 @@ export interface ShopFormValues {
   pincode: string
   openingTime: string
   closingTime: string
+  deliveryEnabled: boolean
+  minimumOrderAmount: number
+  deliveryFeeDefault: number
+  estimatedDeliveryMinutes: number | null
+  serviceRadiusKm: number | null
   isActive: boolean
 }
 
 export interface ShopPayload {
   name?: string
   description?: string
+  logoImageUrl?: string
   category?: string
   phone?: string
   email?: string
@@ -86,6 +103,11 @@ export interface ShopPayload {
   pincode?: string
   openingTime?: string
   closingTime?: string
+  deliveryEnabled?: boolean
+  minimumOrderAmount?: number
+  deliveryFeeDefault?: number
+  estimatedDeliveryMinutes?: number | null
+  serviceRadiusKm?: number | null
   isActive?: boolean
 }
 

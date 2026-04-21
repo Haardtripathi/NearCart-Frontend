@@ -33,6 +33,7 @@ export interface AdminApprovalsResponse {
 }
 
 export interface AdminShopRow extends ManagedShop {
+  inventoryMappingStatus: 'MAPPED' | 'UNMAPPED'
   owner: {
     user: AuthUser
     profile: ShopOwnerProfileRecord
@@ -44,6 +45,29 @@ export interface AdminShopsResponse {
   meta: ApiMeta & {
     total: number
     pendingCount: number
+  }
+}
+
+export interface InventoryOrganizationOption {
+  id: string
+  name: string
+  slug: string
+  currencyCode: string
+  status: string
+  branches: Array<{
+    id: string
+    code: string | null
+    name: string
+    type: string
+    city: string | null
+    isActive: boolean
+  }>
+}
+
+export interface InventoryOrganizationsResponse {
+  items: InventoryOrganizationOption[]
+  meta: ApiMeta & {
+    total: number
   }
 }
 

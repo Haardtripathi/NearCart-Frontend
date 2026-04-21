@@ -98,6 +98,7 @@ export function ShopOwnerShopsPage() {
                   <th className="pb-3 font-medium">Shop</th>
                   <th className="pb-3 font-medium">Category</th>
                   <th className="pb-3 font-medium">Location</th>
+                  <th className="pb-3 font-medium">Inventory</th>
                   <th className="pb-3 font-medium">Status</th>
                   <th className="pb-3 font-medium">Action</th>
                 </tr>
@@ -112,6 +113,20 @@ export function ShopOwnerShopsPage() {
                     <td className="py-4">{shop.category}</td>
                     <td className="py-4">
                       {[shop.area, shop.city].filter(Boolean).join(', ') || shop.city}
+                    </td>
+                    <td className="py-4">
+                      <StatusPill
+                        label={
+                          shop.inventoryOrganizationId && shop.inventoryBranchId
+                            ? 'Mapped'
+                            : 'Awaiting admin map'
+                        }
+                        tone={
+                          shop.inventoryOrganizationId && shop.inventoryBranchId
+                            ? 'success'
+                            : 'warning'
+                        }
+                      />
                     </td>
                     <td className="py-4">
                       <div className="flex flex-wrap items-center gap-2">

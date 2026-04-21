@@ -4,10 +4,10 @@ import { Link } from 'react-router-dom'
 import { getShops } from '@/api/shops'
 import { PageHeader } from '@/components/PageHeader'
 import { PlaceholderPanel } from '@/components/PlaceholderPanel'
-import type { ShopPreview } from '@/types/api'
+import type { PublicShopSummary } from '@/types/api'
 
 export function ShopsPage() {
-  const [shops, setShops] = useState<ShopPreview[]>([])
+  const [shops, setShops] = useState<PublicShopSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -77,16 +77,33 @@ export function ShopsPage() {
             <h2 className="mt-3 font-display text-2xl text-ink-900">
               {shop.name}
             </h2>
-            <p className="mt-2 text-sm text-slate-600">{shop.neighborhood}</p>
-            <div className="mt-6 flex items-center justify-between rounded-2xl bg-nearcart-50 px-4 py-3 text-sm text-slate-700">
-              <span>Estimated delivery</span>
-              <span className="font-semibold text-nearcart-700">
-                {shop.etaMinutes} mins
-              </span>
+            <p className="mt-2 text-sm text-slate-600">
+              {[shop.area, shop.city].filter(Boolean).join(', ')}
+            </p>
+            <div className="mt-6 space-y-3 rounded-2xl bg-nearcart-50 px-4 py-3 text-sm text-slate-700">
+              <div className="flex items-center justify-between">
+                <span>Estimated delivery</span>
+                <span className="font-semibold text-nearcart-700">
+                  {shop.estimatedDeliveryMinutes
+                    ? `${shop.estimatedDeliveryMinutes} mins`
+                    : 'TBD'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Minimum order</span>
+                <span className="font-semibold text-nearcart-700">
+                  Rs {shop.minimumOrderAmount}
+                </span>
+              </div>
             </div>
+            {shop.description ? (
+              <p className="mt-4 text-sm leading-6 text-slate-600">
+                {shop.description}
+              </p>
+            ) : null}
             <Link
               className="mt-6 inline-flex rounded-full bg-nearcart-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-nearcart-700"
-              to={`/shops/${shop.id}`}
+              to={`/shops/${shop.slug}`}
             >
               Open shop
             </Link>
