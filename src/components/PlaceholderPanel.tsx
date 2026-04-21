@@ -19,9 +19,9 @@ export function PlaceholderPanel({
         {points.map((point) => (
           <li
             key={point}
-            className="flex items-start gap-3 rounded-2xl bg-nearcart-50 px-4 py-3 text-sm text-slate-700"
+            className="flex items-start gap-3 rounded-2xl bg-nearkart-50 px-4 py-3 text-sm text-slate-700"
           >
-            <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-nearcart-500" />
+            <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-nearkart-500" />
             <span>{point}</span>
           </li>
         ))}

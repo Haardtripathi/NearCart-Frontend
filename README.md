@@ -1,6 +1,6 @@
-# NearCart Frontend
+# NearKart Frontend
 
-Responsive web frontend for the NearCart storefront.
+Responsive web frontend for the NearKart storefront.
 
 ## Stack
 
@@ -21,7 +21,7 @@ npm run dev -- --host 127.0.0.1 --port 5173
 
 ## Backend connection
 
-The frontend talks only to the NearCart main backend.
+The frontend talks only to the NearKart main backend.
 
 Default API base URL:
 

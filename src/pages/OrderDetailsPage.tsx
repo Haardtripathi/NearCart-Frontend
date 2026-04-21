@@ -70,7 +70,7 @@ export function OrderDetailsPage() {
             <article className="rounded-[1.75rem] border border-white/80 bg-white/95 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearcart-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
                     {order.shopName}
                   </p>
                   <h2 className="mt-2 font-display text-3xl text-ink-900">
@@ -193,14 +193,14 @@ export function OrderDetailsPage() {
                 </div>
                 <div className="flex items-center justify-between text-base text-slate-700">
                   <span>Total</span>
-                  <span className="font-semibold text-nearcart-700">
+                  <span className="font-semibold text-nearkart-700">
                     {formatCurrency(order.totalAmount)}
                   </span>
                 </div>
               </div>
 
               <Link
-                className="mt-6 inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+                className="mt-6 inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
                 to="/shops"
               >
                 Continue shopping

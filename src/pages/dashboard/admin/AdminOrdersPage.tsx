@@ -96,7 +96,7 @@ export function AdminOrdersPage() {
                     <p className="text-sm text-slate-500">{order.paymentStatus}</p>
                   </td>
                   <td className="py-4">{formatDateTime(order.placedAt)}</td>
-                  <td className="py-4 font-semibold text-nearcart-700">
+                  <td className="py-4 font-semibold text-nearkart-700">
                     {formatCurrency(order.totalAmount)}
                   </td>
                 </tr>

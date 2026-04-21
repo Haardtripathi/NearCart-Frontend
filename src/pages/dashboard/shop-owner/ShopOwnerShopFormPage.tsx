@@ -258,7 +258,7 @@ export function ShopOwnerShopFormPage() {
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">Shop name</span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) => updateField('name', event.target.value)}
                   value={formValues.name}
                 />
@@ -270,7 +270,7 @@ export function ShopOwnerShopFormPage() {
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">Category</span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) =>
                     updateField('category', event.target.value)
                   }
@@ -289,7 +289,7 @@ export function ShopOwnerShopFormPage() {
                 Description
               </span>
               <textarea
-                className="min-h-28 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="min-h-28 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) =>
                   updateField('description', event.target.value)
                 }
@@ -302,7 +302,7 @@ export function ShopOwnerShopFormPage() {
                 Logo image URL
               </span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) =>
                   updateField('logoImageUrl', event.target.value)
                 }
@@ -315,7 +315,7 @@ export function ShopOwnerShopFormPage() {
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">Phone</span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) => updateField('phone', event.target.value)}
                   value={formValues.phone}
                 />
@@ -327,7 +327,7 @@ export function ShopOwnerShopFormPage() {
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">Email</span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) => updateField('email', event.target.value)}
                   value={formValues.email}
                 />
@@ -339,7 +339,7 @@ export function ShopOwnerShopFormPage() {
                 Address line 1
               </span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) =>
                   updateField('addressLine1', event.target.value)
                 }
@@ -357,7 +357,7 @@ export function ShopOwnerShopFormPage() {
                 Address line 2
               </span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) =>
                   updateField('addressLine2', event.target.value)
                 }
@@ -369,7 +369,7 @@ export function ShopOwnerShopFormPage() {
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">City</span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) => updateField('city', event.target.value)}
                   value={formValues.city}
                 />
@@ -381,7 +381,7 @@ export function ShopOwnerShopFormPage() {
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">Area</span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) => updateField('area', event.target.value)}
                   value={formValues.area}
                 />
@@ -390,7 +390,7 @@ export function ShopOwnerShopFormPage() {
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">Pincode</span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) =>
                     updateField('pincode', event.target.value)
                   }
@@ -408,7 +408,7 @@ export function ShopOwnerShopFormPage() {
                   Opening time
                 </span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) =>
                     updateField('openingTime', event.target.value)
                   }
@@ -422,7 +422,7 @@ export function ShopOwnerShopFormPage() {
                   Closing time
                 </span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) =>
                     updateField('closingTime', event.target.value)
                   }
@@ -438,7 +438,7 @@ export function ShopOwnerShopFormPage() {
                   Minimum order amount
                 </span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   min={0}
                   onChange={(event) =>
                     updateField(
@@ -456,7 +456,7 @@ export function ShopOwnerShopFormPage() {
                   Default delivery fee
                 </span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   min={0}
                   onChange={(event) =>
                     updateField(
@@ -476,7 +476,7 @@ export function ShopOwnerShopFormPage() {
                   Estimated delivery minutes
                 </span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   min={0}
                   onChange={(event) =>
                     updateField(
@@ -496,7 +496,7 @@ export function ShopOwnerShopFormPage() {
                   Service radius (km)
                 </span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   min={0}
                   onChange={(event) =>
                     updateField(
@@ -547,7 +547,7 @@ export function ShopOwnerShopFormPage() {
 
             <div className="flex flex-wrap gap-3">
               <button
-                className="inline-flex items-center justify-center rounded-full bg-nearcart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearcart-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSaving}
                 type="submit"
               >
@@ -558,7 +558,7 @@ export function ShopOwnerShopFormPage() {
                     : 'Create shop'}
               </button>
               <Link
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
                 to="/dashboard/shop-owner/shops"
               >
                 Back to shops
@@ -608,7 +608,7 @@ export function ShopOwnerShopFormPage() {
                     : 'Pending admin mapping'}
                 </p>
               </div>
-              <div className="rounded-[1.35rem] bg-nearcart-50 px-4 py-4 text-sm leading-7 text-slate-600">
+              <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4 text-sm leading-7 text-slate-600">
                 Future catalog, stock, order handling, and service-area workflows can attach to this same shop record without a structural rewrite.
               </div>
             </div>

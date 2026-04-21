@@ -55,7 +55,7 @@ export function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Review role distribution and activity across all NearCart users."
+        description="Review role distribution and activity across all NearKart users."
         eyebrow="Admin users"
         title="Platform users"
       />

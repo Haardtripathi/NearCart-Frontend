@@ -102,7 +102,7 @@ export function OrdersPage() {
         title="Track your recent orders."
         description={
           user?.role === 'CUSTOMER'
-            ? 'See the latest signed-in orders attached to your NearCart account.'
+            ? 'See the latest signed-in orders attached to your NearKart account.'
             : 'See the orders saved on this device from your guest storefront flow.'
         }
       />
@@ -126,7 +126,7 @@ export function OrdersPage() {
                 key={order.id}
                 className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]"
               >
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearcart-600">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
                   {order.shopName}
                 </p>
                 <h2 className="mt-3 font-display text-2xl text-ink-900">
@@ -136,14 +136,14 @@ export function OrdersPage() {
                 <p className="mt-2 text-sm text-slate-500">
                   {formatDateTime(order.placedAt)}
                 </p>
-                <div className="mt-6 rounded-2xl bg-nearcart-50 px-4 py-3 text-sm text-slate-700">
+                <div className="mt-6 rounded-2xl bg-nearkart-50 px-4 py-3 text-sm text-slate-700">
                   Total:{' '}
                   <span className="font-semibold">
                     {formatCurrency(order.totalAmount)}
                   </span>
                 </div>
                 <Link
-                  className="mt-6 inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+                  className="mt-6 inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
                   to={`/orders/${order.id}`}
                 >
                   View details
@@ -156,7 +156,7 @@ export function OrdersPage() {
         <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-8 text-center shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
           <p className="text-sm leading-7 text-slate-600">
             {user?.role === 'CUSTOMER'
-              ? 'No signed-in orders yet. Place your next NearCart order and it will show up here.'
+              ? 'No signed-in orders yet. Place your next NearKart order and it will show up here.'
               : 'No saved guest orders yet. Place an order from the storefront and it will show up here on this device.'}
           </p>
         </article>

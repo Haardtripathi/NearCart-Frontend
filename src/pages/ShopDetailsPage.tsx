@@ -182,7 +182,7 @@ export function ShopDetailsPage() {
             <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearcart-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
                     {shop.category}
                   </p>
                   <h2 className="mt-2 font-display text-3xl text-ink-900">
@@ -197,7 +197,7 @@ export function ShopDetailsPage() {
                 </div>
 
                 <Link
-                  className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+                  className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
                   to="/cart"
                 >
                   Open cart
@@ -206,13 +206,13 @@ export function ShopDetailsPage() {
 
               <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <input
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-nearcart-400"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-nearkart-400"
                   onChange={(event) => updateFilter('search', event.target.value)}
                   placeholder="Search products"
                   value={filters.search}
                 />
                 <select
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-nearcart-400"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-nearkart-400"
                   onChange={(event) => updateFilter('category', event.target.value)}
                   value={filters.category}
                 >
@@ -224,7 +224,7 @@ export function ShopDetailsPage() {
                   ))}
                 </select>
                 <select
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-nearcart-400"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-nearkart-400"
                   onChange={(event) => updateFilter('brand', event.target.value)}
                   value={filters.brand}
                 >
@@ -236,7 +236,7 @@ export function ShopDetailsPage() {
                   ))}
                 </select>
                 <select
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-nearcart-400"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-nearkart-400"
                   onChange={(event) =>
                     updateFilter('sort', event.target.value as CatalogSort)
                   }
@@ -305,7 +305,7 @@ export function ShopDetailsPage() {
 
         <aside className="space-y-4">
           <article className="rounded-[1.75rem] border border-white/80 bg-white/95 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearcart-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
               Your cart
             </p>
             <h2 className="mt-3 font-display text-2xl text-ink-900">
@@ -319,10 +319,10 @@ export function ShopDetailsPage() {
                 : 'Add a few products to get started. Cart totals update from the same normalized catalog data used by the public APIs.'}
             </p>
 
-            <div className="mt-6 rounded-[1.5rem] bg-nearcart-50 p-4">
+            <div className="mt-6 rounded-[1.5rem] bg-nearkart-50 p-4">
               <div className="flex items-center justify-between text-sm text-slate-700">
                 <span>Subtotal</span>
-                <span className="font-semibold text-nearcart-700">
+                <span className="font-semibold text-nearkart-700">
                   {formatCurrency(cartSubtotal)}
                 </span>
               </div>
@@ -330,13 +330,13 @@ export function ShopDetailsPage() {
 
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
-                className="inline-flex rounded-full bg-nearcart-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-nearcart-700"
+                className="inline-flex rounded-full bg-nearkart-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-nearkart-700"
                 to="/cart"
               >
                 View cart
               </Link>
               <Link
-                className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+                className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
                 to="/shops"
               >
                 Browse shops
@@ -345,7 +345,7 @@ export function ShopDetailsPage() {
           </article>
 
           <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearcart-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
               Good to know
             </p>
             <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-600">

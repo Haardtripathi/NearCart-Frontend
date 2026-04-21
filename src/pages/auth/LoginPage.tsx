@@ -80,7 +80,7 @@ export function LoginPage() {
     <AuthPageShell
       description="Sign in to manage orders, addresses, shops, and platform workflows with the right dashboard for your role."
       eyebrow="Welcome back"
-      featureDescription="The NearCart foundation now supports role-aware sessions, dashboard access, and a path to real operations."
+      featureDescription="The NearKart foundation now supports role-aware sessions, dashboard access, and a path to real operations."
       featurePoints={[
         'Customers can manage addresses and track their own orders.',
         'Shop owners can create shops and watch approval progress.',
@@ -88,9 +88,9 @@ export function LoginPage() {
       ]}
       featureTitle="What unlocks after login"
       footerLabel="Create a customer account"
-      footerPrompt="Need a NearCart account?"
+      footerPrompt="Need a NearKart account?"
       footerTo="/register/customer"
-      title="Run your NearCart role from one secure login."
+      title="Run your NearKart role from one secure login."
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
@@ -98,7 +98,7 @@ export function LoginPage() {
             Email address
           </label>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
             id="email"
             onChange={(event) => updateField('email', event.target.value)}
             type="email"
@@ -117,7 +117,7 @@ export function LoginPage() {
             Password
           </label>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
             id="password"
             onChange={(event) => updateField('password', event.target.value)}
             type="password"
@@ -135,7 +135,7 @@ export function LoginPage() {
         ) : null}
 
         <button
-          className="inline-flex w-full items-center justify-center rounded-full bg-nearcart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearcart-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={loading}
           type="submit"
         >

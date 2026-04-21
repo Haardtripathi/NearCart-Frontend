@@ -71,7 +71,7 @@ export function ShopsPage() {
             key={shop.id}
             className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearcart-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
               {shop.category}
             </p>
             <h2 className="mt-3 font-display text-2xl text-ink-900">
@@ -80,10 +80,10 @@ export function ShopsPage() {
             <p className="mt-2 text-sm text-slate-600">
               {[shop.area, shop.city].filter(Boolean).join(', ')}
             </p>
-            <div className="mt-6 space-y-3 rounded-2xl bg-nearcart-50 px-4 py-3 text-sm text-slate-700">
+            <div className="mt-6 space-y-3 rounded-2xl bg-nearkart-50 px-4 py-3 text-sm text-slate-700">
               <div className="flex items-center justify-between">
                 <span>Estimated delivery</span>
-                <span className="font-semibold text-nearcart-700">
+                <span className="font-semibold text-nearkart-700">
                   {shop.estimatedDeliveryMinutes
                     ? `${shop.estimatedDeliveryMinutes} mins`
                     : 'TBD'}
@@ -91,7 +91,7 @@ export function ShopsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span>Minimum order</span>
-                <span className="font-semibold text-nearcart-700">
+                <span className="font-semibold text-nearkart-700">
                   Rs {shop.minimumOrderAmount}
                 </span>
               </div>
@@ -102,7 +102,7 @@ export function ShopsPage() {
               </p>
             ) : null}
             <Link
-              className="mt-6 inline-flex rounded-full bg-nearcart-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-nearcart-700"
+              className="mt-6 inline-flex rounded-full bg-nearkart-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-nearkart-700"
               to={`/shops/${shop.slug}`}
             >
               Open shop

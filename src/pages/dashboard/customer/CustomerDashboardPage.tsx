@@ -75,7 +75,7 @@ export function CustomerDashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Manage your profile, address book, and order history without leaving the NearCart storefront flow behind."
+        description="Manage your profile, address book, and order history without leaving the NearKart storefront flow behind."
         eyebrow="Customer dashboard"
         title={`Welcome back, ${profile.user.fullName.split(' ')[0]}`}
       />
@@ -93,7 +93,7 @@ export function CustomerDashboardPage() {
           value={profile.stats.addressCount}
         />
         <StatCard
-          description="Orders linked to your signed-in NearCart account."
+          description="Orders linked to your signed-in NearKart account."
           label="Orders"
           value={profile.stats.orderCount}
         />
@@ -109,13 +109,13 @@ export function CustomerDashboardPage() {
           actions={
             <div className="flex flex-wrap gap-2">
               <Link
-                className="inline-flex items-center justify-center rounded-full bg-nearcart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearcart-700"
+                className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearkart-700"
                 to="/shops"
               >
                 Continue shopping
               </Link>
               <Link
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
                 to="/dashboard/customer/addresses"
               >
                 Manage addresses
@@ -126,21 +126,21 @@ export function CustomerDashboardPage() {
           title="Profile summary"
         >
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[1.35rem] bg-nearcart-50 px-4 py-4">
+            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
               <p className="text-sm text-slate-500">Name</p>
               <p className="mt-2 font-semibold text-ink-900">{profile.user.fullName}</p>
             </div>
-            <div className="rounded-[1.35rem] bg-nearcart-50 px-4 py-4">
+            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
               <p className="text-sm text-slate-500">Email</p>
               <p className="mt-2 font-semibold text-ink-900">{profile.user.email}</p>
             </div>
-            <div className="rounded-[1.35rem] bg-nearcart-50 px-4 py-4">
+            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
               <p className="text-sm text-slate-500">Phone</p>
               <p className="mt-2 font-semibold text-ink-900">
                 {profile.user.phone || 'Add from profile settings'}
               </p>
             </div>
-            <div className="rounded-[1.35rem] bg-nearcart-50 px-4 py-4">
+            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
               <p className="text-sm text-slate-500">Default address</p>
               <p className="mt-2 font-semibold text-ink-900">
                 {profile.profile.defaultAddress?.label || 'Not set yet'}
@@ -158,7 +158,7 @@ export function CustomerDashboardPage() {
               {orders.map((order) => (
                 <Link
                   key={order.id}
-                  className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-100 bg-slate-50/80 px-4 py-4 transition hover:border-nearcart-200 hover:bg-white"
+                  className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-100 bg-slate-50/80 px-4 py-4 transition hover:border-nearkart-200 hover:bg-white"
                   to={`/orders/${order.id}`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -172,7 +172,7 @@ export function CustomerDashboardPage() {
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
                     <span>{formatDateTime(order.placedAt)}</span>
-                    <span className="font-semibold text-nearcart-700">
+                    <span className="font-semibold text-nearkart-700">
                       {formatCurrency(order.totalAmount)}
                     </span>
                   </div>

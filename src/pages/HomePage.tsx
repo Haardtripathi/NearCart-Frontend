@@ -5,7 +5,7 @@ import { StatusPill } from '@/components/StatusPill'
 import { useBackendHealth } from '@/hooks/useBackendHealth'
 import { formatDateTime } from '@/utils/formatDateTime'
 
-const appName = import.meta.env.VITE_APP_NAME ?? 'NearCart'
+const appName = import.meta.env.VITE_APP_NAME ?? 'NearKart'
 
 const highlightCards = [
   {
@@ -16,7 +16,7 @@ const highlightCards = [
   {
     title: 'Everything stays in sync',
     description:
-      'Shop discovery, cart building, and order placement flow through one consistent NearCart experience from start to finish.',
+      'Shop discovery, cart building, and order placement flow through one consistent NearKart experience from start to finish.',
   },
   {
     title: 'Built to grow cleanly',
@@ -37,7 +37,7 @@ export function HomePage() {
 
   return (
     <div className="space-y-8 sm:space-y-10">
-      <section className="overflow-hidden rounded-[2rem] border border-white/80 bg-gradient-to-br from-nearcart-50 via-[#fffdf7] to-sun-100 p-6 shadow-[0_30px_90px_-45px_rgba(17,33,23,0.45)] sm:p-8 lg:p-10">
+      <section className="overflow-hidden rounded-[2rem] border border-white/80 bg-gradient-to-br from-nearkart-50 via-[#fffdf7] to-sun-100 p-6 shadow-[0_30px_90px_-45px_rgba(17,33,23,0.45)] sm:p-8 lg:p-10">
         <div className="grid gap-8 lg:grid-cols-[1.3fr_0.85fr] lg:items-center">
           <div className="space-y-6">
             <StatusPill label="Customer storefront" tone="success" />
@@ -53,13 +53,13 @@ export function HomePage() {
 
             <div className="flex flex-wrap gap-3">
               <Link
-                className="inline-flex items-center justify-center rounded-full bg-nearcart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearcart-700"
+                className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700"
                 to="/shops"
               >
                 Explore shops
               </Link>
               <Link
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
                 to="/orders"
               >
                 View recent orders
@@ -150,7 +150,7 @@ export function HomePage() {
               </div>
 
               <div className="rounded-[1.5rem] border border-white/12 bg-white/6 p-4 text-sm text-white/80">
-                NearCart keeps the shopping experience focused here, so customers can browse and order without extra complexity.
+                NearKart keeps the shopping experience focused here, so customers can browse and order without extra complexity.
               </div>
             </div>
           </aside>
@@ -163,7 +163,7 @@ export function HomePage() {
             key={card.title}
             className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)] backdrop-blur"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearcart-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
               Why shoppers like it
             </p>
             <h2 className="mt-3 font-display text-2xl text-ink-900">
@@ -178,7 +178,7 @@ export function HomePage() {
 
       <section className="grid gap-4 lg:grid-cols-[1fr_1.15fr]">
         <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearcart-600">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
             How it feels
           </p>
           <ol className="mt-5 space-y-4">
@@ -189,9 +189,9 @@ export function HomePage() {
             ].map((item, index) => (
               <li
                 key={item}
-                className="flex gap-4 rounded-2xl bg-nearcart-50 px-4 py-4"
+                className="flex gap-4 rounded-2xl bg-nearkart-50 px-4 py-4"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nearcart-600 text-sm font-semibold text-white">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nearkart-600 text-sm font-semibold text-white">
                   {index + 1}
                 </span>
                 <span className="text-sm leading-7 text-slate-700">{item}</span>

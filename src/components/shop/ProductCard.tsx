@@ -31,7 +31,7 @@ export function ProductCard({
 
   return (
     <article className="flex h-full flex-col rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.5)]">
-      <div className="mb-4 overflow-hidden rounded-[1.35rem] bg-nearcart-50">
+      <div className="mb-4 overflow-hidden rounded-[1.35rem] bg-nearkart-50">
         {product.image ? (
           <img
             alt={product.name}
@@ -93,7 +93,7 @@ export function ProductCard({
             </div>
           ) : (
             <button
-              className="inline-flex w-full items-center justify-center rounded-full bg-nearcart-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-nearcart-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+              className="inline-flex w-full items-center justify-center rounded-full bg-nearkart-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
               disabled={isOutOfStock}
               onClick={onAddToCart}
               type="button"

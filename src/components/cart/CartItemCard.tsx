@@ -21,7 +21,7 @@ export function CartItemCard({
 
   return (
     <article className="flex flex-col gap-4 rounded-[1.5rem] border border-white/80 bg-white/95 p-4 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.55)] sm:flex-row sm:items-center sm:p-5">
-      <div className="h-24 w-24 overflow-hidden rounded-[1.25rem] bg-nearcart-50">
+      <div className="h-24 w-24 overflow-hidden rounded-[1.25rem] bg-nearkart-50">
         {item.image ? (
           <img
             alt={item.name}

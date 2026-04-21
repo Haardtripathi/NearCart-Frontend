@@ -85,7 +85,7 @@ export function RegisterCustomerPage() {
 
   return (
     <AuthPageShell
-      description="Create a customer account to save addresses, get a personal dashboard, and keep your future NearCart orders connected to you."
+      description="Create a customer account to save addresses, get a personal dashboard, and keep your future NearKart orders connected to you."
       eyebrow="Customer account"
       featureDescription="The customer foundation is designed to stay compatible with the existing storefront while preparing for deeper account-based shopping."
       featurePoints={[
@@ -97,7 +97,7 @@ export function RegisterCustomerPage() {
       footerLabel="Sign in instead"
       footerPrompt="Already have an account?"
       footerTo="/login"
-      title="Create your NearCart customer account."
+      title="Create your NearKart customer account."
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
@@ -105,7 +105,7 @@ export function RegisterCustomerPage() {
             Full name
           </label>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
             id="fullName"
             onChange={(event) => updateField('fullName', event.target.value)}
             value={formValues.fullName}
@@ -121,7 +121,7 @@ export function RegisterCustomerPage() {
               Email address
             </label>
             <input
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
               id="email"
               onChange={(event) => updateField('email', event.target.value)}
               type="email"
@@ -137,7 +137,7 @@ export function RegisterCustomerPage() {
               Phone number
             </label>
             <input
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
               id="phone"
               onChange={(event) => updateField('phone', event.target.value)}
               value={formValues.phone}
@@ -153,7 +153,7 @@ export function RegisterCustomerPage() {
             Password
           </label>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
             id="password"
             onChange={(event) => updateField('password', event.target.value)}
             type="password"
@@ -171,7 +171,7 @@ export function RegisterCustomerPage() {
         ) : null}
 
         <button
-          className="inline-flex w-full items-center justify-center rounded-full bg-nearcart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearcart-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={loading}
           type="submit"
         >

@@ -90,7 +90,7 @@ export function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Monitor platform users, shop approvals, and order flow from the NearCart control center."
+        description="Monitor platform users, shop approvals, and order flow from the NearKart control center."
         eyebrow="Admin dashboard"
         title="Platform command center"
       />
@@ -108,7 +108,7 @@ export function AdminDashboardPage() {
           value={summary.userCount}
         />
         <StatCard
-          description="Database-backed shops currently registered in NearCart."
+          description="Database-backed shops currently registered in NearKart."
           label="Shops"
           value={summary.shopCount}
         />
@@ -124,13 +124,13 @@ export function AdminDashboardPage() {
           actions={
             <div className="flex flex-wrap gap-2">
               <Link
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
                 to="/dashboard/admin/users"
               >
                 Review users
               </Link>
               <Link
-                className="inline-flex items-center justify-center rounded-full bg-nearcart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearcart-700"
+                className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearkart-700"
                 to="/dashboard/admin/approvals"
               >
                 Open approvals
@@ -172,7 +172,7 @@ export function AdminDashboardPage() {
                       <p className="font-semibold text-ink-900">{order.orderNumber}</p>
                       <p className="text-sm text-slate-500">{order.shopName}</p>
                     </div>
-                    <p className="font-semibold text-nearcart-700">
+                    <p className="font-semibold text-nearkart-700">
                       {formatCurrency(order.totalAmount)}
                     </p>
                   </div>

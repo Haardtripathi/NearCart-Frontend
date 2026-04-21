@@ -12,7 +12,7 @@ export function PageHeader({
   return (
     <header className="space-y-4">
       {eyebrow ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-nearcart-600">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-nearkart-600">
           {eyebrow}
         </p>
       ) : null}

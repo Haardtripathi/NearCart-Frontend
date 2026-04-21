@@ -93,7 +93,7 @@ export function RegisterShopOwnerPage() {
 
   return (
     <AuthPageShell
-      description="Create a shop owner account to register shops, manage business details, and move through the NearCart approval flow."
+      description="Create a shop owner account to register shops, manage business details, and move through the NearKart approval flow."
       eyebrow="Shop owner account"
       featureDescription="This foundation gives merchants a real operating workspace now, while leaving room for future inventory, stock, and order operations."
       featurePoints={[
@@ -105,7 +105,7 @@ export function RegisterShopOwnerPage() {
       footerLabel="Sign in instead"
       footerPrompt="Already have a shop owner account?"
       footerTo="/login"
-      title="Launch your NearCart merchant workspace."
+      title="Launch your NearKart merchant workspace."
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
@@ -113,7 +113,7 @@ export function RegisterShopOwnerPage() {
             Full name
           </label>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
             id="fullName"
             onChange={(event) => updateField('fullName', event.target.value)}
             value={formValues.fullName}
@@ -129,7 +129,7 @@ export function RegisterShopOwnerPage() {
               Email address
             </label>
             <input
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
               id="email"
               onChange={(event) => updateField('email', event.target.value)}
               type="email"
@@ -145,7 +145,7 @@ export function RegisterShopOwnerPage() {
               Phone number
             </label>
             <input
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
               id="phone"
               onChange={(event) => updateField('phone', event.target.value)}
               value={formValues.phone}
@@ -161,7 +161,7 @@ export function RegisterShopOwnerPage() {
             Business name
           </label>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
             id="businessName"
             onChange={(event) => updateField('businessName', event.target.value)}
             value={formValues.businessName}
@@ -180,7 +180,7 @@ export function RegisterShopOwnerPage() {
               GST number
             </label>
             <input
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
               id="gstNumber"
               onChange={(event) => updateField('gstNumber', event.target.value)}
               value={formValues.gstNumber}
@@ -195,7 +195,7 @@ export function RegisterShopOwnerPage() {
               Password
             </label>
             <input
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
               id="password"
               onChange={(event) => updateField('password', event.target.value)}
               type="password"
@@ -214,7 +214,7 @@ export function RegisterShopOwnerPage() {
         ) : null}
 
         <button
-          className="inline-flex w-full items-center justify-center rounded-full bg-nearcart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearcart-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={loading}
           type="submit"
         >

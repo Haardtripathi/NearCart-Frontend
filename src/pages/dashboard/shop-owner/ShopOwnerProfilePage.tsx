@@ -98,13 +98,13 @@ export function ShopOwnerProfilePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Update the business identity and owner details that power your NearCart merchant workspace."
+        description="Update the business identity and owner details that power your NearKart merchant workspace."
         eyebrow="Shop owner profile"
         title="Merchant profile settings"
       />
 
       <DashboardCard
-        description="These details help NearCart keep your merchant account and shop records aligned for future operations."
+        description="These details help NearKart keep your merchant account and shop records aligned for future operations."
         title="Update merchant profile"
       >
         <form className="space-y-5" onSubmit={handleSubmit}>
@@ -112,7 +112,7 @@ export function ShopOwnerProfilePage() {
             <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">Full name</span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) =>
                   setFormValues((currentState) => ({
                     ...currentState,
@@ -126,7 +126,7 @@ export function ShopOwnerProfilePage() {
             <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">Phone number</span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) =>
                   setFormValues((currentState) => ({
                     ...currentState,
@@ -142,7 +142,7 @@ export function ShopOwnerProfilePage() {
                 Business name
               </span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) =>
                   setFormValues((currentState) => ({
                     ...currentState,
@@ -156,7 +156,7 @@ export function ShopOwnerProfilePage() {
             <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">GST number</span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) =>
                   setFormValues((currentState) => ({
                     ...currentState,
@@ -181,7 +181,7 @@ export function ShopOwnerProfilePage() {
           ) : null}
 
           <button
-            className="inline-flex items-center justify-center rounded-full bg-nearcart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearcart-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSaving}
             type="submit"
           >

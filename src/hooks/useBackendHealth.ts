@@ -49,7 +49,7 @@ export function useBackendHealth() {
           error:
             error instanceof Error
               ? error.message
-              : 'Unable to reach NearCart right now.',
+              : 'Unable to reach NearKart right now.',
           isLoading: false,
         })
       }

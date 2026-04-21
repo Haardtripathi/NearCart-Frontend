@@ -68,7 +68,7 @@ export function ShopOwnerShopsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Review every shop under your NearCart merchant account, edit details, and monitor approval state."
+        description="Review every shop under your NearKart merchant account, edit details, and monitor approval state."
         eyebrow="Shop owner shops"
         title="Your shops"
       />
@@ -76,7 +76,7 @@ export function ShopOwnerShopsPage() {
       <DashboardCard
         actions={
           <Link
-            className="inline-flex items-center justify-center rounded-full bg-nearcart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearcart-700"
+            className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearkart-700"
             to="/dashboard/shop-owner/shops/new"
           >
             New shop
@@ -142,7 +142,7 @@ export function ShopOwnerShopsPage() {
                     </td>
                     <td className="py-4">
                       <Link
-                        className="font-semibold text-nearcart-700"
+                        className="font-semibold text-nearkart-700"
                         to={`/dashboard/shop-owner/shops/${shop.id}`}
                       >
                         Manage

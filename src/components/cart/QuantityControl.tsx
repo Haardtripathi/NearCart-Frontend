@@ -21,7 +21,7 @@ export function QuantityControl({
     >
       <button
         aria-label="Decrease quantity"
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-lg font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700 disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-lg font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700 disabled:cursor-not-allowed disabled:opacity-40"
         disabled={quantity <= 1}
         onClick={onDecrease}
         type="button"
@@ -31,7 +31,7 @@ export function QuantityControl({
 
       <input
         aria-label="Quantity"
-        className="w-14 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 text-center text-sm font-semibold text-slate-800 outline-none transition focus:border-nearcart-400"
+        className="w-14 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 text-center text-sm font-semibold text-slate-800 outline-none transition focus:border-nearkart-400"
         max={max ?? undefined}
         min={1}
         onChange={(event) => {
@@ -45,7 +45,7 @@ export function QuantityControl({
 
       <button
         aria-label="Increase quantity"
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-lg font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700 disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-lg font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700 disabled:cursor-not-allowed disabled:opacity-40"
         disabled={max != null ? quantity >= max : false}
         onClick={onIncrease}
         type="button"

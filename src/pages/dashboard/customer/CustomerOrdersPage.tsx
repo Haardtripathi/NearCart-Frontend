@@ -57,7 +57,7 @@ export function CustomerOrdersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Review every signed-in order attached to your NearCart account and jump back into full order details whenever needed."
+        description="Review every signed-in order attached to your NearKart account and jump back into full order details whenever needed."
         eyebrow="Customer orders"
         title="Order history"
       />
@@ -96,12 +96,12 @@ export function CustomerOrdersPage() {
                       />
                     </td>
                     <td className="py-4">{formatDateTime(order.placedAt)}</td>
-                    <td className="py-4 font-semibold text-nearcart-700">
+                    <td className="py-4 font-semibold text-nearkart-700">
                       {formatCurrency(order.totalAmount)}
                     </td>
                     <td className="py-4">
                       <Link
-                        className="font-semibold text-nearcart-700"
+                        className="font-semibold text-nearkart-700"
                         to={`/orders/${order.id}`}
                       >
                         View details

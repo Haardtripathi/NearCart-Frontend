@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 
-import brandMark from '@/assets/nearcart-mark.svg'
+import brandMark from '@/assets/nearkart-mark.svg'
 import { StatusPill } from '@/components/StatusPill'
 import { formatRoleLabel } from '@/utils/auth'
 import { useAuthStore } from '@/store/authStore'
@@ -39,7 +39,7 @@ const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
     'flex items-center rounded-2xl px-4 py-3 text-sm font-medium transition',
     isActive
       ? 'bg-ink-900 text-white shadow-[0_18px_35px_-24px_rgba(17,33,23,0.85)]'
-      : 'text-slate-600 hover:bg-white hover:text-nearcart-700',
+      : 'text-slate-600 hover:bg-white hover:text-nearkart-700',
   ].join(' ')
 
 export function DashboardLayout() {
@@ -78,19 +78,19 @@ export function DashboardLayout() {
         <aside className="rounded-[2rem] border border-white/80 bg-white/80 p-5 shadow-[0_20px_70px_-50px_rgba(17,33,23,0.45)] backdrop-blur">
           <Link className="flex items-center gap-3" to="/">
             <img
-              alt="NearCart"
+              alt="NearKart"
               className="h-11 w-11 rounded-2xl border border-white/80 bg-white/90 p-2"
               src={brandMark}
             />
             <div>
-              <p className="font-display text-lg text-ink-900">NearCart</p>
+              <p className="font-display text-lg text-ink-900">NearKart</p>
               <p className="text-xs uppercase tracking-[0.28em] text-slate-500">
                 Dashboard
               </p>
             </div>
           </Link>
 
-          <div className="mt-8 rounded-[1.5rem] bg-nearcart-50/90 p-4">
+          <div className="mt-8 rounded-[1.5rem] bg-nearkart-50/90 p-4">
             <p className="text-sm font-semibold text-ink-900">{user.fullName}</p>
             <p className="mt-1 text-sm text-slate-600">{user.email}</p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -111,7 +111,7 @@ export function DashboardLayout() {
 
           <div className="mt-8 space-y-3">
             <Link
-              className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+              className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
               to="/shops"
             >
               Back to storefront
@@ -130,8 +130,8 @@ export function DashboardLayout() {
         <div className="space-y-6">
           <header className="flex flex-wrap items-center justify-between gap-4 rounded-[2rem] border border-white/80 bg-white/85 px-6 py-5 shadow-[0_20px_70px_-50px_rgba(17,33,23,0.35)] backdrop-blur">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearcart-600">
-                NearCart workspace
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
+                NearKart workspace
               </p>
               <h1 className="mt-2 font-display text-3xl text-ink-900">
                 {formatRoleLabel(user.role)} Dashboard

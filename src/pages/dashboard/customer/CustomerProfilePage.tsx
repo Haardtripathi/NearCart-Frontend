@@ -91,7 +91,7 @@ export function CustomerProfilePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Update the identity details that NearCart uses across your dashboard and checkout experience."
+        description="Update the identity details that NearKart uses across your dashboard and checkout experience."
         eyebrow="Customer profile"
         title="Profile settings"
       />
@@ -105,7 +105,7 @@ export function CustomerProfilePage() {
             <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">Full name</span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) =>
                   setFormValues((currentState) => ({
                     ...currentState,
@@ -119,7 +119,7 @@ export function CustomerProfilePage() {
             <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">Phone number</span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) =>
                   setFormValues((currentState) => ({
                     ...currentState,
@@ -144,7 +144,7 @@ export function CustomerProfilePage() {
           ) : null}
 
           <button
-            className="inline-flex items-center justify-center rounded-full bg-nearcart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearcart-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSaving}
             type="submit"
           >

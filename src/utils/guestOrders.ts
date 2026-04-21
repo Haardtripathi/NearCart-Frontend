@@ -1,4 +1,4 @@
-const guestOrdersStorageKey = 'nearcart-guest-orders'
+const guestOrdersStorageKey = 'nearkart-guest-orders'
 
 export function getGuestOrderIds() {
   const rawValue = localStorage.getItem(guestOrdersStorageKey)

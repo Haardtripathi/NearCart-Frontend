@@ -86,7 +86,7 @@ export function ShopOwnerDashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Manage your merchant identity, create shops, and keep a close eye on approval status as NearCart grows into a full operating platform."
+        description="Manage your merchant identity, create shops, and keep a close eye on approval status as NearKart grows into a full operating platform."
         eyebrow="Shop owner dashboard"
         title={`Hello, ${profile.profile.businessName}`}
       />
@@ -119,7 +119,7 @@ export function ShopOwnerDashboardPage() {
         <DashboardCard
           actions={
             <Link
-              className="inline-flex items-center justify-center rounded-full bg-nearcart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearcart-700"
+              className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearkart-700"
               to="/dashboard/shop-owner/shops/new"
             >
               Create a shop
@@ -129,23 +129,23 @@ export function ShopOwnerDashboardPage() {
           title="Merchant summary"
         >
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[1.35rem] bg-nearcart-50 px-4 py-4">
+            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
               <p className="text-sm text-slate-500">Owner</p>
               <p className="mt-2 font-semibold text-ink-900">{profile.user.fullName}</p>
             </div>
-            <div className="rounded-[1.35rem] bg-nearcart-50 px-4 py-4">
+            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
               <p className="text-sm text-slate-500">Business</p>
               <p className="mt-2 font-semibold text-ink-900">
                 {profile.profile.businessName}
               </p>
             </div>
-            <div className="rounded-[1.35rem] bg-nearcart-50 px-4 py-4">
+            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
               <p className="text-sm text-slate-500">GST number</p>
               <p className="mt-2 font-semibold text-ink-900">
                 {profile.profile.gstNumber || 'Not provided yet'}
               </p>
             </div>
-            <div className="rounded-[1.35rem] bg-nearcart-50 px-4 py-4">
+            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
               <p className="text-sm text-slate-500">Merchant approval</p>
               <div className="mt-2">
                 <StatusPill
@@ -166,7 +166,7 @@ export function ShopOwnerDashboardPage() {
               {shops.slice(0, 5).map((shop) => (
                 <Link
                   key={shop.id}
-                  className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-100 bg-slate-50/80 px-4 py-4 transition hover:border-nearcart-200 hover:bg-white"
+                  className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-100 bg-slate-50/80 px-4 py-4 transition hover:border-nearkart-200 hover:bg-white"
                   to={`/dashboard/shop-owner/shops/${shop.id}`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">

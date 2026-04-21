@@ -4,7 +4,7 @@ interface LoadingScreenProps {
 }
 
 export function LoadingScreen({
-  message = 'Loading your NearCart workspace...',
+  message = 'Loading your NearKart workspace...',
   fullScreen = false,
 }: LoadingScreenProps) {
   return (
@@ -15,7 +15,7 @@ export function LoadingScreen({
       ].join(' ')}
     >
       <div className="space-y-4 text-center">
-        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-nearcart-100 border-t-nearcart-600" />
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-nearkart-100 border-t-nearkart-600" />
         <p className="text-sm font-medium text-slate-600">{message}</p>
       </div>
     </div>

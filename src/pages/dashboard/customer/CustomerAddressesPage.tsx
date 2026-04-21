@@ -190,7 +190,7 @@ export function CustomerAddressesPage() {
 
   async function handleDelete(addressId: string) {
     const confirmed = window.confirm(
-      'Delete this address from your NearCart account?',
+      'Delete this address from your NearKart account?',
     )
 
     if (!confirmed) {
@@ -223,7 +223,7 @@ export function CustomerAddressesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        description="Save delivery addresses for faster checkout and keep one default address ready for future NearCart orders."
+        description="Save delivery addresses for faster checkout and keep one default address ready for future NearKart orders."
         eyebrow="Customer addresses"
         title="Address book"
       />
@@ -238,7 +238,7 @@ export function CustomerAddressesPage() {
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">Label</span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) => updateField('label', event.target.value)}
                   value={formValues.label}
                 />
@@ -252,7 +252,7 @@ export function CustomerAddressesPage() {
                   Recipient name
                 </span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) =>
                     updateField('fullName', event.target.value)
                   }
@@ -269,7 +269,7 @@ export function CustomerAddressesPage() {
             <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">Phone number</span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) => updateField('phone', event.target.value)}
                 value={formValues.phone}
               />
@@ -283,7 +283,7 @@ export function CustomerAddressesPage() {
                 Address line 1
               </span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) => updateField('line1', event.target.value)}
                 value={formValues.line1}
               />
@@ -297,7 +297,7 @@ export function CustomerAddressesPage() {
                 Address line 2
               </span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) => updateField('line2', event.target.value)}
                 value={formValues.line2}
               />
@@ -307,7 +307,7 @@ export function CustomerAddressesPage() {
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">City</span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) => updateField('city', event.target.value)}
                   value={formValues.city}
                 />
@@ -319,7 +319,7 @@ export function CustomerAddressesPage() {
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">Area</span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) => updateField('area', event.target.value)}
                   value={formValues.area}
                 />
@@ -328,7 +328,7 @@ export function CustomerAddressesPage() {
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-700">Pincode</span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                   onChange={(event) =>
                     updateField('pincode', event.target.value)
                   }
@@ -343,7 +343,7 @@ export function CustomerAddressesPage() {
             <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">Landmark</span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearcart-400"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
                 onChange={(event) => updateField('landmark', event.target.value)}
                 value={formValues.landmark}
               />
@@ -374,7 +374,7 @@ export function CustomerAddressesPage() {
 
             <div className="flex flex-wrap gap-3">
               <button
-                className="inline-flex items-center justify-center rounded-full bg-nearcart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearcart-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSaving}
                 type="submit"
               >
@@ -386,7 +386,7 @@ export function CustomerAddressesPage() {
               </button>
               {editingAddressId ? (
                 <button
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
                   onClick={resetForm}
                   type="button"
                 >
@@ -420,7 +420,7 @@ export function CustomerAddressesPage() {
                         <StatusPill label="Default" tone="success" />
                       ) : null}
                       <button
-                        className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+                        className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
                         onClick={() => startEditing(address)}
                         type="button"
                       >

@@ -160,7 +160,7 @@ export const useAuthStore = create<AuthStore>()(
       },
     }),
     {
-      name: 'nearcart-auth',
+      name: 'nearkart-auth',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,

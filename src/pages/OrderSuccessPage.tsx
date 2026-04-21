@@ -76,7 +76,7 @@ export function OrderSuccessPage() {
           ) : order ? (
             <div className="space-y-5">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearcart-600">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
                   Order summary
                 </p>
                 <h2 className="mt-3 font-display text-3xl text-ink-900">
@@ -85,25 +85,25 @@ export function OrderSuccessPage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-[1.35rem] bg-nearcart-50 p-4">
+                <div className="rounded-[1.35rem] bg-nearkart-50 p-4">
                   <p className="text-sm text-slate-500">Customer</p>
                   <p className="mt-2 font-semibold text-ink-900">
                     {order.customerName}
                   </p>
                 </div>
-                <div className="rounded-[1.35rem] bg-nearcart-50 p-4">
+                <div className="rounded-[1.35rem] bg-nearkart-50 p-4">
                   <p className="text-sm text-slate-500">Shop</p>
                   <p className="mt-2 font-semibold text-ink-900">
                     {order.shopName}
                   </p>
                 </div>
-                <div className="rounded-[1.35rem] bg-nearcart-50 p-4">
+                <div className="rounded-[1.35rem] bg-nearkart-50 p-4">
                   <p className="text-sm text-slate-500">Status</p>
                   <p className="mt-2 font-semibold text-ink-900">
                     {order.status}
                   </p>
                 </div>
-                <div className="rounded-[1.35rem] bg-nearcart-50 p-4">
+                <div className="rounded-[1.35rem] bg-nearkart-50 p-4">
                   <p className="text-sm text-slate-500">Total</p>
                   <p className="mt-2 font-semibold text-ink-900">
                     {formatCurrency(order.totalAmount)}
@@ -115,18 +115,18 @@ export function OrderSuccessPage() {
         </article>
 
         <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearcart-600">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
             Next actions
           </p>
           <div className="mt-5 flex flex-col gap-3">
             <Link
-              className="inline-flex items-center justify-center rounded-full bg-nearcart-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-nearcart-700"
+              className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700"
               to={`/orders/${orderId}`}
             >
               View order details
             </Link>
             <Link
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearcart-200 hover:text-nearcart-700"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
               to="/shops"
             >
               Continue shopping

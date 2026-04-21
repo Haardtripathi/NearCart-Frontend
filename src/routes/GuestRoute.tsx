@@ -9,7 +9,7 @@ export function GuestRoute() {
   const user = useAuthStore((state) => state.user)
 
   if (!hasRestoredSession || loading) {
-    return <LoadingScreen fullScreen message="Checking your NearCart session..." />
+    return <LoadingScreen fullScreen message="Checking your NearKart session..." />
   }
 
   if (user) {

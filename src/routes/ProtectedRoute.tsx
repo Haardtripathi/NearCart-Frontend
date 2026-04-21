@@ -10,7 +10,7 @@ export function ProtectedRoute() {
   const loading = useAuthStore((state) => state.loading)
 
   if (!hasRestoredSession || loading) {
-    return <LoadingScreen fullScreen message="Restoring your NearCart session..." />
+    return <LoadingScreen fullScreen message="Restoring your NearKart session..." />
   }
 
   if (!isAuthenticated) {

@@ -170,7 +170,7 @@ export const useCartStore = create<CartStore>()(
         ),
     }),
     {
-      name: 'nearcart-cart',
+      name: 'nearkart-cart',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         shopId: state.shopId,
