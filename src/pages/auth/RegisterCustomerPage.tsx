@@ -74,7 +74,12 @@ export function RegisterCustomerPage() {
     setSubmitError(null)
 
     try {
-      const user = await registerCustomer(formValues)
+      const user = await registerCustomer({
+        fullName: formValues.fullName,
+        email: formValues.email,
+        phone: formValues.phone.trim() || undefined,
+        password: formValues.password,
+      })
       navigate(user.dashboardPath, { replace: true })
     } catch (error) {
       setSubmitError(
@@ -91,7 +96,7 @@ export function RegisterCustomerPage() {
       featurePoints={[
         'Keep your address book ready for faster checkout.',
         'View your own order history from a protected dashboard.',
-        'Stay compatible with guest checkout while you transition to accounts.',
+        'Place checkout orders from a signed-in customer session.',
       ]}
       featureTitle="Why customers should sign up"
       footerLabel="Sign in instead"

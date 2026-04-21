@@ -27,13 +27,13 @@ export interface LoginPayload {
 export interface RegisterCustomerPayload {
   fullName: string
   email: string
-  phone: string
+  phone?: string
   password: string
 }
 
 export interface RegisterShopOwnerPayload extends RegisterCustomerPayload {
   businessName: string
-  gstNumber: string
+  gstNumber?: string
 }
 
 export interface AuthResponse {

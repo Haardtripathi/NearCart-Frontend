@@ -98,7 +98,7 @@ export function CustomerDashboardPage() {
           value={profile.stats.orderCount}
         />
         <StatCard
-          description="Your account stays compatible with the existing storefront and guest-friendly checkout."
+          description="Your account is ready for signed-in storefront checkout."
           label="Account"
           value={profile.user.isVerified ? 'Verified' : 'Pending'}
         />

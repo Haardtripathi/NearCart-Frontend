@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -13,7 +13,6 @@ import type { Address } from '@/types/customer'
 import type { CheckoutFormValues } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
-import { addGuestOrderId } from '@/utils/guestOrders'
 
 const initialFormValues: CheckoutFormValues = {
   addressId: '',
@@ -115,6 +114,22 @@ export function CheckoutPage() {
   const hasItems = items.length > 0
   const subtotal = getCartSubtotal()
   const cartCount = getCartCount()
+  const cartValidationKey = useMemo(
+    () =>
+      items
+        .map((item) =>
+          [
+            item.productId,
+            item.variantId ?? 'default',
+            item.quantity,
+            item.price,
+            item.mrp ?? '',
+          ].join(':'),
+        )
+        .join('|'),
+    [items],
+  )
+  const lastValidatedCartKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -175,8 +190,16 @@ export function CheckoutPage() {
 
     async function runInitialCartValidation() {
       if (!shopId || !shopName || items.length === 0) {
+        lastValidatedCartKeyRef.current = null
+        setIsValidatingCart(false)
         return
       }
+
+      if (lastValidatedCartKeyRef.current === cartValidationKey) {
+        return
+      }
+
+      lastValidatedCartKeyRef.current = cartValidationKey
 
       setIsValidatingCart(true)
 
@@ -220,6 +243,8 @@ export function CheckoutPage() {
           setValidationMessage(null)
         }
       } catch (error) {
+        lastValidatedCartKeyRef.current = null
+
         if (isMounted) {
           setSubmitError(
             getApiErrorMessage(error, 'Unable to validate the live cart right now.'),
@@ -237,7 +262,7 @@ export function CheckoutPage() {
     return () => {
       isMounted = false
     }
-  }, [items.length, replaceCart, shopId, shopName])
+  }, [cartValidationKey, items, replaceCart, shopId, shopName])
 
   function updateField<Key extends keyof CheckoutFormValues>(
     field: Key,
@@ -317,10 +342,6 @@ export function CheckoutPage() {
           quantity: item.quantity,
         })),
       })
-
-      if (user?.role !== 'CUSTOMER') {
-        addGuestOrderId(response.item.id)
-      }
 
       clearCart()
       navigate(`/order-success/${response.item.id}`, {

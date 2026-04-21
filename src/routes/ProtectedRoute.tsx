@@ -7,9 +7,9 @@ export function ProtectedRoute() {
   const location = useLocation()
   const hasRestoredSession = useAuthStore((state) => state.hasRestoredSession)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const loading = useAuthStore((state) => state.loading)
+  const isRestoringSession = useAuthStore((state) => state.isRestoringSession)
 
-  if (!hasRestoredSession || loading) {
+  if (!hasRestoredSession || isRestoringSession) {
     return <LoadingScreen fullScreen message="Restoring your NearKart session..." />
   }
 

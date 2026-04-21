@@ -82,7 +82,14 @@ export function RegisterShopOwnerPage() {
     setSubmitError(null)
 
     try {
-      const user = await registerShopOwner(formValues)
+      const user = await registerShopOwner({
+        fullName: formValues.fullName,
+        email: formValues.email,
+        phone: formValues.phone.trim() || undefined,
+        password: formValues.password,
+        businessName: formValues.businessName,
+        gstNumber: formValues.gstNumber.trim() || undefined,
+      })
       navigate(user.dashboardPath, { replace: true })
     } catch (error) {
       setSubmitError(

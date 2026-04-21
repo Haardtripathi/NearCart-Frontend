@@ -43,10 +43,14 @@ export function AppRouter() {
           <Route path="shops" element={<ShopsPage />} />
           <Route path="shops/:shopId" element={<ShopDetailsPage />} />
           <Route path="cart" element={<CartPage />} />
-          <Route path="checkout" element={<CheckoutPage />} />
-          <Route path="order-success/:orderId" element={<OrderSuccessPage />} />
-          <Route path="orders" element={<OrdersPage />} />
-          <Route path="orders/:orderId" element={<OrderDetailsPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<RoleRoute allowedRoles={['CUSTOMER']} />}>
+              <Route path="checkout" element={<CheckoutPage />} />
+              <Route path="order-success/:orderId" element={<OrderSuccessPage />} />
+              <Route path="orders" element={<OrdersPage />} />
+              <Route path="orders/:orderId" element={<OrderDetailsPage />} />
+            </Route>
+          </Route>
           <Route element={<GuestRoute />}>
             <Route path="login" element={<LoginPage />} />
             <Route path="register/customer" element={<RegisterCustomerPage />} />

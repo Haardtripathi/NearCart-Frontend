@@ -5,10 +5,10 @@ import { useAuthStore } from '@/store/authStore'
 
 export function GuestRoute() {
   const hasRestoredSession = useAuthStore((state) => state.hasRestoredSession)
-  const loading = useAuthStore((state) => state.loading)
+  const isRestoringSession = useAuthStore((state) => state.isRestoringSession)
   const user = useAuthStore((state) => state.user)
 
-  if (!hasRestoredSession || loading) {
+  if (!hasRestoredSession || isRestoringSession) {
     return <LoadingScreen fullScreen message="Checking your NearKart session..." />
   }
 

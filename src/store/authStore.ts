@@ -23,6 +23,7 @@ interface AuthStore {
   accessToken: string | null
   isAuthenticated: boolean
   hasRestoredSession: boolean
+  isRestoringSession: boolean
   loading: boolean
   setSession: (session: AuthResponse) => void
   setUser: (user: AuthUser) => void
@@ -45,6 +46,7 @@ function applySessionState(
     accessToken: session.accessToken,
     isAuthenticated: true,
     hasRestoredSession: true,
+    isRestoringSession: false,
     loading: false,
   })
 }
@@ -56,6 +58,7 @@ export const useAuthStore = create<AuthStore>()(
       accessToken: null,
       isAuthenticated: false,
       hasRestoredSession: false,
+      isRestoringSession: false,
       loading: false,
       setSession: (session) => {
         applySessionState(set, session)
@@ -74,29 +77,42 @@ export const useAuthStore = create<AuthStore>()(
           accessToken: null,
           isAuthenticated: false,
           hasRestoredSession: true,
+          isRestoringSession: false,
           loading: false,
         })
       },
       login: async (payload) => {
         set({ loading: true })
-        const session = await login(payload)
-        applySessionState(set, session)
+        try {
+          const session = await login(payload)
+          applySessionState(set, session)
 
-        return session.user
+          return session.user
+        } finally {
+          set({ loading: false })
+        }
       },
       registerCustomer: async (payload) => {
         set({ loading: true })
-        const session = await registerCustomer(payload)
-        applySessionState(set, session)
+        try {
+          const session = await registerCustomer(payload)
+          applySessionState(set, session)
 
-        return session.user
+          return session.user
+        } finally {
+          set({ loading: false })
+        }
       },
       registerShopOwner: async (payload) => {
         set({ loading: true })
-        const session = await registerShopOwner(payload)
-        applySessionState(set, session)
+        try {
+          const session = await registerShopOwner(payload)
+          applySessionState(set, session)
 
-        return session.user
+          return session.user
+        } finally {
+          set({ loading: false })
+        }
       },
       fetchMe: async () => {
         if (!get().accessToken) {
@@ -113,11 +129,11 @@ export const useAuthStore = create<AuthStore>()(
         return response.user
       },
       restoreSession: async () => {
-        if (get().loading || get().hasRestoredSession) {
+        if (get().isRestoringSession || get().hasRestoredSession) {
           return get().user
         }
 
-        set({ loading: true })
+        set({ isRestoringSession: true })
 
         try {
           if (get().accessToken) {
@@ -128,7 +144,7 @@ export const useAuthStore = create<AuthStore>()(
 
               set({
                 hasRestoredSession: true,
-                loading: false,
+                isRestoringSession: false,
               })
 
               return user
@@ -147,7 +163,7 @@ export const useAuthStore = create<AuthStore>()(
         } finally {
           set({
             hasRestoredSession: true,
-            loading: false,
+            isRestoringSession: false,
           })
         }
       },

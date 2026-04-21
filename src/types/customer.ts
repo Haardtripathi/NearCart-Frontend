@@ -26,11 +26,11 @@ export interface AddressFormValues {
   fullName: string
   phone: string
   line1: string
-  line2: string
+  line2?: string
   city: string
-  area: string
+  area?: string
   pincode: string
-  landmark: string
+  landmark?: string
   isDefault: boolean
 }
 
