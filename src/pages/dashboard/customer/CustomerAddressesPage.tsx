@@ -9,6 +9,8 @@ import {
 import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
+import { AddressMapPicker } from '@/components/location/AddressMapPicker'
+import type { PickedLocation } from '@/components/location/AddressMapPicker'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import type { Address, AddressFormValues } from '@/types/customer'
 import { getApiErrorMessage } from '@/utils/api'
@@ -24,6 +26,8 @@ const initialAddressForm: AddressFormValues = {
   pincode: '',
   landmark: '',
   isDefault: false,
+  latitude: null,
+  longitude: null,
 }
 
 function getAddressFormValues(address?: Address): AddressFormValues {
@@ -42,6 +46,8 @@ function getAddressFormValues(address?: Address): AddressFormValues {
     pincode: address.pincode,
     landmark: address.landmark || '',
     isDefault: address.isDefault,
+    latitude: address.latitude,
+    longitude: address.longitude,
   }
 }
 
@@ -151,6 +157,29 @@ export function CustomerAddressesPage() {
     setFieldErrors((currentState) => ({
       ...currentState,
       [field]: undefined,
+    }))
+  }
+
+  function handleLocationChange(location: PickedLocation) {
+    setFormValues((currentState) => ({
+      ...currentState,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      // Only fill in text fields the user hasn't already typed something into — the pin/search
+      // result is a convenience prefill, not an override of manual edits.
+      line1: currentState.line1 || location.addressComponents?.line1 || currentState.line1,
+      city: currentState.city || location.addressComponents?.city || currentState.city,
+      area: currentState.area || location.addressComponents?.area || currentState.area,
+      pincode:
+        currentState.pincode || location.addressComponents?.pincode || currentState.pincode,
+      landmark:
+        currentState.landmark || location.addressComponents?.landmark || currentState.landmark,
+    }))
+    setFieldErrors((currentState) => ({
+      ...currentState,
+      line1: undefined,
+      city: undefined,
+      pincode: undefined,
     }))
   }
 
@@ -277,6 +306,12 @@ export function CustomerAddressesPage() {
                 <span className="text-sm text-rose-600">{fieldErrors.phone}</span>
               ) : null}
             </label>
+
+            <AddressMapPicker
+              latitude={formValues.latitude}
+              longitude={formValues.longitude}
+              onLocationChange={handleLocationChange}
+            />
 
             <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">
@@ -418,6 +453,9 @@ export function CustomerAddressesPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       {address.isDefault ? (
                         <StatusPill label="Default" tone="success" />
+                      ) : null}
+                      {address.latitude !== null && address.longitude !== null ? (
+                        <StatusPill label="Location pinned" tone="neutral" />
                       ) : null}
                       <button
                         className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"

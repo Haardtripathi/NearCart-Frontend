@@ -14,6 +14,7 @@ import type { CheckoutFormValues } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { addGuestOrderId } from '@/utils/guestOrders'
+import { formatServiceAreaMessage, getServiceAreaErrorInfo } from '@/utils/serviceArea'
 
 const initialFormValues: CheckoutFormValues = {
   addressId: '',
@@ -108,6 +109,7 @@ export function CheckoutPage() {
     Partial<Record<keyof CheckoutFormValues, string>>
   >({})
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [serviceAreaMessage, setServiceAreaMessage] = useState<string | null>(null)
   const [validationMessage, setValidationMessage] = useState<string | null>(null)
   const [isValidatingCart, setIsValidatingCart] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -221,9 +223,15 @@ export function CheckoutPage() {
         }
       } catch (error) {
         if (isMounted) {
-          setSubmitError(
-            getApiErrorMessage(error, 'Unable to validate the live cart right now.'),
-          )
+          const serviceAreaInfo = getServiceAreaErrorInfo(error)
+
+          if (serviceAreaInfo) {
+            setServiceAreaMessage(formatServiceAreaMessage(serviceAreaInfo))
+          } else {
+            setSubmitError(
+              getApiErrorMessage(error, 'Unable to validate the live cart right now.'),
+            )
+          }
         }
       } finally {
         if (isMounted) {
@@ -266,6 +274,7 @@ export function CheckoutPage() {
 
     setIsSubmitting(true)
     setSubmitError(null)
+    setServiceAreaMessage(null)
 
     try {
       const validationResponse = await validateCart({
@@ -329,7 +338,11 @@ export function CheckoutPage() {
         },
       })
     } catch (error) {
-      if (axios.isAxiosError(error)) {
+      const serviceAreaInfo = getServiceAreaErrorInfo(error)
+
+      if (serviceAreaInfo) {
+        setServiceAreaMessage(formatServiceAreaMessage(serviceAreaInfo))
+      } else if (axios.isAxiosError(error)) {
         setSubmitError(getApiErrorMessage(error, 'Unable to place order.'))
       } else {
         setSubmitError('Unable to place order.')
@@ -370,6 +383,27 @@ export function CheckoutPage() {
         title="Enter delivery details and place your order."
         description="Checkout now validates against the live inventory bridge before an order is created."
       />
+
+      {serviceAreaMessage ? (
+        <section className="rounded-[1.75rem] border border-rose-200 bg-rose-50/90 p-6 text-sm text-rose-800">
+          <p className="font-semibold text-rose-900">This shop can&apos;t deliver here.</p>
+          <p className="mt-1">{serviceAreaMessage}</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              className="inline-flex rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+              to="/dashboard/customer/addresses"
+            >
+              Update delivery address
+            </Link>
+            <Link
+              className="inline-flex rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+              to="/shops"
+            >
+              Browse other shops
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       {validationMessage ? (
         <section className="rounded-[1.75rem] border border-amber-200 bg-amber-50/90 p-6 text-sm text-amber-900">

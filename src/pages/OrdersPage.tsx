@@ -4,12 +4,14 @@ import { Link } from 'react-router-dom'
 import { getCustomerOrders } from '@/api/customer'
 import { getOrderById } from '@/api/orders'
 import { PageHeader } from '@/components/PageHeader'
+import { StatusPill } from '@/components/StatusPill'
 import { useAuthStore } from '@/store/authStore'
 import type { OrderPreview } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDateTime } from '@/utils/formatDateTime'
 import { getGuestOrderIds } from '@/utils/guestOrders'
+import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from '@/utils/orderStatus'
 
 async function getGuestOrders() {
   const guestOrderIds = getGuestOrderIds()
@@ -132,7 +134,12 @@ export function OrdersPage() {
                 <h2 className="mt-3 font-display text-2xl text-ink-900">
                   {order.orderNumber}
                 </h2>
-                <p className="mt-2 text-sm text-slate-600">{order.status}</p>
+                <p className="mt-2">
+                  <StatusPill
+                    label={ORDER_STATUS_LABELS[order.status]}
+                    tone={ORDER_STATUS_TONES[order.status]}
+                  />
+                </p>
                 <p className="mt-2 text-sm text-slate-500">
                   {formatDateTime(order.placedAt)}
                 </p>
