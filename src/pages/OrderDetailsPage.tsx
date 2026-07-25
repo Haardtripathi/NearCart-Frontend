@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { OrderStatusTimeline } from '@/components/order/OrderStatusTimeline'
 import type { Order } from '@/types/order'
+import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDateTime } from '@/utils/formatDateTime'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from '@/utils/orderStatus'
@@ -31,8 +32,8 @@ export function OrderDetailsPage() {
         const response = await getOrderById(orderId)
         setOrder(response.item)
         setErrorMessage(null)
-      } catch {
-        setErrorMessage('Unable to load order details right now.')
+      } catch (error) {
+        setErrorMessage(getApiErrorMessage(error, 'Unable to load order details right now.'))
       } finally {
         setIsLoading(false)
         setIsRefreshing(false)
