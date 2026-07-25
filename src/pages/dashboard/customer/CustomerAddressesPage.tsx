@@ -166,14 +166,14 @@ export function CustomerAddressesPage() {
       latitude: location.latitude,
       longitude: location.longitude,
       // Only fill in text fields the user hasn't already typed something into — the pin/search
-      // result is a convenience prefill, not an override of manual edits.
-      line1: currentState.line1 || location.addressComponents?.line1 || currentState.line1,
+      // result is a convenience prefill, not an override of manual edits. The backend's geocode
+      // response only breaks an address down into city/area/pincode (no line1/landmark
+      // equivalent), so line1 falls back to the full formatted address instead.
+      line1: currentState.line1 || location.formattedAddress || currentState.line1,
       city: currentState.city || location.addressComponents?.city || currentState.city,
       area: currentState.area || location.addressComponents?.area || currentState.area,
       pincode:
         currentState.pincode || location.addressComponents?.pincode || currentState.pincode,
-      landmark:
-        currentState.landmark || location.addressComponents?.landmark || currentState.landmark,
     }))
     setFieldErrors((currentState) => ({
       ...currentState,

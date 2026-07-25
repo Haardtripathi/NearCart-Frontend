@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import axios from 'axios'
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api'
 
 import {
@@ -19,7 +20,7 @@ export interface PickedLocation {
   latitude: number
   longitude: number
   formattedAddress?: string
-  addressComponents?: GeocodeResult['addressComponents']
+  addressComponents?: GeocodeResult['components']
 }
 
 interface AddressMapPickerProps {
@@ -46,6 +47,10 @@ export function AddressMapPicker({
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchAbortControllerRef = useRef<AbortController | null>(null)
+  // Groups a "typing session" of autocomplete calls for Google's session-based billing; reset
+  // once the session ends (a prediction is picked or the search is cleared).
+  const sessionTokenRef = useRef<string | null>(null)
 
   const hasPin = latitude !== null && longitude !== null
   const center = useMemo(
@@ -58,6 +63,8 @@ export function AddressMapPicker({
       if (debounceRef.current) {
         clearTimeout(debounceRef.current)
       }
+
+      searchAbortControllerRef.current?.abort()
     }
   }, [])
 
@@ -66,8 +73,19 @@ export function AddressMapPicker({
       latitude: result.latitude,
       longitude: result.longitude,
       formattedAddress: result.formattedAddress,
-      addressComponents: result.addressComponents,
+      addressComponents: result.components,
     })
+  }
+
+  function getSessionToken() {
+    if (!sessionTokenRef.current) {
+      sessionTokenRef.current =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    }
+
+    return sessionTokenRef.current
   }
 
   function handleSearchInputChange(value: string) {
@@ -79,23 +97,47 @@ export function AddressMapPicker({
     }
 
     if (!value.trim() || value.trim().length < 3) {
+      // Abort any in-flight search so a slow, now-irrelevant response can't repopulate the
+      // dropdown after the user has cleared the input.
+      searchAbortControllerRef.current?.abort()
       setPredictions([])
+      setIsSearching(false)
       return
     }
 
     debounceRef.current = setTimeout(async () => {
+      // Cancel the previous request before starting a new one — without this, a slow early
+      // response can resolve after a faster later one and overwrite it with stale predictions.
+      searchAbortControllerRef.current?.abort()
+      const controller = new AbortController()
+      searchAbortControllerRef.current = controller
+
       setIsSearching(true)
 
       try {
-        const results = await getAddressPredictions(value)
+        const results = await getAddressPredictions(value, {
+          signal: controller.signal,
+          sessionToken: getSessionToken(),
+        })
+
+        if (controller.signal.aborted) {
+          return
+        }
+
         setPredictions(results)
       } catch (error) {
+        if (axios.isCancel(error) || controller.signal.aborted) {
+          return
+        }
+
         setPredictions([])
         setErrorMessage(
           getApiErrorMessage(error, 'Unable to search for addresses right now.'),
         )
       } finally {
-        setIsSearching(false)
+        if (!controller.signal.aborted) {
+          setIsSearching(false)
+        }
       }
     }, SEARCH_DEBOUNCE_MS)
   }
@@ -105,6 +147,9 @@ export function AddressMapPicker({
     setSearchInput(prediction.description)
     setStatusMessage(null)
     setErrorMessage(null)
+    // The autocomplete session (and its session token) ends once a prediction is resolved.
+    searchAbortControllerRef.current?.abort()
+    sessionTokenRef.current = null
 
     try {
       const result = await geocodeAddress(prediction.description)
@@ -134,28 +179,32 @@ export function AddressMapPicker({
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        // The device's own GPS reading is the source of truth for "current location" — reverse
+        // geocoding is only used to fill in the address text. Using the geocode result's
+        // (possibly snapped-to-nearest-known-address) coordinates instead would silently move
+        // the saved pin away from where the device actually is.
+        const { latitude: deviceLatitude, longitude: deviceLongitude } = position.coords
+
         try {
-          const result = await reverseGeocode(
-            position.coords.latitude,
-            position.coords.longitude,
-          )
+          const result = await reverseGeocode(deviceLatitude, deviceLongitude)
+
+          onLocationChange({
+            latitude: deviceLatitude,
+            longitude: deviceLongitude,
+            formattedAddress: result?.formattedAddress,
+            addressComponents: result?.components,
+          })
 
           if (result) {
-            applyGeocodeResult(result)
             setSearchInput(result.formattedAddress)
+            setStatusMessage('Using your current location. Drag the pin to confirm the exact spot.')
           } else {
-            onLocationChange({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-            })
+            setStatusMessage(
+              'Using your current location, but we could not resolve an address for it. Drag the pin to confirm.',
+            )
           }
-
-          setStatusMessage('Using your current location. Drag the pin to confirm the exact spot.')
         } catch (error) {
-          onLocationChange({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          })
+          onLocationChange({ latitude: deviceLatitude, longitude: deviceLongitude })
           setErrorMessage(
             getApiErrorMessage(
               error,
@@ -189,17 +238,28 @@ export function AddressMapPicker({
 
       setErrorMessage(null)
 
+      // Same principle as "use my current location": the dragged/clicked point is the source of
+      // truth for the saved pin. Reverse geocoding only supplies the address text — using its
+      // (possibly snapped) coordinates instead would leave the visible pin and the saved
+      // latitude/longitude out of sync.
       try {
         const result = await reverseGeocode(nextLatitude, nextLongitude)
 
-        if (result) {
-          applyGeocodeResult(result)
-          setSearchInput(result.formattedAddress)
-        } else {
-          onLocationChange({ latitude: nextLatitude, longitude: nextLongitude })
-        }
+        onLocationChange({
+          latitude: nextLatitude,
+          longitude: nextLongitude,
+          formattedAddress: result?.formattedAddress,
+          addressComponents: result?.components,
+        })
 
-        setStatusMessage('Pin updated. This exact spot will be saved with your address.')
+        if (result) {
+          setSearchInput(result.formattedAddress)
+          setStatusMessage('Pin updated. This exact spot will be saved with your address.')
+        } else {
+          setStatusMessage(
+            'Pin updated, but we could not resolve an address for it — the coordinates are still saved.',
+          )
+        }
       } catch {
         onLocationChange({ latitude: nextLatitude, longitude: nextLongitude })
         setStatusMessage(
