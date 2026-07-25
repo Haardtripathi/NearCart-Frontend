@@ -1,48 +1,43 @@
 import type { ApiMeta } from '@/types/api'
 
 /**
- * Shapes for the backend "marketplace-safe" location proxy
- * (`GET /location/autocomplete`, `/location/geocode`, `/location/reverse-geocode`).
- *
- * These endpoints are being built in parallel in NearCart/backend and did not exist yet when this
- * client was written — field names below are this frontend's best-guess contract, kept as close
- * to the raw Google Places/Geocoding response shape as possible so reconciliation is a rename, not
- * a rewrite. `parseAutocompletePrediction`/`parseGeocodeResult` in `src/api/location.ts` are the
- * single place to adjust if the real response differs.
+ * Shapes for the backend's Google Maps proxy (`GET /location/autocomplete`,
+ * `/location/geocode`, `/location/reverse-geocode`). This is the *confirmed* contract — read
+ * directly off `NearCart/backend/src/controllers/location.controller.ts` and
+ * `services/maps.service.ts` on the parallel branch, not guessed — so keep these in sync with
+ * that source if it changes rather than re-introducing lenient parsing here.
  */
 export interface AddressPrediction {
   placeId: string
   description: string
-  mainText?: string
-  secondaryText?: string
+  mainText: string
+  secondaryText: string | null
 }
 
 export interface AutocompleteResponse {
   predictions: AddressPrediction[]
-  meta?: ApiMeta
+  meta: ApiMeta & { source: string }
 }
 
 export interface GeocodeAddressComponents {
-  line1?: string
-  city?: string
-  area?: string
-  pincode?: string
-  landmark?: string
+  city: string | null
+  area: string | null
+  pincode: string | null
+  state: string | null
+  country: string | null
 }
 
 export interface GeocodeResult {
   formattedAddress: string
+  placeId: string
   latitude: number
   longitude: number
-  addressComponents?: GeocodeAddressComponents
+  components: GeocodeAddressComponents
 }
 
 export interface GeocodeResponse {
-  result: GeocodeResult
-  meta?: ApiMeta
+  result: GeocodeResult | null
+  meta: ApiMeta & { source: string }
 }
 
-export interface ReverseGeocodeResponse {
-  result: GeocodeResult
-  meta?: ApiMeta
-}
+export type ReverseGeocodeResponse = GeocodeResponse

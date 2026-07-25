@@ -9,155 +9,64 @@ import type {
 
 /**
  * Client for the backend's read-only Google Maps proxy:
- *   GET /location/autocomplete?input=...
+ *   GET /location/autocomplete?input=...&sessionToken=...&language=...&region=...
  *   GET /location/geocode?address=...
  *   GET /location/reverse-geocode?lat=...&lng=...
  *
- * A backend teammate is adding these in parallel (they may not exist yet). The parsers below are
- * intentionally lenient about the exact response envelope (`predictions` vs `items`, `result` vs
- * `data`, snake_case vs camelCase lat/lng) so this file is the only spot to adjust once the real
- * contract lands, instead of every call site.
+ * The response envelopes are the confirmed contract (see `src/types/location.ts`), so this file
+ * parses them directly instead of guessing at alternate field names/shapes.
  */
 
-function toFiniteNumber(value: unknown): number | null {
-  const parsed = typeof value === 'string' ? Number(value) : value
-
-  return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : null
-}
-
-function normalizePrediction(raw: unknown): AddressPrediction | null {
-  if (!raw || typeof raw !== 'object') {
-    return null
-  }
-
-  const record = raw as Record<string, unknown>
-  const placeId = record.placeId ?? record.place_id ?? record.id
-  const description = record.description ?? record.formattedAddress ?? record.text
-
-  if (typeof placeId !== 'string' || typeof description !== 'string') {
-    return null
-  }
-
-  const structured = record.structuredFormatting as
-    | Record<string, unknown>
-    | undefined
-
-  return {
-    placeId,
-    description,
-    mainText:
-      typeof record.mainText === 'string'
-        ? record.mainText
-        : typeof structured?.mainText === 'string'
-          ? (structured.mainText as string)
-          : undefined,
-    secondaryText:
-      typeof record.secondaryText === 'string'
-        ? record.secondaryText
-        : typeof structured?.secondaryText === 'string'
-          ? (structured.secondaryText as string)
-          : undefined,
-  }
-}
-
-function normalizeGeocodeResult(raw: unknown): GeocodeResult | null {
-  if (!raw || typeof raw !== 'object') {
-    return null
-  }
-
-  const record = raw as Record<string, unknown>
-  const location = (record.location ?? record.geometry) as
-    | Record<string, unknown>
-    | undefined
-
-  const latitude =
-    toFiniteNumber(record.latitude ?? record.lat) ??
-    toFiniteNumber(location?.latitude ?? location?.lat)
-  const longitude =
-    toFiniteNumber(record.longitude ?? record.lng) ??
-    toFiniteNumber(location?.longitude ?? location?.lng)
-
-  if (latitude === null || longitude === null) {
-    return null
-  }
-
-  const formattedAddress =
-    typeof record.formattedAddress === 'string'
-      ? record.formattedAddress
-      : typeof record.formatted_address === 'string'
-        ? (record.formatted_address as string)
-        : ''
-
-  const components = record.addressComponents as
-    | Record<string, unknown>
-    | undefined
-
-  return {
-    formattedAddress,
-    latitude,
-    longitude,
-    addressComponents: components
-      ? {
-          line1: typeof components.line1 === 'string' ? components.line1 : undefined,
-          city: typeof components.city === 'string' ? components.city : undefined,
-          area: typeof components.area === 'string' ? components.area : undefined,
-          pincode:
-            typeof components.pincode === 'string' ? components.pincode : undefined,
-          landmark:
-            typeof components.landmark === 'string' ? components.landmark : undefined,
-        }
-      : undefined,
-  }
+interface RequestOptions {
+  /** Aborts the request — used so a slow, now-stale autocomplete request can't overwrite a
+   * newer one's results. */
+  signal?: AbortSignal
 }
 
 export async function getAddressPredictions(
   input: string,
+  options: RequestOptions & { sessionToken?: string } = {},
 ): Promise<AddressPrediction[]> {
   if (!input.trim()) {
     return []
   }
 
-  const { data } = await httpClient.get<AutocompleteResponse | AddressPrediction[]>(
-    '/location/autocomplete',
-    { params: { input } },
-  )
+  const { data } = await httpClient.get<AutocompleteResponse>('/location/autocomplete', {
+    params: {
+      input,
+      sessionToken: options.sessionToken,
+    },
+    signal: options.signal,
+  })
 
-  const rawPredictions = Array.isArray(data)
-    ? data
-    : (data.predictions ??
-      (data as unknown as { items?: unknown[] }).items ??
-      [])
-
-  return rawPredictions
-    .map(normalizePrediction)
-    .filter((prediction): prediction is AddressPrediction => prediction !== null)
+  return data.predictions
 }
 
-export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
+export async function geocodeAddress(
+  address: string,
+  options: RequestOptions = {},
+): Promise<GeocodeResult | null> {
   if (!address.trim()) {
     return null
   }
 
-  const { data } = await httpClient.get<GeocodeResponse | GeocodeResult>(
-    '/location/geocode',
-    { params: { address } },
-  )
+  const { data } = await httpClient.get<GeocodeResponse>('/location/geocode', {
+    params: { address },
+    signal: options.signal,
+  })
 
-  const rawResult = 'result' in data ? data.result : data
-
-  return normalizeGeocodeResult(rawResult)
+  return data.result
 }
 
 export async function reverseGeocode(
   latitude: number,
   longitude: number,
+  options: RequestOptions = {},
 ): Promise<GeocodeResult | null> {
-  const { data } = await httpClient.get<ReverseGeocodeResponse | GeocodeResult>(
-    '/location/reverse-geocode',
-    { params: { lat: latitude, lng: longitude } },
-  )
+  const { data } = await httpClient.get<ReverseGeocodeResponse>('/location/reverse-geocode', {
+    params: { lat: latitude, lng: longitude },
+    signal: options.signal,
+  })
 
-  const rawResult = 'result' in data ? data.result : data
-
-  return normalizeGeocodeResult(rawResult)
+  return data.result
 }
