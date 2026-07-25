@@ -1,52 +1,53 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { getOrderById } from '@/api/orders'
 import { PageHeader } from '@/components/PageHeader'
+import { StatusPill } from '@/components/StatusPill'
+import { OrderStatusTimeline } from '@/components/order/OrderStatusTimeline'
 import type { Order } from '@/types/order'
+import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDateTime } from '@/utils/formatDateTime'
+import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from '@/utils/orderStatus'
 
 export function OrderDetailsPage() {
   const { orderId = '' } = useParams()
   const [order, setOrder] = useState<Order | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  useEffect(() => {
-    let isMounted = true
+  const loadOrder = useCallback(
+    async ({ silent }: { silent: boolean }) => {
+      if (!orderId) {
+        return
+      }
 
-    async function loadOrder() {
+      if (silent) {
+        setIsRefreshing(true)
+      }
+
       try {
         const response = await getOrderById(orderId)
-
-        if (!isMounted) {
-          return
-        }
-
         setOrder(response.item)
         setErrorMessage(null)
-      } catch {
-        if (!isMounted) {
-          return
-        }
-
-        setErrorMessage('Unable to load order details right now.')
+      } catch (error) {
+        setErrorMessage(getApiErrorMessage(error, 'Unable to load order details right now.'))
       } finally {
-        if (isMounted) {
-          setIsLoading(false)
-        }
+        setIsLoading(false)
+        setIsRefreshing(false)
       }
-    }
+    },
+    [orderId],
+  )
 
-    if (orderId) {
-      void loadOrder()
-    }
-
-    return () => {
-      isMounted = false
-    }
-  }, [orderId])
+  useEffect(() => {
+    void loadOrder({ silent: false })
+    // Status changes are synced by a shop's back-office on its own schedule — no live/websocket
+    // updates in Phase 1, so re-fetch on mount/navigation and let the visitor use "Refresh
+    // status" (below) to check again without a full page reload.
+  }, [loadOrder])
 
   return (
     <div className="space-y-8">
@@ -77,8 +78,19 @@ export function OrderDetailsPage() {
                     {order.orderNumber}
                   </h2>
                 </div>
-                <div className="rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-900">
-                  {order.status}
+                <div className="flex items-center gap-3">
+                  <StatusPill
+                    label={ORDER_STATUS_LABELS[order.status]}
+                    tone={ORDER_STATUS_TONES[order.status]}
+                  />
+                  <button
+                    className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isRefreshing}
+                    onClick={() => void loadOrder({ silent: true })}
+                    type="button"
+                  >
+                    {isRefreshing ? 'Refreshing…' : 'Refresh status'}
+                  </button>
                 </div>
               </div>
 
@@ -95,6 +107,13 @@ export function OrderDetailsPage() {
                     {order.paymentMethod.replaceAll('_', ' ')}
                   </p>
                 </div>
+              </div>
+            </article>
+
+            <article className="rounded-[1.75rem] border border-white/80 bg-white/95 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
+              <h3 className="font-display text-2xl text-ink-900">Order status</h3>
+              <div className="mt-5">
+                <OrderStatusTimeline order={order} />
               </div>
             </article>
 

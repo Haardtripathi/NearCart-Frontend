@@ -10,6 +10,7 @@ import type { OrderPreview } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDateTime } from '@/utils/formatDateTime'
+import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from '@/utils/orderStatus'
 
 export function CustomerOrdersPage() {
   const [orders, setOrders] = useState<OrderPreview[]>([])
@@ -91,8 +92,8 @@ export function CustomerOrdersPage() {
                     <td className="py-4">{order.shopName}</td>
                     <td className="py-4">
                       <StatusPill
-                        label={order.status.replaceAll('_', ' ')}
-                        tone="warning"
+                        label={ORDER_STATUS_LABELS[order.status]}
+                        tone={ORDER_STATUS_TONES[order.status]}
                       />
                     </td>
                     <td className="py-4">{formatDateTime(order.placedAt)}</td>

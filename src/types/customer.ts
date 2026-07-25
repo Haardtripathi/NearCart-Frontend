@@ -32,6 +32,8 @@ export interface AddressFormValues {
   pincode: string
   landmark?: string
   isDefault: boolean
+  latitude: number | null
+  longitude: number | null
 }
 
 export interface CustomerProfileRecord {
