@@ -24,40 +24,59 @@ export function CartPage() {
   const hasItems = items.length > 0
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       <PageHeader
-        eyebrow="Cart"
+        eyebrow="My Cart"
         title={hasItems ? 'Review your cart' : 'Your cart is empty'}
         description={
           hasItems
-            ? 'Adjust quantities, remove items, and keep shopping from the same store before you place the order.'
-            : 'Start from a shop, add a few products, and they will be waiting here when you come back.'
+            ? `Items from ${shopName} are ready for checkout.`
+            : 'Explore nearby shops to add items to your cart.'
         }
       />
 
-      <section className="grid gap-4 lg:grid-cols-[1.25fr_0.85fr]">
-        <div className="space-y-4">
-          {hasItems ? (
-            <>
-              <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
-                      Current shop
-                    </p>
-                    <h2 className="mt-2 font-display text-2xl text-ink-900">
-                      {shopName}
-                    </h2>
-                  </div>
-                  <Link
-                    className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
-                    to={shopId ? `/shops/${shopId}` : '/shops'}
-                  >
-                    Continue shopping
-                  </Link>
+      {!hasItems ? (
+        <div className="min-h-[450px] rounded-[3rem] border border-dashed border-ink-200 bg-ink-50/50 p-8 sm:p-12">
+          <div className="mx-auto flex max-w-sm flex-col items-center text-center">
+            <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-[2rem] bg-white text-5xl shadow-sm">
+              🛒
+            </div>
+            <h3 className="font-display text-2xl font-bold text-ink-900">Your cart is feeling light</h3>
+            <p className="mt-3 text-sm leading-relaxed text-ink-500">
+              Start adding fresh products from our local partner shops to see them here.
+            </p>
+            <div className="mt-10">
+              <Link
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-ink-900 px-8 text-sm font-bold text-white transition hover:shadow-lg active:scale-95"
+                to="/shops"
+              >
+                Go Shopping
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-12 lg:grid-cols-[1fr_350px]">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between rounded-3xl border border-ink-100 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-nearkart-50 flex items-center justify-center text-xl">
+                  🏢
                 </div>
-              </article>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-nearkart-600">Shopping at</p>
+                  <h3 className="font-bold text-ink-900">{shopName}</h3>
+                </div>
+              </div>
+              <Link
+                className="text-xs font-bold text-nearkart-600 underline underline-offset-4 transition hover:text-nearkart-700"
+                to={shopId ? `/shops/${shopId}` : '/shops'}
+              >
+                Change Shop
+              </Link>
+            </div>
 
+            <div className="space-y-4">
               {items.map((item) => (
                 <CartItemCard
                   key={item.cartItemId}
@@ -70,81 +89,72 @@ export function CartPage() {
                   onRemove={() => removeItem(item.cartItemId)}
                 />
               ))}
-            </>
-          ) : (
-            <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-8 text-center shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-              <h2 className="font-display text-3xl text-ink-900">
-                No items added yet
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                Browse a shop, add products that are in stock, and come back
-                here to manage quantities.
-              </p>
-              <Link
-                className="mt-6 inline-flex rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700"
-                to="/shops"
-              >
-                Explore shops
-              </Link>
-            </article>
-          )}
+            </div>
+          </div>
+
+          <aside className="relative">
+            <div className="sticky top-28 space-y-6">
+              <article className="overflow-hidden rounded-[2.5rem] border border-ink-100 bg-white shadow-glass">
+                <div className="border-b border-ink-50 bg-ink-50/30 px-8 py-6">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-nearkart-600">
+                    Summary
+                  </p>
+                  <h2 className="mt-1 font-display text-2xl font-bold text-ink-900">
+                    Order Total
+                  </h2>
+                </div>
+
+                <div className="space-y-6 p-8">
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-ink-400">Total Items</span>
+                      <span className="font-bold text-ink-900">{cartCount}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-ink-400">Subtotal</span>
+                      <span className="font-bold text-ink-900">{formatCurrency(subtotal)}</span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-ink-900 p-6 text-white shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold">Payable Now</span>
+                      <span className="text-xl font-bold">{formatCurrency(subtotal)}</span>
+                    </div>
+                    <p className="mt-3 text-[10px] font-medium opacity-60 leading-relaxed">
+                      Final taxes and delivery charges may apply at the next step based on your address.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <Link
+                      className="flex h-12 items-center justify-center rounded-xl bg-nearkart-600 text-sm font-bold text-white shadow-md shadow-nearkart-600/20 transition hover:bg-nearkart-700 active:scale-95"
+                      to="/checkout"
+                    >
+                      Proceed to Checkout
+                    </Link>
+                    <button
+                      className="text-xs font-bold text-rose-500 transition hover:text-rose-600"
+                      onClick={clearCart}
+                    >
+                      Clear entire cart
+                    </button>
+                  </div>
+                </div>
+              </article>
+
+              <div className="rounded-2xl border border-ink-100 bg-ink-50/50 p-4">
+                <div className="flex gap-3">
+                  <span className="text-xl">💳</span>
+                  <p className="text-[10px] font-medium leading-relaxed text-ink-400">
+                    Safe and secure payments powered by Razorpay. Your data is always encrypted and protected.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </aside>
         </div>
-
-        <aside className="space-y-4">
-          <article className="rounded-[1.75rem] border border-white/80 bg-white/95 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
-              Order summary
-            </p>
-            <div className="mt-5 space-y-4">
-              <div className="flex items-center justify-between text-sm text-slate-600">
-                <span>Total quantity</span>
-                <span className="font-semibold text-slate-800">{cartCount}</span>
-              </div>
-              <div className="flex items-center justify-between text-base text-slate-700">
-                <span>Subtotal</span>
-                <span className="font-semibold text-nearkart-700">
-                  {formatCurrency(subtotal)}
-                </span>
-              </div>
-            </div>
-
-            <Link
-              className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-nearkart-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700"
-              to={hasItems ? '/checkout' : '/cart'}
-            >
-              Proceed to checkout
-            </Link>
-
-            <div className="mt-3 flex flex-wrap gap-3">
-              <Link
-                className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
-                to={shopId ? `/shops/${shopId}` : '/shops'}
-              >
-                Continue shopping
-              </Link>
-              <button
-                className="inline-flex rounded-full border border-rose-200 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
-                disabled={!hasItems}
-                onClick={clearCart}
-                type="button"
-              >
-                Clear cart
-              </button>
-            </div>
-          </article>
-
-          <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
-              Helpful details
-            </p>
-            <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
-              <li>Your cart stays tied to one shop at a time.</li>
-              <li>Quantity controls respect the available stock shown for each item.</li>
-              <li>You can head to checkout as soon as your cart looks right.</li>
-            </ul>
-          </article>
-        </aside>
-      </section>
+      )}
     </div>
   )
 }

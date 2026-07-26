@@ -1,6 +1,6 @@
 type StatusTone = 'success' | 'neutral' | 'danger' | 'warning'
 
-interface StatusPillProps {
+export interface StatusPillProps {
   label: string
   tone?: StatusTone
 }

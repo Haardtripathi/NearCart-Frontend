@@ -51,70 +51,94 @@ export function OrdersPage() {
   }, [])
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       <PageHeader
-        eyebrow="Orders"
-        title="Track your recent orders."
-        description="See the latest orders attached to your NearKart customer account."
+        eyebrow="My Orders"
+        title="Track your recent purchases"
+        description="Monitor the status of your orders and review your shopping history."
       />
 
       {errorMessage ? (
-        <section className="rounded-[1.75rem] border border-rose-200 bg-rose-50/80 p-6 text-sm text-rose-700">
+        <section className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-sm text-rose-600">
           {errorMessage}
         </section>
       ) : null}
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {isLoading
-          ? Array.from({ length: 3 }, (_, index) => (
+      <div className="min-h-[500px]">
+        {isLoading ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }, (_, index) => (
               <div
                 key={`order-skeleton-${index}`}
-                className="h-64 animate-pulse rounded-[1.75rem] border border-white/80 bg-white/75"
+                className="h-64 animate-pulse rounded-3xl bg-ink-50"
               />
-            ))
-          : orders.map((order) => (
+            ))}
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-[2rem] bg-ink-50 text-5xl">
+              📦
+            </div>
+            <h3 className="font-display text-2xl font-bold text-ink-900">No orders yet</h3>
+            <p className="mt-3 max-w-xs text-sm text-ink-400">
+              Your order history will appear here once you place your first purchase on NearKart.
+            </p>
+            <Link
+              className="mt-10 inline-flex h-12 items-center justify-center rounded-xl bg-ink-900 px-8 text-sm font-bold text-white transition hover:shadow-lg active:scale-95"
+              to="/shops"
+            >
+              Start Shopping
+            </Link>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {orders.map((order) => (
               <article
                 key={order.id}
-                className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]"
+                className="group relative flex flex-col rounded-3xl border border-ink-100 bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-glass"
               >
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
-                  {order.shopName}
-                </p>
-                <h2 className="mt-3 font-display text-2xl text-ink-900">
-                  {order.orderNumber}
-                </h2>
-                <p className="mt-2">
-                  <StatusPill
-                    label={ORDER_STATUS_LABELS[order.status]}
-                    tone={ORDER_STATUS_TONES[order.status]}
-                  />
-                </p>
-                <p className="mt-2 text-sm text-slate-500">
-                  {formatDateTime(order.placedAt)}
-                </p>
-                <div className="mt-6 rounded-2xl bg-nearkart-50 px-4 py-3 text-sm text-slate-700">
-                  Total:{' '}
-                  <span className="font-semibold">
-                    {formatCurrency(order.totalAmount)}
-                  </span>
+                <div className="flex flex-1 flex-col space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-nearkart-600">
+                      {order.shopName}
+                    </span>
+                    <StatusPill
+                      label={ORDER_STATUS_LABELS[order.status]}
+                      tone={ORDER_STATUS_TONES[order.status]}
+                    />
+                  </div>
+
+                  <div>
+                    <h3 className="font-display text-xl font-bold text-ink-900">
+                      #{order.orderNumber}
+                    </h3>
+                    <p className="mt-1 text-xs font-medium text-ink-400">
+                      Placed on {formatDateTime(order.placedAt)}
+                    </p>
+                  </div>
+
+                  <div className="mt-auto flex items-center justify-between border-t border-ink-50 pt-4">
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">Total Amount</p>
+                      <p className="text-lg font-bold text-ink-900">
+                        {formatCurrency(order.totalAmount)}
+                      </p>
+                    </div>
+
+                    <Link
+                      className="flex h-10 w-10 items-center justify-center rounded-xl border border-ink-100 text-ink-900 transition hover:bg-ink-50"
+                      to={`/orders/${order.id}`}
+                    >
+                      <span className="sr-only">View Details</span>
+                      →
+                    </Link>
+                  </div>
                 </div>
-                <Link
-                  className="mt-6 inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
-                  to={`/orders/${order.id}`}
-                >
-                  View details
-                </Link>
               </article>
             ))}
-      </section>
-
-      {!isLoading && orders.length === 0 ? (
-        <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-8 text-center shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-          <p className="text-sm leading-7 text-slate-600">
-            No signed-in orders yet. Place your next NearKart order and it will show up here.
-          </p>
-        </article>
-      ) : null}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

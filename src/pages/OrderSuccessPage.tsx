@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 
 import { getOrderById } from '@/api/orders'
-import { PageHeader } from '@/components/PageHeader'
 import type { Order } from '@/types/order'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -56,84 +55,74 @@ export function OrderSuccessPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        eyebrow="Order placed"
-        title="Your order was placed successfully."
-        description="Your order is in, and you can review the details or keep shopping for more household essentials."
-      />
+    <div className="flex min-h-[70vh] flex-col items-center justify-center py-12">
+      <div className="mx-auto w-full max-w-2xl text-center">
+        <div className="mb-10 flex flex-col items-center">
+          <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-[2.5rem] bg-ink-900 text-5xl shadow-glass animate-bounce">
+            🎉
+          </div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-nearkart-600">
+            Success!
+          </p>
+          <h1 className="mt-4 font-display text-4xl font-bold tracking-tight text-ink-900 sm:text-5xl">
+            Order Placed Successfully
+          </h1>
+          <p className="mt-4 text-lg text-ink-400">
+            Your order is now being processed by the shop.
+          </p>
+        </div>
 
-      {errorMessage ? (
-        <section className="rounded-[1.75rem] border border-rose-200 bg-rose-50/80 p-6 text-sm text-rose-700">
-          {errorMessage}
-        </section>
-      ) : null}
+        {errorMessage ? (
+          <section className="mb-8 rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-sm text-rose-600">
+            {errorMessage}
+          </section>
+        ) : null}
 
-      <section className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-        <article className="rounded-[1.75rem] border border-white/80 bg-white/95 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
+        <div className="rounded-[3rem] border border-ink-100 bg-white p-8 sm:p-12 shadow-glass text-left">
           {isLoading ? (
-            <div className="h-48 animate-pulse rounded-[1.5rem] bg-slate-100" />
+            <div className="h-48 animate-pulse rounded-2xl bg-ink-50" />
           ) : order ? (
-            <div className="space-y-5">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
-                  Order summary
-                </p>
-                <h2 className="mt-3 font-display text-3xl text-ink-900">
-                  {order.orderNumber}
-                </h2>
+            <div className="space-y-8">
+              <div className="flex items-center justify-between border-b border-ink-50 pb-6">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400 font-bold uppercase">Order Number</p>
+                  <p className="mt-1 text-2xl font-bold text-ink-900">#{order.orderNumber}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400 font-bold uppercase">Amount Paid</p>
+                  <p className="mt-1 text-2xl font-bold text-nearkart-600">{formatCurrency(order.totalAmount)}</p>
+                </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-[1.35rem] bg-nearkart-50 p-4">
-                  <p className="text-sm text-slate-500">Customer</p>
-                  <p className="mt-2 font-semibold text-ink-900">
-                    {order.customerName}
-                  </p>
+              <div className="grid gap-8 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">Shop</p>
+                  <p className="font-bold text-ink-900">{order.shopName}</p>
                 </div>
-                <div className="rounded-[1.35rem] bg-nearkart-50 p-4">
-                  <p className="text-sm text-slate-500">Shop</p>
-                  <p className="mt-2 font-semibold text-ink-900">
-                    {order.shopName}
-                  </p>
-                </div>
-                <div className="rounded-[1.35rem] bg-nearkart-50 p-4">
-                  <p className="text-sm text-slate-500">Status</p>
-                  <p className="mt-2 font-semibold text-ink-900">
-                    {order.status}
-                  </p>
-                </div>
-                <div className="rounded-[1.35rem] bg-nearkart-50 p-4">
-                  <p className="text-sm text-slate-500">Total</p>
-                  <p className="mt-2 font-semibold text-ink-900">
-                    {formatCurrency(order.totalAmount)}
-                  </p>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">Contact Number</p>
+                  <p className="font-bold text-ink-900">{order.customerPhone}</p>
                 </div>
               </div>
             </div>
           ) : null}
-        </article>
+        </div>
 
-        <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
-            Next actions
-          </p>
-          <div className="mt-5 flex flex-col gap-3">
-            <Link
-              className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700"
-              to={`/orders/${orderId}`}
-            >
-              View order details
-            </Link>
-            <Link
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
-              to="/shops"
-            >
-              Continue shopping
-            </Link>
-          </div>
-        </article>
-      </section>
+        <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+          <Link
+            className="flex h-14 w-full items-center justify-center rounded-2xl bg-ink-900 px-8 text-sm font-bold text-white shadow-lg transition hover:shadow-xl active:scale-95 sm:w-auto"
+            to={`/orders/${orderId}`}
+          >
+            Track My Order
+          </Link>
+          <Link
+            className="flex h-14 w-full items-center justify-center rounded-2xl border border-ink-100 bg-white px-8 text-sm font-bold text-ink-700 transition hover:bg-ink-50 active:scale-95 sm:w-auto"
+            to="/shops"
+          >
+            Continue Shopping
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

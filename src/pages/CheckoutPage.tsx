@@ -398,11 +398,11 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       <PageHeader
         eyebrow="Checkout"
-        title="Enter delivery details and place your order."
-        description="Checkout now validates against the live inventory bridge before an order is created."
+        title="Finalize your order"
+        description="Enter your delivery details and choose a payment method to complete your purchase."
       />
 
       {serviceAreaMessage ? (
@@ -427,184 +427,256 @@ export function CheckoutPage() {
       ) : null}
 
       {validationMessage ? (
-        <section className="rounded-[1.75rem] border border-amber-200 bg-amber-50/90 p-6 text-sm text-amber-900">
+        <section className="rounded-2xl border border-sun-100 bg-sun-50/50 p-4 text-sm text-sun-700">
           {validationMessage}
         </section>
       ) : null}
 
       {submitError ? (
-        <section className="rounded-[1.75rem] border border-rose-200 bg-rose-50/80 p-6 text-sm text-rose-700">
+        <section className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-sm text-rose-600">
           {submitError}
         </section>
       ) : null}
 
-      <section className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="grid gap-12 lg:grid-cols-[1fr_350px]">
         <form
-          className="space-y-4 rounded-[1.75rem] border border-white/80 bg-white/95 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]"
+          className="space-y-8"
           onSubmit={handleSubmit}
         >
-          {user?.role === 'CUSTOMER' ? (
-            <div className="rounded-[1.4rem] bg-nearkart-50/80 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-ink-900">
-                    Signed in as {user.fullName}
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    Your checkout is linked to your NearKart customer account.
-                  </p>
-                </div>
-                <Link
-                  className="text-sm font-semibold text-nearkart-700"
-                  to="/dashboard/customer/addresses"
-                >
-                  Manage saved addresses
-                </Link>
-              </div>
+          {/* Section 1: Identity */}
+          <div className="rounded-[2.5rem] border border-ink-100 bg-white p-8 sm:p-10 shadow-sm">
+            <div className="mb-8 flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-900 text-sm font-bold text-white">1</div>
+              <h3 className="font-display text-xl font-bold text-ink-900">Your Identity</h3>
             </div>
-          ) : null}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {savedAddresses.length > 0 ? (
-              <label className="space-y-2 sm:col-span-2">
-                <span className="text-sm font-medium text-slate-700">
-                  Saved address
-                </span>
-                <select
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  onChange={(event) => {
-                    const selectedAddress = savedAddresses.find(
-                      (address) => address.id === event.target.value,
-                    )
-
-                    updateField('addressId', event.target.value)
-
-                    if (!selectedAddress) {
-                      return
-                    }
-
-                    setFormValues((currentState) => ({
-                      ...currentState,
-                      addressId: selectedAddress.id,
-                      customerName: currentState.customerName || selectedAddress.fullName,
-                      customerPhone: currentState.customerPhone || selectedAddress.phone,
-                      deliveryAddressLine1: selectedAddress.line1,
-                      deliveryAddressLine2: selectedAddress.line2 || '',
-                      city: selectedAddress.city,
-                      area: selectedAddress.area || '',
-                      pincode: selectedAddress.pincode,
-                      landmark: selectedAddress.landmark || '',
-                    }))
-                  }}
-                  value={formValues.addressId}
-                >
-                  <option value="">Choose a saved address</option>
-                  {savedAddresses.map((address) => (
-                    <option key={address.id} value={address.id}>
-                      {address.label} • {address.line1}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-
-            {(
-              [
-                ['customerName', 'Full name'],
-                ['customerPhone', 'Phone number'],
-                ['customerEmail', 'Email address'],
-                ['deliveryAddressLine1', 'Address line 1'],
-                ['deliveryAddressLine2', 'Address line 2'],
-                ['city', 'City'],
-                ['area', 'Area'],
-                ['pincode', 'Pincode'],
-                ['landmark', 'Landmark'],
-              ] as Array<[keyof CheckoutFormValues, string]>
-            ).map(([field, label]) => (
-              <label
-                className={field === 'deliveryAddressLine1' ? 'space-y-2 sm:col-span-2' : 'space-y-2'}
-                key={field}
-              >
-                <span className="text-sm font-medium text-slate-700">{label}</span>
+            <div className="grid gap-6 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-400">Full Name</span>
                 <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  onChange={(event) => updateField(field, event.target.value)}
-                  type={field === 'customerEmail' ? 'email' : 'text'}
-                  value={formValues[field]}
+                  className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                  onChange={(event) => updateField('customerName', event.target.value)}
+                  placeholder="John Doe"
+                  value={formValues.customerName}
                 />
-                {fieldErrors[field] ? (
-                  <span className="text-sm text-rose-600">{fieldErrors[field]}</span>
-                ) : null}
+                {fieldErrors.customerName && <p className="text-xs font-medium text-rose-500">{fieldErrors.customerName}</p>}
               </label>
-            ))}
-
-            <label className="space-y-2 sm:col-span-2">
-              <span className="text-sm font-medium text-slate-700">Notes</span>
-              <textarea
-                className="min-h-28 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                onChange={(event) => updateField('notes', event.target.value)}
-                value={formValues.notes}
-              />
-            </label>
-
-            <label className="space-y-2 sm:col-span-2">
-              <span className="text-sm font-medium text-slate-700">Payment method</span>
-              <select
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                onChange={(event) =>
-                  updateField('paymentMethod', event.target.value as CheckoutFormValues['paymentMethod'])
-                }
-                value={formValues.paymentMethod}
-              >
-                <option value="COD">Cash on delivery</option>
-                <option value="PAY_ON_PICKUP">Pay on pickup</option>
-                <option value="ONLINE">Online payment</option>
-              </select>
-            </label>
+              <label className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-400">Phone Number</span>
+                <input
+                  className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                  onChange={(event) => updateField('customerPhone', event.target.value)}
+                  placeholder="+91 00000 00000"
+                  value={formValues.customerPhone}
+                />
+                {fieldErrors.customerPhone && <p className="text-xs font-medium text-rose-500">{fieldErrors.customerPhone}</p>}
+              </label>
+              <label className="space-y-2 sm:col-span-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-400">Email Address (Optional)</span>
+                <input
+                  className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                  onChange={(event) => updateField('customerEmail', event.target.value)}
+                  placeholder="john@example.com"
+                  type="email"
+                  value={formValues.customerEmail}
+                />
+              </label>
+            </div>
           </div>
 
-          <button
-            className="inline-flex w-full items-center justify-center rounded-full bg-nearkart-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
-            disabled={isSubmitting || isValidatingCart}
-            type="submit"
-          >
-            {isSubmitting
-              ? 'Placing order...'
-              : isValidatingCart
-                ? 'Validating cart...'
-                : 'Place order'}
-          </button>
+          {/* Section 2: Delivery */}
+          <div className="rounded-[2.5rem] border border-ink-100 bg-white p-8 sm:p-10 shadow-sm">
+            <div className="mb-8 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-900 text-sm font-bold text-white">2</div>
+                <h3 className="font-display text-xl font-bold text-ink-900">Delivery Address</h3>
+              </div>
+              {savedAddresses.length > 0 && (
+                <div className="hidden sm:block">
+                  <select
+                    className="rounded-xl border border-ink-100 bg-ink-50 px-4 py-2 text-xs font-bold text-ink-700 outline-none transition focus:border-nearkart-200"
+                    onChange={(event) => {
+                      const selectedAddress = savedAddresses.find(
+                        (address) => address.id === event.target.value,
+                      )
+                      updateField('addressId', event.target.value)
+                      if (selectedAddress) {
+                        setFormValues((currentState) => ({
+                          ...currentState,
+                          addressId: selectedAddress.id,
+                          customerName: currentState.customerName || selectedAddress.fullName,
+                          customerPhone: currentState.customerPhone || selectedAddress.phone,
+                          deliveryAddressLine1: selectedAddress.line1,
+                          deliveryAddressLine2: selectedAddress.line2 || '',
+                          city: selectedAddress.city,
+                          area: selectedAddress.area || '',
+                          pincode: selectedAddress.pincode,
+                          landmark: selectedAddress.landmark || '',
+                        }))
+                      }
+                    }}
+                    value={formValues.addressId}
+                  >
+                    <option value="">Use a saved address</option>
+                    {savedAddresses.map((address) => (
+                      <option key={address.id} value={address.id}>
+                        {address.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2">
+              <label className="space-y-2 sm:col-span-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-400">Address Line 1</span>
+                <input
+                  className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                  onChange={(event) => updateField('deliveryAddressLine1', event.target.value)}
+                  placeholder="Street name, house/flat number"
+                  value={formValues.deliveryAddressLine1}
+                />
+                {fieldErrors.deliveryAddressLine1 && <p className="text-xs font-medium text-rose-500">{fieldErrors.deliveryAddressLine1}</p>}
+              </label>
+              <label className="space-y-2 sm:col-span-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-400">Address Line 2 (Optional)</span>
+                <input
+                  className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                  onChange={(event) => updateField('deliveryAddressLine2', event.target.value)}
+                  placeholder="Apartment, suite, unit, etc."
+                  value={formValues.deliveryAddressLine2}
+                />
+              </label>
+              <label className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-400">City</span>
+                <input
+                  className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                  onChange={(event) => updateField('city', event.target.value)}
+                  value={formValues.city}
+                />
+              </label>
+              <label className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-400">Pincode</span>
+                <input
+                  className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                  onChange={(event) => updateField('pincode', event.target.value)}
+                  value={formValues.pincode}
+                />
+              </label>
+              <label className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-400">Landmark</span>
+                <input
+                  className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                  onChange={(event) => updateField('landmark', event.target.value)}
+                  placeholder="Near big hospital..."
+                  value={formValues.landmark}
+                />
+              </label>
+              <label className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-400">Notes for delivery</span>
+                <input
+                  className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                  onChange={(event) => updateField('notes', event.target.value)}
+                  placeholder="Ring twice, etc."
+                  value={formValues.notes}
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Section 3: Payment */}
+          <div className="rounded-[2.5rem] border border-ink-100 bg-white p-8 sm:p-10 shadow-sm">
+            <div className="mb-8 flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-900 text-sm font-bold text-white">3</div>
+              <h3 className="font-display text-xl font-bold text-ink-900">Payment Method</h3>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              {(['COD', 'ONLINE', 'PAY_ON_PICKUP'] as const).map((method) => (
+                <button
+                  key={method}
+                  className={`flex flex-col items-center justify-center gap-3 rounded-3xl border-2 p-6 transition-all ${formValues.paymentMethod === method
+                    ? 'border-nearkart-500 bg-nearkart-50 shadow-sm'
+                    : 'border-ink-100 bg-white hover:border-ink-200 hover:bg-ink-50/50'
+                    }`}
+                  onClick={() => updateField('paymentMethod', method)}
+                  type="button"
+                >
+                  <span className="text-2xl">
+                    {method === 'COD' ? '💵' : method === 'ONLINE' ? '💳' : '🏪'}
+                  </span>
+                  <span className="text-xs font-bold text-ink-900">
+                    {method === 'COD' ? 'Cash on Delivery' : method === 'ONLINE' ? 'Online' : 'Pay on Pickup'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         </form>
 
-        <aside className="space-y-4">
-          <article className="rounded-[1.75rem] border border-white/80 bg-white/95 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
-              Order summary
-            </p>
-            <div className="mt-5 space-y-4">
-              <div className="flex items-center justify-between text-sm text-slate-600">
-                <span>Total quantity</span>
-                <span className="font-semibold text-slate-800">{cartCount}</span>
+        <aside className="relative">
+          <div className="sticky top-28 space-y-6">
+            <article className="overflow-hidden rounded-[2.5rem] border border-ink-100 bg-white shadow-glass">
+              <div className="border-b border-ink-50 bg-ink-50/30 px-8 py-6">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-nearkart-600">
+                  Order Summary
+                </p>
+                <h2 className="mt-1 font-display text-2xl font-bold text-ink-900">
+                  {cartCount} Items
+                </h2>
               </div>
-              <div className="flex items-center justify-between text-base text-slate-700">
-                <span>Subtotal</span>
-                <span className="font-semibold text-nearkart-700">
-                  {formatCurrency(subtotal)}
-                </span>
-              </div>
-            </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
-                to="/cart"
-              >
-                Back to cart
-              </Link>
+              <div className="space-y-6 p-8">
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-ink-400">Shop</span>
+                    <span className="font-bold text-ink-900">{shopName}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-ink-400">Subtotal</span>
+                    <span className="font-bold text-ink-900">{formatCurrency(subtotal)}</span>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-ink-900 p-6 text-white shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold">Total Estimate</span>
+                    <span className="text-xl font-bold">{formatCurrency(subtotal)}</span>
+                  </div>
+                </div>
+
+                <button
+                  className="flex w-full h-14 items-center justify-center rounded-xl bg-nearkart-600 text-sm font-bold text-white shadow-md shadow-nearkart-600/20 transition hover:bg-nearkart-700 active:scale-95 disabled:grayscale disabled:opacity-50"
+                  disabled={isSubmitting || isValidatingCart}
+                  onClick={(e) => {
+                    const form = e.currentTarget.closest('div')?.closest('aside')?.previousSibling as HTMLFormElement;
+                    form?.requestSubmit();
+                  }}
+                >
+                  {isSubmitting ? 'Placing Order...' : isValidatingCart ? 'Validating...' : 'Place My Order'}
+                </button>
+
+                <Link
+                  className="flex h-12 items-center justify-center rounded-xl border border-ink-100 bg-white text-sm font-bold text-ink-700 transition hover:bg-ink-50"
+                  to="/cart"
+                >
+                  Edit Cart
+                </Link>
+              </div>
+            </article>
+
+            <div className="rounded-2xl border border-ink-100 bg-ink-50/50 p-4">
+              <div className="flex gap-3">
+                <span className="text-xl">🛡️</span>
+                <p className="text-[10px] font-medium leading-relaxed text-ink-400">
+                  Checkout is safe and secure. Your order is sent directly to the local shop owner for immediate fulfillment.
+                </p>
+              </div>
             </div>
-          </article>
+          </div>
         </aside>
-      </section>
+      </div>
     </div>
   )
 }

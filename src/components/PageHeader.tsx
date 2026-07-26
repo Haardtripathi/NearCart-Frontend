@@ -10,17 +10,17 @@ export function PageHeader({
   eyebrow,
 }: PageHeaderProps) {
   return (
-    <header className="space-y-4">
+    <header className="space-y-3">
       {eyebrow ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-nearkart-600">
+        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-nearkart-600/90">
           {eyebrow}
         </p>
       ) : null}
-      <div className="space-y-3">
-        <h1 className="font-display text-3xl text-ink-900 sm:text-4xl">
+      <div className="space-y-2">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-ink-900 sm:text-3xl lg:text-4xl">
           {title}
         </h1>
-        <p className="max-w-3xl text-base leading-7 text-slate-600 sm:text-lg">
+        <p className="max-w-2xl text-sm leading-7 text-ink-500 sm:text-base">
           {description}
         </p>
       </div>

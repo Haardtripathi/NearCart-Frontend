@@ -100,132 +100,128 @@ export function RegisterShopOwnerPage() {
 
   return (
     <AuthPageShell
-      description="Create a shop owner account to register shops, manage business details, and move through the NearKart approval flow."
-      eyebrow="Shop owner account"
-      featureDescription="This foundation gives merchants a real operating workspace now, while leaving room for future inventory, stock, and order operations."
+      description="Launch your business on NearKart. Create an account to register your shops, manage products, and join our local commerce network."
+      eyebrow="Merchant Portal"
       featurePoints={[
-        'Set up business identity and keep approval status visible.',
-        'Create and manage one or more shops from a protected dashboard.',
-        'Stay ready for future product, stock, and order modules.',
+        'Shop Management: Register and manage multiple storefronts easily.',
+        'Business Identity: Keep your business details and approval status in sync.',
+        'Future-Ready: Stay ahead with upcoming inventory and order modules.',
       ]}
-      featureTitle="What merchants can do"
+      featureTitle="Merchant Advantages"
       footerLabel="Sign in instead"
-      footerPrompt="Already have a shop owner account?"
+      footerPrompt="Already have a merchant account?"
       footerTo="/login"
-      title="Launch your NearKart merchant workspace."
+      title="Start your workspace"
     >
-      <form className="space-y-5" onSubmit={handleSubmit}>
+      <form className="space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="fullName">
+          <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="fullName">
             Full name
           </label>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+            className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
             id="fullName"
             onChange={(event) => updateField('fullName', event.target.value)}
+            placeholder="Jane Smith"
             value={formValues.fullName}
           />
-          {fieldErrors.fullName ? (
-            <p className="text-sm text-rose-600">{fieldErrors.fullName}</p>
-          ) : null}
+          {fieldErrors.fullName && (
+            <p className="text-xs font-medium text-rose-500">{fieldErrors.fullName}</p>
+          )}
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="email">
+            <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="email">
               Email address
             </label>
             <input
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+              className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
               id="email"
               onChange={(event) => updateField('email', event.target.value)}
+              placeholder="jane@business.com"
               type="email"
               value={formValues.email}
             />
-            {fieldErrors.email ? (
-              <p className="text-sm text-rose-600">{fieldErrors.email}</p>
-            ) : null}
+            {fieldErrors.email && (
+              <p className="text-xs font-medium text-rose-500">{fieldErrors.email}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="phone">
+            <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="phone">
               Phone number
             </label>
             <input
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+              className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
               id="phone"
               onChange={(event) => updateField('phone', event.target.value)}
+              placeholder="+91 00000 00000"
               value={formValues.phone}
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <label
-            className="text-sm font-medium text-slate-700"
-            htmlFor="businessName"
-          >
-            Business name
+          <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="businessName">
+            Business Name
           </label>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+            className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
             id="businessName"
             onChange={(event) => updateField('businessName', event.target.value)}
+            placeholder="Acme Retail Solutions"
             value={formValues.businessName}
           />
-          {fieldErrors.businessName ? (
-            <p className="text-sm text-rose-600">{fieldErrors.businessName}</p>
-          ) : null}
+          {fieldErrors.businessName && (
+            <p className="text-xs font-medium text-rose-500">{fieldErrors.businessName}</p>
+          )}
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           <div className="space-y-2">
-            <label
-              className="text-sm font-medium text-slate-700"
-              htmlFor="gstNumber"
-            >
-              GST number
+            <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="gstNumber">
+              GST Number
             </label>
             <input
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+              className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
               id="gstNumber"
               onChange={(event) => updateField('gstNumber', event.target.value)}
+              placeholder="Optional"
               value={formValues.gstNumber}
             />
           </div>
 
           <div className="space-y-2">
-            <label
-              className="text-sm font-medium text-slate-700"
-              htmlFor="password"
-            >
+            <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="password">
               Password
             </label>
             <input
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+              className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
               id="password"
               onChange={(event) => updateField('password', event.target.value)}
+              placeholder="At least 8 characters"
               type="password"
               value={formValues.password}
             />
-            {fieldErrors.password ? (
-              <p className="text-sm text-rose-600">{fieldErrors.password}</p>
-            ) : null}
+            {fieldErrors.password && (
+              <p className="text-xs font-medium text-rose-500">{fieldErrors.password}</p>
+            )}
           </div>
         </div>
 
-        {submitError ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        {submitError && (
+          <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4 text-xs font-medium text-rose-600">
             {submitError}
           </div>
-        ) : null}
+        )}
 
         <button
-          className="inline-flex w-full items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-12 w-full items-center justify-center rounded-xl bg-ink-900 px-8 text-sm font-bold text-white shadow-lg transition hover:shadow-xl active:scale-95 disabled:grayscale disabled:opacity-50"
           disabled={loading}
           type="submit"
         >
-          {loading ? 'Creating merchant account...' : 'Create shop owner account'}
+          {loading ? 'Creating workspace...' : 'Create Merchant Workspace'}
         </button>
       </form>
     </AuthPageShell>

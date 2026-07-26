@@ -44,6 +44,13 @@ export interface PublicShopSummary {
   deliveryFee: number
   deliveryEnabled: boolean
   isOpenNow: boolean | null
+  /**
+   * Live, computed ETA in minutes (queue + weather, plus distance when the
+   * caller passed `lat`/`lng`). List responses (`GET /public/shops`) use a
+   * cheaper "fast" estimate; detail/catalog responses use a fuller "full"
+   * one. Always present (not optional) — the backend always attaches it.
+   */
+  liveEstimatedDeliveryMinutes: number
 }
 
 export interface PublicShopDetail extends PublicShopSummary {

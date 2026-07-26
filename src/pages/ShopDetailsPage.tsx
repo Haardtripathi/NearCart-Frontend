@@ -3,10 +3,12 @@ import { Link, useParams } from 'react-router-dom'
 
 import { getShopCatalog } from '@/api/shops'
 import { PageHeader } from '@/components/PageHeader'
+import { StatusPill } from '@/components/StatusPill'
 import { ProductCard } from '@/components/shop/ProductCard'
 import { useCartStore } from '@/store/cartStore'
 import type { PublicCatalogProduct, PublicShopDetail } from '@/types/api'
 import type { CartItem } from '@/types/cart'
+import { formatLiveEta, getLiveEtaTone } from '@/utils/deliveryEta'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 type CatalogSort =
@@ -60,9 +62,6 @@ export function ShopDetailsPage() {
   const [categories, setCategories] = useState<
     Array<{ id: string; slug: string; name: string }>
   >([])
-  const [brands, setBrands] = useState<
-    Array<{ id: string; slug: string; name: string }>
-  >([])
   const [filters, setFilters] = useState<CatalogFiltersState>(initialFilters)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -88,7 +87,6 @@ export function ShopDetailsPage() {
         const response = await getShopCatalog(shopId, {
           search: filters.search || undefined,
           category: filters.category || undefined,
-          brand: filters.brand || undefined,
           inStockOnly: filters.inStockOnly || undefined,
           sort: filters.sort,
           page: 1,
@@ -102,7 +100,6 @@ export function ShopDetailsPage() {
         setShop(response.item)
         setProducts(response.items)
         setCategories(response.filters.categories)
-        setBrands(response.filters.brands)
         setErrorMessage(null)
       } catch {
         if (!isMounted) {
@@ -159,64 +156,41 @@ export function ShopDetailsPage() {
   const cartSubtotal = getCartSubtotal()
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       <PageHeader
-        eyebrow="Shop details"
-        title={shop ? shop.name : 'Shop details'}
+        eyebrow="Shop Catalog"
+        title={shop ? shop.name : 'Catalog'}
         description={
           shop
-            ? `Browse live products from ${shop.name}, filter by category or brand, and add only what is currently available.`
-            : 'Loading live shop catalog.'
+            ? `Browse and order fresh local groceries from ${shop.name}.`
+            : 'Loading live shop catalog...'
         }
       />
 
       {errorMessage ? (
-        <section className="rounded-[1.75rem] border border-rose-200 bg-rose-50/80 p-6 text-sm text-rose-700">
+        <section className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-sm text-rose-600">
           {errorMessage}
         </section>
       ) : null}
 
-      <section className="grid gap-4 lg:grid-cols-[1.35fr_0.85fr]">
-        <div className="space-y-4">
+      <div className="grid gap-12 lg:grid-cols-[1fr_350px]">
+        <div className="space-y-10">
           {shop ? (
-            <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
-                    {shop.category}
-                  </p>
-                  <h2 className="mt-2 font-display text-3xl text-ink-900">
-                    {shop.name}
-                  </h2>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {[shop.area, shop.city].filter(Boolean).join(', ')} •{' '}
-                    {shop.estimatedDeliveryMinutes
-                      ? `Delivery in about ${shop.estimatedDeliveryMinutes} mins`
-                      : 'Delivery estimate available at checkout'}
-                  </p>
-                </div>
-
-                <Link
-                  className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
-                  to="/cart"
-                >
-                  Open cart
-                </Link>
-              </div>
-
-              <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="space-y-6">
+              {/* Filter Bar */}
+              <div className="flex flex-wrap items-center gap-3 rounded-[2rem] border border-ink-100 bg-white p-2 shadow-sm">
                 <input
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-nearkart-400"
+                  className="flex-1 min-w-[200px] rounded-2xl border-none bg-ink-50/50 px-5 py-3 text-sm font-medium text-ink-900 outline-none transition focus:bg-white focus:ring-1 focus:ring-nearkart-200"
                   onChange={(event) => updateFilter('search', event.target.value)}
-                  placeholder="Search products"
+                  placeholder="Search in this shop..."
                   value={filters.search}
                 />
                 <select
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-nearkart-400"
+                  className="rounded-2xl border-none bg-ink-50/50 px-4 py-3 text-sm font-bold text-ink-700 outline-none transition focus:bg-white focus:ring-1 focus:ring-nearkart-200"
                   onChange={(event) => updateFilter('category', event.target.value)}
                   value={filters.category}
                 >
-                  <option value="">All categories</option>
+                  <option value="">Categories</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.slug}>
                       {category.name}
@@ -224,145 +198,172 @@ export function ShopDetailsPage() {
                   ))}
                 </select>
                 <select
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-nearkart-400"
-                  onChange={(event) => updateFilter('brand', event.target.value)}
-                  value={filters.brand}
-                >
-                  <option value="">All brands</option>
-                  {brands.map((brand) => (
-                    <option key={brand.id} value={brand.slug}>
-                      {brand.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-nearkart-400"
-                  onChange={(event) =>
-                    updateFilter('sort', event.target.value as CatalogSort)
-                  }
+                  className="rounded-2xl border-none bg-ink-50/50 px-4 py-3 text-sm font-bold text-ink-700 outline-none transition focus:bg-white focus:ring-1 focus:ring-nearkart-200"
+                  onChange={(event) => updateFilter('sort', event.target.value as CatalogSort)}
                   value={filters.sort}
                 >
-                  <option value="featured">Featured</option>
-                  <option value="name-asc">Name A-Z</option>
-                  <option value="price-asc">Price low to high</option>
-                  <option value="price-desc">Price high to low</option>
-                  <option value="newest">Newest</option>
+                  <option value="featured">Sort: Featured</option>
+                  <option value="name-asc">A-Z</option>
+                  <option value="price-asc">Price: Low</option>
+                  <option value="price-desc">Price: High</option>
                 </select>
               </div>
 
-              <label className="mt-4 inline-flex items-center gap-3 text-sm text-slate-600">
-                <input
-                  checked={filters.inStockOnly}
-                  onChange={(event) =>
-                    updateFilter('inStockOnly', event.target.checked)
-                  }
-                  type="checkbox"
-                />
-                Show only in-stock items
-              </label>
-            </article>
+              <div className="flex items-center gap-6 px-4">
+                <label className="inline-flex cursor-pointer items-center gap-2.5 text-xs font-bold uppercase tracking-wider text-ink-400 select-none">
+                  <input
+                    checked={filters.inStockOnly}
+                    className="h-4 w-4 rounded border-ink-200 text-nearkart-600 focus:ring-nearkart-500"
+                    onChange={(event) =>
+                      updateFilter('inStockOnly', event.target.checked)
+                    }
+                    type="checkbox"
+                  />
+                  In Stock Only
+                </label>
+              </div>
+            </div>
           ) : null}
 
-          <section className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {isLoading
-              ? Array.from({ length: 4 }, (_, index) => (
-                  <div
-                    key={`product-skeleton-${index}`}
-                    className="h-96 animate-pulse rounded-[1.75rem] border border-white/80 bg-white/75"
-                  />
-                ))
+              ? Array.from({ length: 6 }, (_, index) => (
+                <div
+                  key={`product-skeleton-${index}`}
+                  className="h-[420px] animate-pulse rounded-[2rem] bg-ink-50"
+                />
+              ))
               : products.map((product) => {
-                  const cartItem = items.find(
-                    (item) => item.cartItemId === `${product.id}:${product.variantId}`,
-                  )
+                const cartItem = items.find(
+                  (item) => item.cartItemId === `${product.id}:${product.variantId}`,
+                )
 
-                  return (
-                    <ProductCard
-                      key={`${product.id}:${product.variantId}`}
-                      onAddToCart={() => handleAddToCart(product)}
-                      onDecreaseQty={() =>
-                        cartItem && decreaseQty(cartItem.cartItemId)
-                      }
-                      onIncreaseQty={() =>
-                        cartItem && increaseQty(cartItem.cartItemId)
-                      }
-                      onUpdateQty={(quantity) =>
-                        cartItem && updateQty(cartItem.cartItemId, quantity)
-                      }
-                      product={product}
-                      quantityInCart={cartItem?.quantity ?? 0}
-                    />
-                  )
-                })}
-          </section>
+                return (
+                  <ProductCard
+                    key={`${product.id}:${product.variantId}`}
+                    onAddToCart={() => handleAddToCart(product)}
+                    onDecreaseQty={() =>
+                      cartItem && decreaseQty(cartItem.cartItemId)
+                    }
+                    onIncreaseQty={() =>
+                      cartItem && increaseQty(cartItem.cartItemId)
+                    }
+                    onUpdateQty={(quantity) =>
+                      cartItem && updateQty(cartItem.cartItemId, quantity)
+                    }
+                    product={product}
+                    quantityInCart={cartItem?.quantity ?? 0}
+                  />
+                )
+              })}
+          </div>
 
           {!isLoading && products.length === 0 ? (
-            <article className="rounded-[1.5rem] border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-slate-600">
-              No products match the current filters.
-            </article>
+            <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-ink-100 bg-white/50 p-12 text-center">
+              <div className="mb-4 text-3xl">🔍</div>
+              <h3 className="font-display text-lg font-bold text-ink-900">No products found</h3>
+              <p className="mt-1 text-sm text-ink-400">Try adjusting your filters or search terms.</p>
+              <button
+                onClick={() => setFilters(initialFilters)}
+                className="mt-6 text-sm font-bold text-nearkart-600 underline underline-offset-4"
+              >
+                Clear all filters
+              </button>
+            </div>
           ) : null}
         </div>
 
-        <aside className="space-y-4">
-          <article className="rounded-[1.75rem] border border-white/80 bg-white/95 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
-              Your cart
-            </p>
-            <h2 className="mt-3 font-display text-2xl text-ink-900">
-              {cartCount > 0
-                ? `${cartCount} item${cartCount === 1 ? '' : 's'} in cart`
-                : 'Your cart is empty'}
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-slate-600">
-              {cartCount > 0 && cartShopName
-                ? `Current cart shop: ${cartShopName}. Live catalog quantities still get rechecked before checkout.`
-                : 'Add a few products to get started. Cart totals update from the same normalized catalog data used by the public APIs.'}
-            </p>
-
-            <div className="mt-6 rounded-[1.5rem] bg-nearkart-50 p-4">
-              <div className="flex items-center justify-between text-sm text-slate-700">
-                <span>Subtotal</span>
-                <span className="font-semibold text-nearkart-700">
-                  {formatCurrency(cartSubtotal)}
-                </span>
+        <aside className="relative">
+          <div className="sticky top-28 space-y-6">
+            <article className="overflow-hidden rounded-[2.5rem] border border-ink-100 bg-white shadow-glass transition-all hover:shadow-glass-strong">
+              <div className="border-b border-ink-50 bg-ink-50/30 px-8 py-6">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-nearkart-600">
+                  Quick Cart
+                </p>
+                <h2 className="mt-1 font-display text-2xl font-bold text-ink-900">
+                  {cartCount > 0
+                    ? `${cartCount} item${cartCount === 1 ? '' : 's'}`
+                    : 'Order Summary'}
+                </h2>
               </div>
-            </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                className="inline-flex rounded-full bg-nearkart-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-nearkart-700"
-                to="/cart"
-              >
-                View cart
-              </Link>
-              <Link
-                className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
-                to="/shops"
-              >
-                Browse shops
-              </Link>
-            </div>
-          </article>
+              <div className="space-y-6 p-8">
+                <p className="text-sm leading-relaxed text-ink-500">
+                  {cartCount > 0 && cartShopName
+                    ? `You're ordering from ${cartShopName}. Items are revalidated at checkout.`
+                    : 'Add fresh groceries from this catalog to see your order subtotal here.'}
+                </p>
 
-          <article className="rounded-[1.75rem] border border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-nearkart-600">
-              Good to know
-            </p>
-            <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
-              <li>Product cards now come from the mapped inventory organization and branch.</li>
-              <li>Stock badges and quantities are branch-aware instead of hardcoded.</li>
-              <li>Checkout validates the same catalog again before an order is created.</li>
-            </ul>
-          </article>
+                {cartCount > 0 && (
+                  <div className="rounded-2xl bg-ink-900 p-6 text-white shadow-lg">
+                    <div className="flex items-center justify-between opacity-80">
+                      <span className="text-xs font-bold uppercase tracking-wider">Subtotal</span>
+                      <span className="text-sm font-medium">{formatCurrency(cartSubtotal)}</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-2">
+                      <span className="text-sm font-bold">Total Estimate</span>
+                      <span className="text-xl font-bold">{formatCurrency(cartSubtotal)}</span>
+                    </div>
+                  </div>
+                )}
 
-          {cartShopId && cartShopId !== shop?.id ? (
-            <article className="rounded-[1.5rem] border border-amber-200 bg-amber-50/90 p-5 text-sm text-amber-900">
-              Your cart belongs to {cartShopName}. Adding from this shop will
-              ask before clearing the existing cart.
+                <div className="flex flex-col gap-3">
+                  <Link
+                    className="flex h-12 items-center justify-center rounded-xl bg-nearkart-600 text-sm font-bold text-white shadow-md shadow-nearkart-600/20 transition hover:bg-nearkart-700 active:scale-95"
+                    to="/cart"
+                  >
+                    Checkout Now
+                  </Link>
+                  <Link
+                    className="flex h-12 items-center justify-center rounded-xl border border-ink-100 bg-white text-sm font-bold text-ink-700 transition hover:bg-ink-50 active:scale-95"
+                    to="/shops"
+                  >
+                    Browse Other Shops
+                  </Link>
+                </div>
+              </div>
             </article>
-          ) : null}
+
+            {shop && (
+              <article className="rounded-3xl border border-ink-100 bg-white p-6 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 flex-shrink-0 rounded-2xl bg-nearkart-50 flex items-center justify-center text-xl">
+                    🏢
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-ink-900">{shop.name}</h4>
+                    <p className="text-xs text-ink-400">{shop.category}</p>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-3 border-t border-ink-50 pt-4">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-ink-400">Min. Order</span>
+                    <span className="font-bold text-ink-700">₹{shop.minimumOrderAmount}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-ink-400">Live ETA</span>
+                    <StatusPill
+                      label={formatLiveEta(shop.liveEstimatedDeliveryMinutes)}
+                      tone={getLiveEtaTone(shop.liveEstimatedDeliveryMinutes)}
+                    />
+                  </div>
+                </div>
+              </article>
+            )}
+
+            {cartShopId && cartShopId !== shop?.id ? (
+              <div className="rounded-2xl border border-sun-200 bg-sun-50 p-4 shadow-sm ring-1 ring-sun-100">
+                <div className="flex gap-3">
+                  <span className="text-sun-600">⚠️</span>
+                  <p className="text-xs font-medium leading-relaxed text-sun-900">
+                    Your cart has items from <span className="font-bold">{cartShopName}</span>. Adding items here will ask to clear your current cart.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+          </div>
         </aside>
-      </section>
+      </div>
     </div>
   )
 }

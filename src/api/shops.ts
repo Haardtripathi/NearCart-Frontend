@@ -16,17 +16,29 @@ export interface ShopCatalogQuery {
   limit?: number
   sort?: 'featured' | 'name-asc' | 'price-asc' | 'price-desc' | 'newest'
   lang?: string
+  lat?: number
+  lng?: number
 }
 
-export async function getShops() {
-  const { data } = await httpClient.get<PublicShopListResponse>('/public/shops')
+export interface ShopGeoQuery {
+  lat?: number
+  lng?: number
+}
+
+export async function getShops(query: ShopGeoQuery = {}) {
+  const { data } = await httpClient.get<PublicShopListResponse>('/public/shops', {
+    params: query,
+  })
 
   return data
 }
 
-export async function getShopDetails(shopIdOrSlug: string) {
+export async function getShopDetails(shopIdOrSlug: string, query: ShopGeoQuery = {}) {
   const { data } = await httpClient.get<PublicShopResponse>(
     `/public/shops/${shopIdOrSlug}`,
+    {
+      params: query,
+    },
   )
 
   return data

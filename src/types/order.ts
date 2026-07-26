@@ -91,6 +91,8 @@ export interface Order {
   deliveredAt: string | null
   createdAt: string
   updatedAt: string
+  /** True only while `status === 'PENDING_CONFIRMATION'` — drives whether a cancel button shows. */
+  isCancellable: boolean
   items: OrderItem[]
 }
 

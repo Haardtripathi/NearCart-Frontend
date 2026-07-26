@@ -8,13 +8,34 @@
   --color-nearkart-50: #f4f8ee;
   --color-nearkart-100: #e4edd3;
   --color-nearkart-200: #d0dfb0;
+  --color-nearkart-300: #b9d08e;
+  --color-nearkart-400: #9ab96d;
   --color-nearkart-500: #587a2b;
   --color-nearkart-600: #456220;
   --color-nearkart-700: #344817;
+  --color-nearkart-800: #2a3914;
+  --color-nearkart-900: #1e2a0f;
+
+  --color-sun-50: #fffaf0;
   --color-sun-100: #fff2db;
   --color-sun-200: #f7d59b;
+  --color-sun-300: #f4be6d;
   --color-sun-400: #f0a640;
+  --color-sun-500: #e68d25;
+
+  --color-ink-50: #f2f5f3;
+  --color-ink-100: #e5ebe7;
+  --color-ink-200: #cbd7cf;
+  --color-ink-300: #a7b9ad;
+  --color-ink-400: #7d9687;
+  --color-ink-500: #5d7767;
+  --color-ink-600: #4a5f52;
+  --color-ink-700: #3b4c42;
+  --color-ink-800: #323e36;
   --color-ink-900: #112117;
+
+  --shadow-glass: 0 8px 32px 0 rgba(17, 33, 23, 0.08);
+  --shadow-glass-strong: 0 12px 48px 0 rgba(17, 33, 23, 0.15);
 }
 
 @layer base {

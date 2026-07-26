@@ -15,3 +15,9 @@ export async function getOrderById(orderId: string) {
 
   return data
 }
+
+export async function cancelOrder(orderId: string) {
+  const { data } = await httpClient.post<OrderResponse>(`/orders/${orderId}/cancel`)
+
+  return data
+}

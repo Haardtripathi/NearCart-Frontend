@@ -8,7 +8,6 @@ interface AuthPageShellProps {
   title: string
   description: string
   featureTitle: string
-  featureDescription: string
   featurePoints: string[]
   children: ReactNode
   footerPrompt: string
@@ -21,7 +20,6 @@ export function AuthPageShell({
   title,
   description,
   featureTitle,
-  featureDescription,
   featurePoints,
   children,
   footerPrompt,
@@ -29,62 +27,66 @@ export function AuthPageShell({
   footerTo,
 }: AuthPageShellProps) {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_0.95fr]">
-      <section className="rounded-[2rem] border border-white/80 bg-[linear-gradient(135deg,rgba(88,122,43,0.12),rgba(240,166,64,0.14))] p-8 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.4)]">
-        <div className="flex items-center gap-3">
-          <img
-            alt="NearKart"
-            className="h-12 w-12 rounded-2xl border border-white/80 bg-white/90 p-2 shadow-[0_18px_40px_-28px_rgba(17,33,23,0.55)]"
-            src={brandMark}
-          />
-          <div>
-            <p className="font-display text-lg text-ink-900">NearKart</p>
-            <p className="text-xs uppercase tracking-[0.28em] text-slate-500">
-              Commerce OS
+    <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
+      <div className="grid w-full gap-12 lg:grid-cols-[1fr_450px]">
+        {/* Left Side: Visual/Info */}
+        <section className="flex flex-col justify-center space-y-12 rounded-[3.5rem] border border-ink-100 bg-ink-50/50 p-12">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-glass">
+              <img alt="NearKart" className="h-8 w-8" src={brandMark} />
+            </div>
+            <div>
+              <p className="font-display text-xl font-bold text-ink-900">NearKart</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink-400">Commerce OS</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-nearkart-600">
+              {eyebrow}
+            </p>
+            <h1 className="font-display text-5xl font-bold leading-tight tracking-tight text-ink-900">
+              {title}
+            </h1>
+            <p className="max-w-md text-lg leading-relaxed text-ink-500">
+              {description}
             </p>
           </div>
-        </div>
 
-        <div className="mt-10 space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-nearkart-600">
-            {eyebrow}
-          </p>
-          <h1 className="font-display text-4xl leading-tight text-ink-900">
-            {title}
-          </h1>
-          <p className="max-w-xl text-base leading-8 text-slate-600">
-            {description}
-          </p>
-        </div>
+          <div className="space-y-4">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-ink-900">{featureTitle}</h2>
+            <div className="grid gap-3">
+              {featurePoints.map((point) => (
+                <div
+                  key={point}
+                  className="flex items-center gap-3 rounded-2xl border border-ink-100 bg-white px-5 py-4 text-sm font-medium text-ink-700 shadow-sm"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-nearkart-50 text-xs">✓</span>
+                  <span>{point}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-        <article className="mt-10 rounded-[1.75rem] border border-white/80 bg-white/75 p-6 backdrop-blur">
-          <h2 className="font-display text-2xl text-ink-900">{featureTitle}</h2>
-          <p className="mt-3 text-sm leading-7 text-slate-600">
-            {featureDescription}
-          </p>
-          <ul className="mt-6 space-y-3">
-            {featurePoints.map((point) => (
-              <li
-                key={point}
-                className="flex items-start gap-3 rounded-2xl bg-nearkart-50/80 px-4 py-3 text-sm text-slate-700"
-              >
-                <span className="mt-1.5 h-2 w-2 rounded-full bg-nearkart-500" />
-                <span>{point}</span>
-              </li>
-            ))}
-          </ul>
-        </article>
-      </section>
+        {/* Right Side: Form */}
+        <section className="flex flex-col justify-center">
+          <div className="rounded-[3rem] border border-ink-100 bg-white p-10 shadow-glass">
+            {children}
 
-      <section className="rounded-[2rem] border border-white/80 bg-white/95 p-8 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.4)]">
-        {children}
-        <p className="mt-6 text-sm text-slate-500">
-          {footerPrompt}{' '}
-          <Link className="font-semibold text-nearkart-700" to={footerTo}>
-            {footerLabel}
-          </Link>
-        </p>
-      </section>
+            <div className="mt-8 border-t border-ink-50 pt-8 text-center text-sm">
+              <span className="text-ink-400">{footerPrompt}</span>{' '}
+              <Link className="font-bold text-nearkart-600 transition hover:text-nearkart-700 hover:underline underline-offset-4" to={footerTo}>
+                {footerLabel}
+              </Link>
+            </div>
+          </div>
+
+          <p className="mt-8 px-10 text-center text-[10px] font-medium leading-relaxed text-ink-400">
+            By continuing, you agree to NearKart's Terms of Service and Privacy Policy. All transactions are secure and encrypted.
+          </p>
+        </section>
+      </div>
     </div>
   )
 }
