@@ -5,37 +5,45 @@
   --font-display: 'Space Grotesk', 'Trebuchet MS', sans-serif;
   --font-body: 'Public Sans', 'Segoe UI', sans-serif;
 
-  --color-nearkart-50: #f4f8ee;
-  --color-nearkart-100: #e4edd3;
-  --color-nearkart-200: #d0dfb0;
-  --color-nearkart-300: #b9d08e;
-  --color-nearkart-400: #9ab96d;
-  --color-nearkart-500: #587a2b;
-  --color-nearkart-600: #456220;
-  --color-nearkart-700: #344817;
-  --color-nearkart-800: #2a3914;
-  --color-nearkart-900: #1e2a0f;
+  --color-nearkart-50: #f5f3ff;
+  --color-nearkart-100: #ede9fe;
+  --color-nearkart-200: #ddd6fe;
+  --color-nearkart-300: #c4b5fd;
+  --color-nearkart-400: #a78bfa;
+  --color-nearkart-500: #8b5cf6;
+  --color-nearkart-600: #7c3aed;
+  --color-nearkart-700: #6d28d9;
+  --color-nearkart-800: #5b21b6;
+  --color-nearkart-900: #4c1d95;
 
-  --color-sun-50: #fffaf0;
-  --color-sun-100: #fff2db;
-  --color-sun-200: #f7d59b;
-  --color-sun-300: #f4be6d;
-  --color-sun-400: #f0a640;
-  --color-sun-500: #e68d25;
+  --color-sun-50: #fff7ed;
+  --color-sun-100: #ffedd5;
+  --color-sun-200: #fed7aa;
+  --color-sun-300: #fdba74;
+  --color-sun-400: #fc9750;
+  --color-sun-500: #ff7a1a;
 
-  --color-ink-50: #f2f5f3;
-  --color-ink-100: #e5ebe7;
-  --color-ink-200: #cbd7cf;
-  --color-ink-300: #a7b9ad;
-  --color-ink-400: #7d9687;
-  --color-ink-500: #5d7767;
-  --color-ink-600: #4a5f52;
-  --color-ink-700: #3b4c42;
-  --color-ink-800: #323e36;
-  --color-ink-900: #112117;
+  --color-accent-50: #fff0f6;
+  --color-accent-100: #ffe0ed;
+  --color-accent-200: #ffb8d2;
+  --color-accent-300: #ff8bb3;
+  --color-accent-400: #ff5f96;
+  --color-accent-500: #ff3d81;
+  --color-accent-600: #e01f66;
 
-  --shadow-glass: 0 8px 32px 0 rgba(17, 33, 23, 0.08);
-  --shadow-glass-strong: 0 12px 48px 0 rgba(17, 33, 23, 0.15);
+  --color-ink-50: #f5f4f8;
+  --color-ink-100: #eae8ef;
+  --color-ink-200: #d3cfdd;
+  --color-ink-300: #b3adc4;
+  --color-ink-400: #8f87a5;
+  --color-ink-500: #6f6686;
+  --color-ink-600: #584f6d;
+  --color-ink-700: #453d58;
+  --color-ink-800: #322c41;
+  --color-ink-900: #1e192b;
+
+  --shadow-glass: 0 8px 32px 0 rgba(76, 29, 149, 0.1);
+  --shadow-glass-strong: 0 12px 48px 0 rgba(76, 29, 149, 0.18);
 }
 
 @layer base {
@@ -47,12 +55,12 @@
     min-height: 100vh;
     margin: 0;
     background:
-      radial-gradient(circle at top left, rgba(240, 166, 64, 0.18), transparent 24%),
-      radial-gradient(circle at top right, rgba(88, 122, 43, 0.12), transparent 28%),
+      radial-gradient(circle at top left, rgba(255, 122, 26, 0.16), transparent 24%),
+      radial-gradient(circle at top right, rgba(124, 58, 237, 0.14), transparent 28%),
       radial-gradient(circle at center, rgba(255, 255, 255, 0.55), transparent 36%),
-      linear-gradient(180deg, #fcfdf8 0%, #f6f6ef 56%, #f1f3e8 100%);
+      linear-gradient(180deg, #fdfbff 0%, #f7f5fb 56%, #f2eef9 100%);
     background-attachment: fixed;
-    color: #223127;
+    color: #221c33;
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

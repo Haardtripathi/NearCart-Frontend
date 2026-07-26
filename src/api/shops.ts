@@ -3,8 +3,11 @@ import type {
   PublicCartValidationResponse,
   PublicCatalogProductResponse,
   PublicCatalogResponse,
+  PublicSearchResponse,
+  PublicShopCategoriesResponse,
   PublicShopListResponse,
   PublicShopResponse,
+  PublicTrendingResponse,
 } from '@/types/api'
 
 export interface ShopCatalogQuery {
@@ -23,6 +26,14 @@ export interface ShopCatalogQuery {
 export interface ShopGeoQuery {
   lat?: number
   lng?: number
+  search?: string
+  category?: string
+}
+
+export interface CrossShopQuery {
+  category?: string
+  limit?: number
+  lang?: string
 }
 
 export async function getShops(query: ShopGeoQuery = {}) {
@@ -69,6 +80,30 @@ export async function getShopCatalogProduct(
       params: lang ? { lang } : undefined,
     },
   )
+
+  return data
+}
+
+export async function getShopCategories() {
+  const { data } = await httpClient.get<PublicShopCategoriesResponse>(
+    '/public/categories',
+  )
+
+  return data
+}
+
+export async function searchCatalog(q: string, query: CrossShopQuery = {}) {
+  const { data } = await httpClient.get<PublicSearchResponse>('/public/search', {
+    params: { q, ...query },
+  })
+
+  return data
+}
+
+export async function getTrendingProducts(query: CrossShopQuery = {}) {
+  const { data } = await httpClient.get<PublicTrendingResponse>('/public/trending', {
+    params: query,
+  })
 
   return data
 }

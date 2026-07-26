@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import brandMark from '@/assets/nearkart-mark.svg'
+import { HeaderSearchBar } from '@/components/search/HeaderSearchBar'
 import { primaryNavigation } from '@/routes/navigation'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
@@ -50,6 +51,10 @@ export function MainLayout() {
               </p>
             </div>
           </NavLink>
+
+          <div className="order-3 w-full md:order-none md:w-auto md:flex-1 md:px-4">
+            <HeaderSearchBar />
+          </div>
 
           <nav className="flex flex-1 flex-wrap justify-start gap-1 rounded-2xl border border-ink-100/50 bg-ink-50/30 p-1 md:w-auto md:flex-none md:justify-end">
             {primaryNavigation.map((item) => (

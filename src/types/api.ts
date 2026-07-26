@@ -219,3 +219,41 @@ export interface PublicCartValidationResponse {
     source: string
   }
 }
+export interface PublicShopCategorySummary {
+  category: string
+  shopCount: number
+}
+
+export interface PublicShopCategoriesResponse {
+  items: PublicShopCategorySummary[]
+  meta: ApiMeta & {
+    source: string
+  }
+}
+
+export type PublicSearchResultItem = PublicCatalogProduct & {
+  shop: PublicShopSummary
+}
+
+export interface PublicSearchResponse {
+  items: PublicSearchResultItem[]
+  meta: ApiMeta & {
+    query: string
+    shopsSearched: number
+    shopsSucceeded: number
+    shopsFailed: number
+    strategy: string
+    source: string
+  }
+}
+
+export interface PublicTrendingResponse {
+  items: PublicSearchResultItem[]
+  meta: ApiMeta & {
+    shopsQueried: number
+    shopsSucceeded: number
+    shopsFailed: number
+    strategy: string
+    source: string
+  }
+}

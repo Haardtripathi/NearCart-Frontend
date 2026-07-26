@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { ProductCard } from '@/components/shop/ProductCard'
 import { useCartStore } from '@/store/cartStore'
-import type { PublicCatalogProduct, PublicShopDetail } from '@/types/api'
+import type { PublicCatalogProduct, PublicCatalogVariant, PublicShopDetail } from '@/types/api'
 import type { CartItem } from '@/types/cart'
 import { formatLiveEta, getLiveEtaTone } from '@/utils/deliveryEta'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -34,23 +34,29 @@ const initialFilters: CatalogFiltersState = {
   sort: 'featured',
 }
 
-function createCartItem(shop: PublicShopDetail, product: PublicCatalogProduct): CartItem {
+function createCartItem(
+  shop: PublicShopDetail,
+  product: PublicCatalogProduct,
+  variant?: PublicCatalogVariant,
+): CartItem {
+  const variantId = variant?.id ?? product.variantId
+
   return {
-    cartItemId: `${product.id}:${product.variantId}`,
+    cartItemId: `${product.id}:${variantId}`,
     productId: product.id,
-    variantId: product.variantId,
+    variantId,
     shopId: shop.id,
     shopName: shop.name,
-    name: product.name,
+    name: variant && !variant.isDefault ? `${product.name} (${variant.name})` : product.name,
     description: product.description,
     brand: product.brand?.name ?? null,
     category: product.category?.name ?? null,
-    unitLabel: product.unitLabel,
-    image: product.image,
-    price: product.price,
-    mrp: product.mrp,
-    stockQty: product.availableQty,
-    stockStatus: product.stockStatus,
+    unitLabel: variant?.unitLabel ?? product.unitLabel,
+    image: variant?.imageUrl ?? product.image,
+    price: variant?.price ?? product.price,
+    mrp: variant?.mrp ?? product.mrp,
+    stockQty: variant?.stock.availableQty ?? product.availableQty,
+    stockStatus: variant?.stock.stockStatus ?? product.stockStatus,
     quantity: 1,
   }
 }
@@ -131,12 +137,7 @@ export function ShopDetailsPage() {
     }))
   }
 
-  function handleAddToCart(product: PublicCatalogProduct) {
-    if (!shop) {
-      return
-    }
-
-    const cartItem = createCartItem(shop, product)
+  function addCartItem(cartItem: CartItem) {
     const result = addItem(cartItem)
 
     if (!result.requiresConfirmation) {
@@ -150,6 +151,22 @@ export function ShopDetailsPage() {
     if (didConfirm) {
       addItem(cartItem, { forceReplace: true })
     }
+  }
+
+  function handleAddToCart(product: PublicCatalogProduct) {
+    if (!shop) {
+      return
+    }
+
+    addCartItem(createCartItem(shop, product))
+  }
+
+  function handleAddVariant(product: PublicCatalogProduct, variant: PublicCatalogVariant) {
+    if (!shop) {
+      return
+    }
+
+    addCartItem(createCartItem(shop, product, variant))
   }
 
   const cartCount = getCartCount()
@@ -234,25 +251,44 @@ export function ShopDetailsPage() {
                 />
               ))
               : products.map((product) => {
-                const cartItem = items.find(
-                  (item) => item.cartItemId === `${product.id}:${product.variantId}`,
+                const productCartItems = items.filter(
+                  (item) => item.productId === product.id,
+                )
+                const defaultCartItem = productCartItems.find(
+                  (item) => item.variantId === product.variantId,
+                )
+                const variantQuantities = Object.fromEntries(
+                  productCartItems
+                    .filter((item) => item.variantId)
+                    .map((item) => [item.variantId as string, item.quantity]),
                 )
 
                 return (
                   <ProductCard
                     key={`${product.id}:${product.variantId}`}
                     onAddToCart={() => handleAddToCart(product)}
+                    onAddVariant={(variant) => handleAddVariant(product, variant)}
                     onDecreaseQty={() =>
-                      cartItem && decreaseQty(cartItem.cartItemId)
+                      defaultCartItem && decreaseQty(defaultCartItem.cartItemId)
+                    }
+                    onDecreaseVariant={(variant) =>
+                      decreaseQty(`${product.id}:${variant.id}`)
                     }
                     onIncreaseQty={() =>
-                      cartItem && increaseQty(cartItem.cartItemId)
+                      defaultCartItem && increaseQty(defaultCartItem.cartItemId)
+                    }
+                    onIncreaseVariant={(variant) =>
+                      increaseQty(`${product.id}:${variant.id}`)
                     }
                     onUpdateQty={(quantity) =>
-                      cartItem && updateQty(cartItem.cartItemId, quantity)
+                      defaultCartItem && updateQty(defaultCartItem.cartItemId, quantity)
+                    }
+                    onUpdateVariantQty={(variant, quantity) =>
+                      updateQty(`${product.id}:${variant.id}`, quantity)
                     }
                     product={product}
-                    quantityInCart={cartItem?.quantity ?? 0}
+                    quantityInCart={defaultCartItem?.quantity ?? 0}
+                    variantQuantities={variantQuantities}
                   />
                 )
               })}

@@ -13,6 +13,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 import { OrderDetailsPage } from '@/pages/OrderDetailsPage'
 import { OrderSuccessPage } from '@/pages/OrderSuccessPage'
 import { OrdersPage } from '@/pages/OrdersPage'
+import { SearchPage } from '@/pages/SearchPage'
 import { ShopDetailsPage } from '@/pages/ShopDetailsPage'
 import { ShopsPage } from '@/pages/ShopsPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
@@ -42,6 +43,7 @@ export function AppRouter() {
           <Route index element={<HomePage />} />
           <Route path="shops" element={<ShopsPage />} />
           <Route path="shops/:shopId" element={<ShopDetailsPage />} />
+          <Route path="search" element={<SearchPage />} />
           <Route path="cart" element={<CartPage />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleRoute allowedRoles={['CUSTOMER']} />}>

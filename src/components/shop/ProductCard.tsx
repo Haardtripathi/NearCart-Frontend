@@ -1,6 +1,9 @@
+import { useState } from 'react'
+
 import { StatusPill } from '@/components/StatusPill'
 import { QuantityControl } from '@/components/cart/QuantityControl'
-import type { PublicCatalogProduct } from '@/types/api'
+import { VariantPickerModal } from '@/components/shop/VariantPickerModal'
+import type { PublicCatalogProduct, PublicCatalogVariant } from '@/types/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 interface ProductCardProps {
@@ -10,6 +13,16 @@ interface ProductCardProps {
   onIncreaseQty: () => void
   onDecreaseQty: () => void
   onUpdateQty: (quantity: number) => void
+  /**
+   * Only needed for products with 2+ variants (`hasVariants && variantCount > 1`) — powers the
+   * "Select options" flow. Single-variant products never read these, so callers rendering only
+   * single-variant products can omit them entirely.
+   */
+  variantQuantities?: Record<string, number>
+  onAddVariant?: (variant: PublicCatalogVariant) => void
+  onIncreaseVariant?: (variant: PublicCatalogVariant) => void
+  onDecreaseVariant?: (variant: PublicCatalogVariant) => void
+  onUpdateVariantQty?: (variant: PublicCatalogVariant, quantity: number) => void
 }
 
 const stockToneByStatus = {
@@ -25,12 +38,19 @@ export function ProductCard({
   onIncreaseQty,
   onDecreaseQty,
   onUpdateQty,
+  variantQuantities,
+  onAddVariant,
+  onIncreaseVariant,
+  onDecreaseVariant,
+  onUpdateVariantQty,
 }: ProductCardProps) {
+  const [isVariantPickerOpen, setIsVariantPickerOpen] = useState(false)
   const showMrp = (product.mrp ?? 0) > product.price
   const isOutOfStock = product.stockStatus === 'OUT_OF_STOCK'
+  const hasMultipleVariants = product.hasVariants && product.variantCount > 1
 
   return (
-    <article className="flex h-full flex-col rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.5)]">
+    <article className="flex h-full flex-col rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-[0_20px_70px_-45px_rgba(76,29,149,0.5)]">
       <div className="mb-4 overflow-hidden rounded-[1.35rem] bg-nearkart-50">
         {product.image ? (
           <img
@@ -78,7 +98,27 @@ export function ProductCard({
         </div>
 
         <div className="mt-6">
-          {quantityInCart > 0 ? (
+          {hasMultipleVariants ? (
+            <>
+              <button
+                className="inline-flex w-full items-center justify-center rounded-full bg-nearkart-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700"
+                onClick={() => setIsVariantPickerOpen(true)}
+                type="button"
+              >
+                Select options
+              </button>
+              <VariantPickerModal
+                isOpen={isVariantPickerOpen}
+                onAdd={(variant) => onAddVariant?.(variant)}
+                onClose={() => setIsVariantPickerOpen(false)}
+                onDecrease={(variant) => onDecreaseVariant?.(variant)}
+                onIncrease={(variant) => onIncreaseVariant?.(variant)}
+                onUpdateQty={(variant, quantity) => onUpdateVariantQty?.(variant, quantity)}
+                product={product}
+                variantQuantities={variantQuantities ?? {}}
+              />
+            </>
+          ) : quantityInCart > 0 ? (
             <div className="space-y-3">
               <QuantityControl
                 max={product.availableQty}
