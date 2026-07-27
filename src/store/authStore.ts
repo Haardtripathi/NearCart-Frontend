@@ -25,6 +25,11 @@ interface AuthStore {
   hasRestoredSession: boolean
   isRestoringSession: boolean
   loading: boolean
+  // Tracks which user ids have already been through the post-verification onboarding wizard
+  // (welcome -> address -> notifications), so it only ever shows once per account. Keyed by
+  // user id (not a single boolean) because more than one account can log into the same
+  // browser/localStorage over time.
+  onboardingCompletedUserIds: string[]
   setSession: (session: AuthResponse) => void
   setUser: (user: AuthUser) => void
   clearSession: () => void
@@ -34,6 +39,8 @@ interface AuthStore {
   fetchMe: () => Promise<AuthUser | null>
   restoreSession: () => Promise<AuthUser | null>
   logout: () => Promise<void>
+  hasCompletedOnboarding: (userId: string) => boolean
+  markOnboardingComplete: (userId: string) => void
 }
 
 function applySessionState(
@@ -60,6 +67,7 @@ export const useAuthStore = create<AuthStore>()(
       hasRestoredSession: false,
       isRestoringSession: false,
       loading: false,
+      onboardingCompletedUserIds: [],
       setSession: (session) => {
         applySessionState(set, session)
       },
@@ -174,6 +182,14 @@ export const useAuthStore = create<AuthStore>()(
           get().clearSession()
         }
       },
+      hasCompletedOnboarding: (userId) => get().onboardingCompletedUserIds.includes(userId),
+      markOnboardingComplete: (userId) => {
+        set({
+          onboardingCompletedUserIds: get().onboardingCompletedUserIds.includes(userId)
+            ? get().onboardingCompletedUserIds
+            : [...get().onboardingCompletedUserIds, userId],
+        })
+      },
     }),
     {
       name: 'nearkart-auth',
@@ -182,6 +198,7 @@ export const useAuthStore = create<AuthStore>()(
         user: state.user,
         accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
+        onboardingCompletedUserIds: state.onboardingCompletedUserIds,
       }),
       onRehydrateStorage: () => (state) => {
         setHttpAccessToken(state?.accessToken ?? null)

@@ -18,6 +18,7 @@ export function VerifyEmailPage() {
   const [searchParams] = useSearchParams()
   const user = useAuthStore((state) => state.user)
   const setUser = useAuthStore((state) => state.setUser)
+  const hasCompletedOnboarding = useAuthStore((state) => state.hasCompletedOnboarding)
 
   const [code, setCode] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -28,6 +29,16 @@ export function VerifyEmailPage() {
   const [verifyError, setVerifyError] = useState<string | null>(null)
   const [cooldownSeconds, setCooldownSeconds] = useState(0)
   const hasAutoSentRef = useRef(false)
+  // Guards against a re-render race: setUser() below flips user.isVerified to true, and
+  // because that store update and the navigate() call are both dispatched from inside the
+  // same async handler (after an `await`), this component can still render one more time with
+  // the now-verified user before the router has actually swapped away from this route. Without
+  // this guard, the plain `if (user.isVerified) return <Navigate to={redirectTo} />` below fires
+  // on that stray render and its effect-driven redirect wins the race against our own explicit
+  // post-verify navigate() call — silently overriding the onboarding redirect with `redirectTo`
+  // every time (this was invisible before onboarding existed, since both destinations used to
+  // be the same URL). Set right before handleVerifySubmit takes over the redirect decision.
+  const ownRedirectInFlightRef = useRef(false)
 
   const redirectTo = searchParams.get('redirect') || user?.dashboardPath || '/'
 
@@ -89,7 +100,7 @@ export function VerifyEmailPage() {
     return null
   }
 
-  if (user.isVerified) {
+  if (user.isVerified && !ownRedirectInFlightRef.current) {
     return <Navigate replace to={redirectTo} />
   }
 
@@ -107,8 +118,18 @@ export function VerifyEmailPage() {
     try {
       await verifyEmailOtp(code)
 
+      ownRedirectInFlightRef.current = true
       setUser({ ...user!, isVerified: true })
-      navigate(redirectTo, { replace: true })
+
+      // First-time onboarding (welcome -> home address -> notifications) only ever runs right
+      // after a customer's own successful verification, and only once per account (see
+      // OnboardingPage.tsx / authStore's onboardingCompletedUserIds). Other roles and
+      // already-onboarded customers skip straight to wherever they were headed.
+      if (user!.role === 'CUSTOMER' && !hasCompletedOnboarding(user!.id)) {
+        navigate('/onboarding', { replace: true })
+      } else {
+        navigate(redirectTo, { replace: true })
+      }
     } catch (error) {
       setVerifyError(
         getApiErrorMessage(error, 'Unable to verify that code right now.'),

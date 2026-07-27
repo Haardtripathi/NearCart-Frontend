@@ -30,6 +30,7 @@ import { CustomerAddressesPage } from '@/pages/dashboard/customer/CustomerAddres
 import { CustomerDashboardPage } from '@/pages/dashboard/customer/CustomerDashboardPage'
 import { CustomerOrdersPage } from '@/pages/dashboard/customer/CustomerOrdersPage'
 import { CustomerProfilePage } from '@/pages/dashboard/customer/CustomerProfilePage'
+import { OnboardingPage } from '@/pages/onboarding/OnboardingPage'
 import { ShopOwnerDashboardPage } from '@/pages/dashboard/shop-owner/ShopOwnerDashboardPage'
 import { ShopOwnerProfilePage } from '@/pages/dashboard/shop-owner/ShopOwnerProfilePage'
 import { ShopOwnerShopFormPage } from '@/pages/dashboard/shop-owner/ShopOwnerShopFormPage'
@@ -49,6 +50,7 @@ export function AppRouter() {
           <Route element={<ProtectedRoute />}>
             <Route path="verify-email" element={<VerifyEmailPage />} />
             <Route element={<RoleRoute allowedRoles={['CUSTOMER']} />}>
+              <Route path="onboarding" element={<OnboardingPage />} />
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="order-success/:orderId" element={<OrderSuccessPage />} />
               <Route path="orders" element={<OrdersPage />} />
