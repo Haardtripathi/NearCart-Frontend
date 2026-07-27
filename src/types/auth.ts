@@ -58,3 +58,16 @@ export interface LogoutResponse {
   success: boolean
   meta: ApiMeta
 }
+
+export interface SendOtpResponse {
+  success: boolean
+  message: string
+  cooldownSeconds: number
+  meta: ApiMeta
+}
+
+export interface VerifyOtpResponse {
+  success: boolean
+  message: string
+  meta: ApiMeta
+}

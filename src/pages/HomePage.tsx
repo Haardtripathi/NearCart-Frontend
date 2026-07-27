@@ -5,12 +5,14 @@ import { getShops } from '@/api/shops'
 import { CategoryChips } from '@/components/category/CategoryChips'
 import { TrendingRail } from '@/components/home/TrendingRail'
 import { ShopCard } from '@/components/shop/ShopCard'
+import { useCustomerCity } from '@/hooks/useCustomerCity'
 import type { PublicShopSummary } from '@/types/api'
 
 const MIN_QUERY_LENGTH = 2
 
 export function HomePage() {
   const navigate = useNavigate()
+  const { city } = useCustomerCity()
   const [heroQuery, setHeroQuery] = useState('')
   const [nearbyShops, setNearbyShops] = useState<PublicShopSummary[]>([])
   const [isLoadingShops, setIsLoadingShops] = useState(true)
@@ -20,7 +22,7 @@ export function HomePage() {
 
     async function loadShops() {
       try {
-        const response = await getShops()
+        const response = await getShops({ city })
 
         if (isMounted) {
           setNearbyShops(response.items.slice(0, 3))
@@ -41,7 +43,7 @@ export function HomePage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [city])
 
   function handleHeroSearchSubmit(event: FormEvent) {
     event.preventDefault()
@@ -139,7 +141,7 @@ export function HomePage() {
       </section>
 
       {/* Trending */}
-      <TrendingRail />
+      <TrendingRail city={city} />
 
       {/* Shops near you */}
       <section className="space-y-6">

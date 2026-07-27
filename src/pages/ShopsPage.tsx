@@ -5,12 +5,14 @@ import { getShopCategories, getShops } from '@/api/shops'
 import { CategoryChips } from '@/components/category/CategoryChips'
 import { PageHeader } from '@/components/PageHeader'
 import { ShopCard } from '@/components/shop/ShopCard'
+import { useCustomerCity } from '@/hooks/useCustomerCity'
 import type { PublicShopCategorySummary, PublicShopSummary } from '@/types/api'
 
 export function ShopsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const search = searchParams.get('search') ?? ''
   const category = searchParams.get('category') ?? ''
+  const { city } = useCustomerCity()
 
   const [shops, setShops] = useState<PublicShopSummary[]>([])
   const [categories, setCategories] = useState<PublicShopCategorySummary[]>([])
@@ -26,6 +28,7 @@ export function ShopsPage() {
         const response = await getShops({
           search: search || undefined,
           category: category || undefined,
+          city,
         })
 
         if (!isMounted) {
@@ -52,7 +55,7 @@ export function ShopsPage() {
     return () => {
       isMounted = false
     }
-  }, [search, category])
+  }, [search, category, city])
 
   useEffect(() => {
     let isMounted = true

@@ -79,6 +79,8 @@ export interface ShopFormValues {
   city: string
   area: string
   pincode: string
+  latitude: number | null
+  longitude: number | null
   openingTime: string
   closingTime: string
   deliveryEnabled: boolean
@@ -101,6 +103,8 @@ export interface ShopPayload {
   city?: string
   area?: string
   pincode?: string
+  latitude?: number | null
+  longitude?: number | null
   openingTime?: string
   closingTime?: string
   deliveryEnabled?: boolean
@@ -121,4 +125,9 @@ export interface ShopListResponse {
   meta: ApiMeta & {
     total: number
   }
+}
+
+export interface ShopLogoUploadResponse {
+  item: { url: string }
+  meta: ApiMeta
 }

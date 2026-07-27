@@ -6,6 +6,8 @@ import type {
   LogoutResponse,
   RegisterCustomerPayload,
   RegisterShopOwnerPayload,
+  SendOtpResponse,
+  VerifyOtpResponse,
 } from '@/types/auth'
 
 export async function login(payload: LoginPayload) {
@@ -46,6 +48,20 @@ export async function fetchMe() {
 
 export async function logout() {
   const { data } = await httpClient.post<LogoutResponse>('/auth/logout')
+
+  return data
+}
+
+export async function sendEmailOtp() {
+  const { data } = await httpClient.post<SendOtpResponse>('/auth/otp/send')
+
+  return data
+}
+
+export async function verifyEmailOtp(code: string) {
+  const { data } = await httpClient.post<VerifyOtpResponse>('/auth/otp/verify', {
+    code,
+  })
 
   return data
 }

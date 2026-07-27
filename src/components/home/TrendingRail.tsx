@@ -6,6 +6,7 @@ import type { PublicSearchResultItem } from '@/types/api'
 
 interface TrendingRailProps {
   category?: string
+  city?: string
   limit?: number
   title?: string
 }
@@ -15,7 +16,12 @@ interface TrendingRailProps {
  * signal (see `meta.strategy` on `/public/trending`) — labelled generically here so the UI copy
  * doesn't overclaim.
  */
-export function TrendingRail({ category, limit = 12, title = 'Popular right now' }: TrendingRailProps) {
+export function TrendingRail({
+  category,
+  city,
+  limit = 12,
+  title = 'Popular right now',
+}: TrendingRailProps) {
   const [items, setItems] = useState<PublicSearchResultItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
@@ -27,7 +33,7 @@ export function TrendingRail({ category, limit = 12, title = 'Popular right now'
       setIsLoading(true)
 
       try {
-        const response = await getTrendingProducts({ category, limit })
+        const response = await getTrendingProducts({ category, city, limit })
 
         if (isMounted) {
           setItems(response.items)
@@ -49,7 +55,7 @@ export function TrendingRail({ category, limit = 12, title = 'Popular right now'
     return () => {
       isMounted = false
     }
-  }, [category, limit])
+  }, [category, city, limit])
 
   if (!isLoading && !hasError && items.length === 0) {
     return null

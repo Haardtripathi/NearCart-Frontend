@@ -90,7 +90,10 @@ export function RegisterShopOwnerPage() {
         businessName: formValues.businessName,
         gstNumber: formValues.gstNumber.trim() || undefined,
       })
-      navigate(user.dashboardPath, { replace: true })
+      navigate(
+        `/verify-email?redirect=${encodeURIComponent(user.dashboardPath)}`,
+        { replace: true },
+      )
     } catch (error) {
       setSubmitError(
         getApiErrorMessage(error, 'Unable to create your shop owner account right now.'),

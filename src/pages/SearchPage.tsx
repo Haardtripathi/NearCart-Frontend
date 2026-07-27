@@ -5,6 +5,7 @@ import { searchCatalog } from '@/api/shops'
 import { PageHeader } from '@/components/PageHeader'
 import { TrendingRail } from '@/components/home/TrendingRail'
 import { CrossShopProductCard } from '@/components/shop/CrossShopProductCard'
+import { useCustomerCity } from '@/hooks/useCustomerCity'
 import type { PublicSearchResultItem } from '@/types/api'
 
 const MIN_QUERY_LENGTH = 2
@@ -13,6 +14,7 @@ export function SearchPage() {
   const [searchParams] = useSearchParams()
   const query = (searchParams.get('q') ?? '').trim()
   const isValidQuery = query.length >= MIN_QUERY_LENGTH
+  const { city } = useCustomerCity()
 
   const [items, setItems] = useState<PublicSearchResultItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -31,7 +33,7 @@ export function SearchPage() {
       setIsLoading(true)
 
       try {
-        const response = await searchCatalog(query, { limit: 36 })
+        const response = await searchCatalog(query, { city, limit: 36 })
 
         if (isMounted) {
           setItems(response.items)
@@ -53,7 +55,7 @@ export function SearchPage() {
     return () => {
       isMounted = false
     }
-  }, [query, isValidQuery])
+  }, [query, isValidQuery, city])
 
   return (
     <div className="space-y-12">
@@ -100,7 +102,10 @@ export function SearchPage() {
         )
       ) : null}
 
-      <TrendingRail title={isValidQuery ? 'You might also like' : 'Popular right now'} />
+      <TrendingRail
+        city={city}
+        title={isValidQuery ? 'You might also like' : 'Popular right now'}
+      />
     </div>
   )
 }

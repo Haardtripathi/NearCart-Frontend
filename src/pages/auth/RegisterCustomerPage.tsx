@@ -80,7 +80,10 @@ export function RegisterCustomerPage() {
         phone: formValues.phone.trim() || undefined,
         password: formValues.password,
       })
-      navigate(user.dashboardPath, { replace: true })
+      navigate(
+        `/verify-email?redirect=${encodeURIComponent(user.dashboardPath)}`,
+        { replace: true },
+      )
     } catch (error) {
       setSubmitError(
         getApiErrorMessage(error, 'Unable to create your customer account right now.'),

@@ -1,13 +1,32 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { createShop, getShopOwnerShop, updateShop } from '@/api/shopOwner'
+import {
+  createShop,
+  getShopOwnerShop,
+  updateShop,
+  uploadShopLogo,
+} from '@/api/shopOwner'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
+import {
+  SHOP_FORM_STEPS,
+  ShopBasicsFields,
+  ShopFormStepIndicator,
+  ShopHoursDeliveryFields,
+  ShopLocationContactFields,
+  ShopPhotoFields,
+} from '@/components/dashboard/shop-owner/ShopFormSteps'
+import type { PickedLocation } from '@/components/dashboard/shop-owner/ShopFormSteps'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import type { ManagedShop, ShopFormValues, ShopPayload } from '@/types/shop-owner'
 import { getApiErrorMessage } from '@/utils/api'
+
+// Matches the backend's default IMAGE_UPLOAD_MAX_BYTES (backend/src/config/env.ts) — kept as a
+// literal here since the frontend has no runtime visibility into the backend's env config; if
+// the backend default ever changes this should be updated to match.
+const MAX_LOGO_UPLOAD_BYTES = 5 * 1024 * 1024
 
 const initialFormValues: ShopFormValues = {
   name: '',
@@ -21,6 +40,8 @@ const initialFormValues: ShopFormValues = {
   city: '',
   area: '',
   pincode: '',
+  latitude: null,
+  longitude: null,
   openingTime: '',
   closingTime: '',
   deliveryEnabled: true,
@@ -48,6 +69,8 @@ function getFormValues(shop?: ManagedShop): ShopFormValues {
     city: shop.city,
     area: shop.area || '',
     pincode: shop.pincode,
+    latitude: shop.latitude,
+    longitude: shop.longitude,
     openingTime: shop.openingTime || '',
     closingTime: shop.closingTime || '',
     deliveryEnabled: shop.deliveryEnabled,
@@ -102,6 +125,8 @@ function buildPayload(values: ShopFormValues): ShopPayload {
     city: values.city,
     area: values.area,
     pincode: values.pincode,
+    latitude: values.latitude,
+    longitude: values.longitude,
     openingTime: values.openingTime,
     closingTime: values.closingTime,
     deliveryEnabled: values.deliveryEnabled,
@@ -139,6 +164,13 @@ export function ShopOwnerShopFormPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
+  const [logoUploadError, setLogoUploadError] = useState<string | null>(null)
+  // Wizard state only used in create mode — an existing shop is edited as a single page (see
+  // reasoning in the report: stepping through 4 screens to fix one field on an established shop
+  // is friction, not help).
+  const [currentStep, setCurrentStep] = useState(0)
+  const isLastStep = currentStep === SHOP_FORM_STEPS.length - 1
 
   useEffect(() => {
     let isMounted = true
@@ -193,13 +225,123 @@ export function ShopOwnerShopFormPage() {
     }))
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  function handleLocationChange(location: PickedLocation) {
+    setFormValues((currentState) => ({
+      ...currentState,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      // Only fill in text fields the user hasn't already typed something into — the pin/search
+      // result is a convenience prefill, not an override of manual edits. Same convention as
+      // CustomerAddressesPage's handleLocationChange.
+      addressLine1:
+        currentState.addressLine1 ||
+        location.formattedAddress ||
+        currentState.addressLine1,
+      city: currentState.city || location.addressComponents?.city || currentState.city,
+      area: currentState.area || location.addressComponents?.area || currentState.area,
+      pincode:
+        currentState.pincode || location.addressComponents?.pincode || currentState.pincode,
+    }))
+    setFieldErrors((currentState) => ({
+      ...currentState,
+      addressLine1: undefined,
+      city: undefined,
+      pincode: undefined,
+    }))
+  }
 
+  async function handleLogoFileChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (!file || !shopId) {
+      return
+    }
+
+    // Mirror the backend's multer fileFilter (mimetype must start with "image/") and
+    // IMAGE_UPLOAD_MAX_BYTES limit (default 5MB — see backend/src/config/env.ts and
+    // backend/src/modules/uploads/uploads.routes.ts) client-side. Without this, picking a huge
+    // or non-image file silently starts a slow upload that only fails after the full transfer,
+    // instead of giving the user an instant, clear error.
+    if (!file.type.startsWith('image/')) {
+      setLogoUploadError('Only image files are supported.')
+      return
+    }
+
+    if (file.size > MAX_LOGO_UPLOAD_BYTES) {
+      setLogoUploadError(
+        `Image must be smaller than ${Math.floor(MAX_LOGO_UPLOAD_BYTES / (1024 * 1024))}MB.`,
+      )
+      return
+    }
+
+    setLogoUploadError(null)
+    setIsUploadingLogo(true)
+
+    try {
+      const response = await uploadShopLogo(shopId, file)
+
+      updateField('logoImageUrl', response.item.url)
+    } catch (error) {
+      setLogoUploadError(
+        getApiErrorMessage(error, 'Unable to upload this image right now.'),
+      )
+    } finally {
+      setIsUploadingLogo(false)
+    }
+  }
+
+  function handleNextStep() {
+    const allErrors = validate(formValues)
+    const stepFields = SHOP_FORM_STEPS[currentStep].fields
+    const hasStepError = stepFields.some((field) => allErrors[field])
+
+    // Only surface/clear errors for fields that belong to the step being left — steps further
+    // ahead haven't been visited yet and shouldn't show errors prematurely.
+    setFieldErrors((current) => {
+      const next = { ...current }
+      stepFields.forEach((field) => {
+        next[field] = allErrors[field]
+      })
+      return next
+    })
+
+    if (hasStepError) {
+      return
+    }
+
+    setCurrentStep((step) => Math.min(step + 1, SHOP_FORM_STEPS.length - 1))
+  }
+
+  function handleBackStep() {
+    setCurrentStep((step) => Math.max(step - 1, 0))
+  }
+
+  function handleStepSelect(index: number) {
+    // Jumping back to an already-visited step is fine; jumping ahead has to go through "Next"
+    // so per-step validation can't be skipped.
+    if (index <= currentStep) {
+      setCurrentStep(index)
+    }
+  }
+
+  async function submitShop() {
     const nextErrors = validate(formValues)
     setFieldErrors(nextErrors)
 
     if (Object.keys(nextErrors).length > 0) {
+      if (!isEditMode) {
+        const firstErrorStepIndex = SHOP_FORM_STEPS.findIndex((step) =>
+          step.fields.some((field) => nextErrors[field]),
+        )
+
+        if (firstErrorStepIndex !== -1) {
+          setCurrentStep(firstErrorStepIndex)
+        }
+      }
+
       return
     }
 
@@ -236,9 +378,24 @@ export function ShopOwnerShopFormPage() {
     }
   }
 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    // In the create wizard, every step except the last submits by advancing instead of
+    // saving — the actual create/update API call only ever fires from the final step.
+    if (!isEditMode && !isLastStep) {
+      handleNextStep()
+      return
+    }
+
+    await submitShop()
+  }
+
   if (isLoading) {
     return <LoadingScreen message="Loading your shop..." />
   }
+
+  const currentStepDefinition = SHOP_FORM_STEPS[currentStep]
 
   return (
     <div className="space-y-6">
@@ -250,288 +407,118 @@ export function ShopOwnerShopFormPage() {
 
       <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <DashboardCard
-          description="Keep your merchant-facing shop details accurate so future storefront exposure, approvals, and operations can build on the same record."
+          description={
+            isEditMode
+              ? 'Keep your merchant-facing shop details accurate so future storefront exposure, approvals, and operations can build on the same record.'
+              : 'Set up your shop step by step — you can always come back and adjust any of these details later.'
+          }
           title={shop ? 'Edit shop' : 'New shop'}
         >
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">Shop name</span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  onChange={(event) => updateField('name', event.target.value)}
-                  value={formValues.name}
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {isEditMode ? (
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    Basics
+                  </h3>
+                  <ShopBasicsFields
+                    fieldErrors={fieldErrors}
+                    formValues={formValues}
+                    updateField={updateField}
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    Location & contact
+                  </h3>
+                  <ShopLocationContactFields
+                    fieldErrors={fieldErrors}
+                    formValues={formValues}
+                    onLocationChange={handleLocationChange}
+                    updateField={updateField}
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    Photo
+                  </h3>
+                  <ShopPhotoFields
+                    formValues={formValues}
+                    isUploadingLogo={isUploadingLogo}
+                    logoUploadError={logoUploadError}
+                    onLogoFileChange={handleLogoFileChange}
+                    shopId={shopId}
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    Hours & delivery
+                  </h3>
+                  <ShopHoursDeliveryFields
+                    fieldErrors={fieldErrors}
+                    formValues={formValues}
+                    updateField={updateField}
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                <ShopFormStepIndicator
+                  currentStepIndex={currentStep}
+                  onStepSelect={handleStepSelect}
+                  steps={SHOP_FORM_STEPS}
                 />
-                {fieldErrors.name ? (
-                  <span className="text-sm text-rose-600">{fieldErrors.name}</span>
-                ) : null}
-              </label>
 
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">Category</span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  onChange={(event) =>
-                    updateField('category', event.target.value)
-                  }
-                  value={formValues.category}
-                />
-                {fieldErrors.category ? (
-                  <span className="text-sm text-rose-600">
-                    {fieldErrors.category}
-                  </span>
-                ) : null}
-              </label>
-            </div>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-display text-lg text-ink-900">
+                      {currentStepDefinition.label}
+                    </h3>
+                    <p className="text-sm text-slate-500">
+                      {currentStepDefinition.description}
+                    </p>
+                  </div>
 
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
-                Description
-              </span>
-              <textarea
-                className="min-h-28 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                onChange={(event) =>
-                  updateField('description', event.target.value)
-                }
-                value={formValues.description}
-              />
-            </label>
+                  {currentStep === 0 ? (
+                    <ShopBasicsFields
+                      fieldErrors={fieldErrors}
+                      formValues={formValues}
+                      updateField={updateField}
+                    />
+                  ) : null}
 
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
-                Logo image URL
-              </span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                onChange={(event) =>
-                  updateField('logoImageUrl', event.target.value)
-                }
-                placeholder="https://..."
-                value={formValues.logoImageUrl}
-              />
-            </label>
+                  {currentStep === 1 ? (
+                    <ShopLocationContactFields
+                      fieldErrors={fieldErrors}
+                      formValues={formValues}
+                      onLocationChange={handleLocationChange}
+                      updateField={updateField}
+                    />
+                  ) : null}
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">Phone</span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  onChange={(event) => updateField('phone', event.target.value)}
-                  value={formValues.phone}
-                />
-                {fieldErrors.phone ? (
-                  <span className="text-sm text-rose-600">{fieldErrors.phone}</span>
-                ) : null}
-              </label>
+                  {currentStep === 2 ? (
+                    <ShopPhotoFields
+                      formValues={formValues}
+                      isUploadingLogo={isUploadingLogo}
+                      logoUploadError={logoUploadError}
+                      onLogoFileChange={handleLogoFileChange}
+                      shopId={shopId}
+                    />
+                  ) : null}
 
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">Email</span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  onChange={(event) => updateField('email', event.target.value)}
-                  value={formValues.email}
-                />
-              </label>
-            </div>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
-                Address line 1
-              </span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                onChange={(event) =>
-                  updateField('addressLine1', event.target.value)
-                }
-                value={formValues.addressLine1}
-              />
-              {fieldErrors.addressLine1 ? (
-                <span className="text-sm text-rose-600">
-                  {fieldErrors.addressLine1}
-                </span>
-              ) : null}
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
-                Address line 2
-              </span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                onChange={(event) =>
-                  updateField('addressLine2', event.target.value)
-                }
-                value={formValues.addressLine2}
-              />
-            </label>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">City</span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  onChange={(event) => updateField('city', event.target.value)}
-                  value={formValues.city}
-                />
-                {fieldErrors.city ? (
-                  <span className="text-sm text-rose-600">{fieldErrors.city}</span>
-                ) : null}
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">Area</span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  onChange={(event) => updateField('area', event.target.value)}
-                  value={formValues.area}
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">Pincode</span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  onChange={(event) =>
-                    updateField('pincode', event.target.value)
-                  }
-                  value={formValues.pincode}
-                />
-                {fieldErrors.pincode ? (
-                  <span className="text-sm text-rose-600">{fieldErrors.pincode}</span>
-                ) : null}
-              </label>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">
-                  Opening time
-                </span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  onChange={(event) =>
-                    updateField('openingTime', event.target.value)
-                  }
-                  placeholder="09:00"
-                  value={formValues.openingTime}
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">
-                  Closing time
-                </span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  onChange={(event) =>
-                    updateField('closingTime', event.target.value)
-                  }
-                  placeholder="21:00"
-                  value={formValues.closingTime}
-                />
-              </label>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">
-                  Minimum order amount
-                </span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  min={0}
-                  onChange={(event) =>
-                    updateField(
-                      'minimumOrderAmount',
-                      Number.parseInt(event.target.value || '0', 10),
-                    )
-                  }
-                  type="number"
-                  value={formValues.minimumOrderAmount}
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">
-                  Default delivery fee
-                </span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  min={0}
-                  onChange={(event) =>
-                    updateField(
-                      'deliveryFeeDefault',
-                      Number.parseInt(event.target.value || '0', 10),
-                    )
-                  }
-                  type="number"
-                  value={formValues.deliveryFeeDefault}
-                />
-              </label>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">
-                  Estimated delivery minutes
-                </span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  min={0}
-                  onChange={(event) =>
-                    updateField(
-                      'estimatedDeliveryMinutes',
-                      event.target.value
-                        ? Number.parseInt(event.target.value, 10)
-                        : null,
-                    )
-                  }
-                  type="number"
-                  value={formValues.estimatedDeliveryMinutes ?? ''}
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">
-                  Service radius (km)
-                </span>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
-                  min={0}
-                  onChange={(event) =>
-                    updateField(
-                      'serviceRadiusKm',
-                      event.target.value
-                        ? Number.parseFloat(event.target.value)
-                        : null,
-                    )
-                  }
-                  step="0.1"
-                  type="number"
-                  value={formValues.serviceRadiusKm ?? ''}
-                />
-              </label>
-            </div>
-
-            <label className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              <input
-                checked={formValues.deliveryEnabled}
-                onChange={(event) =>
-                  updateField('deliveryEnabled', event.target.checked)
-                }
-                type="checkbox"
-              />
-              <span>Enable delivery for the public storefront</span>
-            </label>
-
-            <label className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              <input
-                checked={formValues.isActive}
-                onChange={(event) => updateField('isActive', event.target.checked)}
-                type="checkbox"
-              />
-              <span>Shop is active and ready for future operations</span>
-            </label>
+                  {currentStep === 3 ? (
+                    <ShopHoursDeliveryFields
+                      fieldErrors={fieldErrors}
+                      formValues={formValues}
+                      updateField={updateField}
+                    />
+                  ) : null}
+                </div>
+              </>
+            )}
 
             {submitError ? (
               <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -546,6 +533,16 @@ export function ShopOwnerShopFormPage() {
             ) : null}
 
             <div className="flex flex-wrap gap-3">
+              {!isEditMode && currentStep > 0 ? (
+                <button
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
+                  onClick={handleBackStep}
+                  type="button"
+                >
+                  Back
+                </button>
+              ) : null}
+
               <button
                 className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSaving}
@@ -553,10 +550,13 @@ export function ShopOwnerShopFormPage() {
               >
                 {isSaving
                   ? 'Saving...'
-                  : shop
+                  : isEditMode
                     ? 'Save shop changes'
-                    : 'Create shop'}
+                    : isLastStep
+                      ? 'Create shop'
+                      : 'Next'}
               </button>
+
               <Link
                 className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
                 to="/dashboard/shop-owner/shops"

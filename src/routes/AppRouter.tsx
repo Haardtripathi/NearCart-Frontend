@@ -19,6 +19,7 @@ import { ShopsPage } from '@/pages/ShopsPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterCustomerPage } from '@/pages/auth/RegisterCustomerPage'
 import { RegisterShopOwnerPage } from '@/pages/auth/RegisterShopOwnerPage'
+import { VerifyEmailPage } from '@/pages/auth/VerifyEmailPage'
 import { DashboardIndexPage } from '@/pages/dashboard/DashboardIndexPage'
 import { AdminApprovalsPage } from '@/pages/dashboard/admin/AdminApprovalsPage'
 import { AdminDashboardPage } from '@/pages/dashboard/admin/AdminDashboardPage'
@@ -46,6 +47,7 @@ export function AppRouter() {
           <Route path="search" element={<SearchPage />} />
           <Route path="cart" element={<CartPage />} />
           <Route element={<ProtectedRoute />}>
+            <Route path="verify-email" element={<VerifyEmailPage />} />
             <Route element={<RoleRoute allowedRoles={['CUSTOMER']} />}>
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="order-success/:orderId" element={<OrderSuccessPage />} />

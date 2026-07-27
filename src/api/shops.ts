@@ -28,10 +28,12 @@ export interface ShopGeoQuery {
   lng?: number
   search?: string
   category?: string
+  city?: string
 }
 
 export interface CrossShopQuery {
   category?: string
+  city?: string
   limit?: number
   lang?: string
 }

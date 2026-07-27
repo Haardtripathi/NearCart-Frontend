@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import brandMark from '@/assets/nearkart-mark.svg'
+import { VerifyEmailBanner } from '@/components/auth/VerifyEmailBanner'
 import { HeaderSearchBar } from '@/components/search/HeaderSearchBar'
 import { primaryNavigation } from '@/routes/navigation'
 import { useAuthStore } from '@/store/authStore'
@@ -113,6 +114,7 @@ export function MainLayout() {
       </header>
 
       <main className="mx-auto w-full max-w-7xl px-6 py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-16">
+        <VerifyEmailBanner />
         <Outlet />
       </main>
 

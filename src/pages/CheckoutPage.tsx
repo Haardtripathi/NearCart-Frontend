@@ -373,6 +373,31 @@ export function CheckoutPage() {
     }
   }
 
+  if (user && !user.isVerified) {
+    return (
+      <div className="space-y-8">
+        <PageHeader
+          eyebrow="Checkout"
+          title="Verify your email to continue."
+          description="For order confirmations and delivery updates to reach you reliably, verify your email address before placing an order."
+        />
+
+        <article className="rounded-[1.75rem] border border-amber-200 bg-amber-50/90 p-8 text-center shadow-[0_20px_70px_-45px_rgba(17,33,23,0.45)]">
+          <p className="text-sm leading-7 text-amber-900">
+            Your account isn&apos;t verified yet. It only takes a minute — we&apos;ll send a
+            6-digit code to your email.
+          </p>
+          <Link
+            className="mt-6 inline-flex rounded-full bg-amber-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-amber-800"
+            to="/verify-email?redirect=/checkout"
+          >
+            Verify email now
+          </Link>
+        </article>
+      </div>
+    )
+  }
+
   if (!hasItems || !shopId || !shopName) {
     return (
       <div className="space-y-8">

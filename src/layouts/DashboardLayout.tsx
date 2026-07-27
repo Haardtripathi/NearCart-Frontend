@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import brandMark from '@/assets/nearkart-mark.svg'
 import { StatusPill } from '@/components/StatusPill'
+import { VerifyEmailBanner } from '@/components/auth/VerifyEmailBanner'
 import { formatRoleLabel } from '@/utils/auth'
 import { useAuthStore } from '@/store/authStore'
 
@@ -143,6 +144,7 @@ export function DashboardLayout() {
           </header>
 
           <main>
+            <VerifyEmailBanner />
             <Outlet />
           </main>
         </div>
