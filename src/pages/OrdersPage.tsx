@@ -74,7 +74,7 @@ export function OrdersPage() {
               />
             ))}
           </div>
-        ) : orders.length === 0 ? (
+        ) : errorMessage ? null : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-[2rem] bg-ink-50 text-5xl">
               📦

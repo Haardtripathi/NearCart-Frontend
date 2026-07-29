@@ -58,7 +58,9 @@ export function MainLayout() {
           </div>
 
           <nav className="flex flex-1 flex-wrap justify-start gap-1 rounded-2xl border border-ink-100/50 bg-ink-50/30 p-1 md:w-auto md:flex-none md:justify-end">
-            {primaryNavigation.map((item) => (
+            {primaryNavigation
+              .filter((item) => !item.customerOnly || !user || user.role === 'CUSTOMER')
+              .map((item) => (
               <NavLink key={item.to} className={navLinkClassName} to={item.to}>
                 <span className="inline-flex items-center gap-2">
                   <span>{item.label}</span>

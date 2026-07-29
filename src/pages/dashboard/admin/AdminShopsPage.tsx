@@ -135,6 +135,12 @@ export function AdminShopsPage() {
           </div>
         ) : null}
 
+        {shops.length === 0 && !errorMessage ? (
+          <div className="rounded-[1.35rem] bg-slate-50 px-4 py-5 text-sm text-slate-600">
+            No shops have been registered on the platform yet.
+          </div>
+        ) : null}
+
         <div className="space-y-4">
           {shops.map((shop) => {
             const selectedOrganization = inventoryOrganizations.find(
@@ -197,7 +203,11 @@ export function AdminShopsPage() {
                     }}
                     value={shop.inventoryOrganizationId ?? ''}
                   >
-                    <option value="">Select inventory organization</option>
+                    <option value="">
+                      {inventoryOrganizations.length > 0
+                        ? 'Select inventory organization'
+                        : 'No inventory organizations available'}
+                    </option>
                     {inventoryOrganizations.map((organization) => (
                       <option key={organization.id} value={organization.id}>
                         {organization.name}
@@ -239,6 +249,13 @@ export function AdminShopsPage() {
                     {savingShopId === shop.id ? 'Saving...' : 'Save mapping'}
                   </button>
                 </div>
+
+                {inventoryOrganizations.length === 0 ? (
+                  <p className="mt-2 text-xs text-slate-500">
+                    No organizations were found in NearCart-Inventory yet — a shop can&apos;t be
+                    mapped until at least one exists there.
+                  </p>
+                ) : null}
 
                 <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-600">
                   <label className="inline-flex items-center gap-2">

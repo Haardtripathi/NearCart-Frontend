@@ -85,11 +85,11 @@ export function OrderSuccessPage() {
             <div className="space-y-8">
               <div className="flex items-center justify-between border-b border-ink-50 pb-6">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400 font-bold uppercase">Order Number</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">Order Number</p>
                   <p className="mt-1 text-2xl font-bold text-ink-900">#{order.orderNumber}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400 font-bold uppercase">Amount Paid</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">Amount Paid</p>
                   <p className="mt-1 text-2xl font-bold text-nearkart-600">{formatCurrency(order.totalAmount)}</p>
                 </div>
               </div>

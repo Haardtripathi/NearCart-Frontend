@@ -103,13 +103,7 @@ export function CustomerAddressesPage() {
 
     async function loadPage() {
       try {
-        const response = await getCustomerAddresses()
-
-        if (!isMounted) {
-          return
-        }
-
-        setAddresses(response.items)
+        await loadAddresses()
       } catch (error) {
         if (!isMounted) {
           return

@@ -466,6 +466,7 @@ export function CheckoutPage() {
       <div className="grid gap-12 lg:grid-cols-[1fr_350px]">
         <form
           className="space-y-8"
+          id="checkout-form"
           onSubmit={handleSubmit}
         >
           {/* Section 1: Identity */}
@@ -674,10 +675,8 @@ export function CheckoutPage() {
                 <button
                   className="flex w-full h-14 items-center justify-center rounded-xl bg-nearkart-600 text-sm font-bold text-white shadow-md shadow-nearkart-600/20 transition hover:bg-nearkart-700 active:scale-95 disabled:grayscale disabled:opacity-50"
                   disabled={isSubmitting || isValidatingCart}
-                  onClick={(e) => {
-                    const form = e.currentTarget.closest('div')?.closest('aside')?.previousSibling as HTMLFormElement;
-                    form?.requestSubmit();
-                  }}
+                  form="checkout-form"
+                  type="submit"
                 >
                   {isSubmitting ? 'Placing Order...' : isValidatingCart ? 'Validating...' : 'Place My Order'}
                 </button>

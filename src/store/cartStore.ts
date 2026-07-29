@@ -26,15 +26,15 @@ const initialCartState: CartSnapshot = {
 }
 
 function clampQuantity(item: CartItem, quantity: number) {
-  const minimumQuantity = 1
-  const normalizedQuantity = Number.isFinite(quantity)
-    ? Math.floor(quantity)
-    : minimumQuantity
+  const normalizedQuantity = Number.isFinite(quantity) ? Math.floor(quantity) : 1
+  // Cap at whatever stock actually remains — when an item has gone out of stock (stockQty 0)
+  // since it was added, the floor must drop to 0 too, not stay pinned at 1. A hardcoded
+  // `Math.max(1, item.stockQty)` here previously meant a 0-stock item could never be clamped
+  // below quantity 1, silently keeping an unavailable item "active" in the cart.
+  const maxQuantity = Math.max(0, item.stockQty)
+  const minQuantity = maxQuantity > 0 ? 1 : 0
 
-  return Math.min(
-    Math.max(minimumQuantity, normalizedQuantity),
-    Math.max(minimumQuantity, item.stockQty),
-  )
+  return Math.min(Math.max(minQuantity, normalizedQuantity), maxQuantity)
 }
 
 function withUpdatedItemQuantity(

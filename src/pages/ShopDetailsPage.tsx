@@ -294,7 +294,7 @@ export function ShopDetailsPage() {
               })}
           </div>
 
-          {!isLoading && products.length === 0 ? (
+          {!isLoading && !errorMessage && products.length === 0 ? (
             <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-ink-100 bg-white/50 p-12 text-center">
               <div className="mb-4 text-3xl">🔍</div>
               <h3 className="font-display text-lg font-bold text-ink-900">No products found</h3>

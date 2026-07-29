@@ -67,50 +67,56 @@ export function AdminUsersPage() {
           </div>
         ) : null}
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
-            <thead>
-              <tr className="text-slate-500">
-                <th className="pb-3 font-medium">User</th>
-                <th className="pb-3 font-medium">Role</th>
-                <th className="pb-3 font-medium">Merchant</th>
-                <th className="pb-3 font-medium">Stats</th>
-                <th className="pb-3 font-medium">Joined</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td className="py-4">
-                    <p className="font-semibold text-ink-900">{user.fullName}</p>
-                    <p className="text-sm text-slate-500">{user.email}</p>
-                  </td>
-                  <td className="py-4">
-                    <StatusPill label={user.role.replaceAll('_', ' ')} tone="neutral" />
-                  </td>
-                  <td className="py-4">
-                    {user.businessName ? (
-                      <div className="space-y-1">
-                        <p className="font-medium text-ink-900">{user.businessName}</p>
-                        <StatusPill
-                          label={user.shopOwnerApproved ? 'Approved' : 'Pending'}
-                          tone={user.shopOwnerApproved ? 'success' : 'warning'}
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-slate-500">Not applicable</span>
-                    )}
-                  </td>
-                  <td className="py-4">
-                    <p>Orders: {user.orderCount}</p>
-                    <p>Addresses: {user.addressCount}</p>
-                  </td>
-                  <td className="py-4">{formatDateTime(user.createdAt)}</td>
+        {users.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
+              <thead>
+                <tr className="text-slate-500">
+                  <th className="pb-3 font-medium">User</th>
+                  <th className="pb-3 font-medium">Role</th>
+                  <th className="pb-3 font-medium">Merchant</th>
+                  <th className="pb-3 font-medium">Stats</th>
+                  <th className="pb-3 font-medium">Joined</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    <td className="py-4">
+                      <p className="font-semibold text-ink-900">{user.fullName}</p>
+                      <p className="text-sm text-slate-500">{user.email}</p>
+                    </td>
+                    <td className="py-4">
+                      <StatusPill label={user.role.replaceAll('_', ' ')} tone="neutral" />
+                    </td>
+                    <td className="py-4">
+                      {user.businessName ? (
+                        <div className="space-y-1">
+                          <p className="font-medium text-ink-900">{user.businessName}</p>
+                          <StatusPill
+                            label={user.shopOwnerApproved ? 'Approved' : 'Pending'}
+                            tone={user.shopOwnerApproved ? 'success' : 'warning'}
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-slate-500">Not applicable</span>
+                      )}
+                    </td>
+                    <td className="py-4">
+                      <p>Orders: {user.orderCount}</p>
+                      <p>Addresses: {user.addressCount}</p>
+                    </td>
+                    <td className="py-4">{formatDateTime(user.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : errorMessage ? null : (
+          <div className="rounded-[1.35rem] bg-slate-50 px-4 py-5 text-sm text-slate-600">
+            No platform users found yet.
+          </div>
+        )}
       </DashboardCard>
     </div>
   )

@@ -159,8 +159,8 @@ export function ShopsPage() {
               />
             ))}
           </div>
-        ) : shops.length === 0 ? (
-          <div className="min-h-[400px] rounded-[2.5rem] border border-dashed border-ink-200 bg-ink-50/50 p-8 sm:p-12">
+        ) : errorMessage ? null : shops.length === 0 ? (
+          <div className="flex min-h-[400px] items-center justify-center rounded-[2.5rem] border border-dashed border-ink-200 bg-ink-50/50 p-8 sm:p-12">
             <div className="mx-auto flex max-w-sm flex-col items-center text-center">
               <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white text-4xl shadow-sm">
                 🏪

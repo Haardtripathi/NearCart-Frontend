@@ -9,7 +9,7 @@ import {
   registerCustomer,
   registerShopOwner,
 } from '@/api/auth'
-import { setHttpAccessToken } from '@/api/http'
+import { registerUnauthorizedHandlers, setHttpAccessToken } from '@/api/http'
 import type {
   AuthResponse,
   AuthUser,
@@ -206,3 +206,24 @@ export const useAuthStore = create<AuthStore>()(
     },
   ),
 )
+
+// Lets `httpClient` (src/api/http.ts) transparently refresh an expired access token and retry a
+// request that 401'd mid-session, instead of leaving the user stuck until a hard page reload.
+// Only engages once `restoreSession()` has already run once (see `hasRestoredSession` below), so
+// it never races with that initial bootstrap flow's own fallback-to-refresh logic.
+registerUnauthorizedHandlers({
+  hasRestoredSession: () => useAuthStore.getState().hasRestoredSession,
+  refresh: async () => {
+    try {
+      const session = await refreshSession()
+      applySessionState(useAuthStore.setState, session)
+
+      return session.accessToken
+    } catch {
+      return null
+    }
+  },
+  onRefreshFailed: () => {
+    useAuthStore.getState().clearSession()
+  },
+})

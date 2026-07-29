@@ -36,7 +36,7 @@ export function CartPage() {
       />
 
       {!hasItems ? (
-        <div className="min-h-[450px] rounded-[3rem] border border-dashed border-ink-200 bg-ink-50/50 p-8 sm:p-12">
+        <div className="flex min-h-[450px] items-center justify-center rounded-[3rem] border border-dashed border-ink-200 bg-ink-50/50 p-8 sm:p-12">
           <div className="mx-auto flex max-w-sm flex-col items-center text-center">
             <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-[2rem] bg-white text-5xl shadow-sm">
               🛒

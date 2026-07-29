@@ -67,43 +67,49 @@ export function AdminOrdersPage() {
           </div>
         ) : null}
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
-            <thead>
-              <tr className="text-slate-500">
-                <th className="pb-3 font-medium">Order</th>
-                <th className="pb-3 font-medium">Shop</th>
-                <th className="pb-3 font-medium">Customer</th>
-                <th className="pb-3 font-medium">Status</th>
-                <th className="pb-3 font-medium">Placed</th>
-                <th className="pb-3 font-medium">Total</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {orders.map((order) => (
-                <tr key={order.id}>
-                  <td className="py-4">
-                    <p className="font-semibold text-ink-900">{order.orderNumber}</p>
-                    <p className="text-sm text-slate-500">{order.paymentMethod}</p>
-                  </td>
-                  <td className="py-4">{order.shopName}</td>
-                  <td className="py-4">
-                    <p>{order.customerName}</p>
-                    <p className="text-sm text-slate-500">{order.customerPhone}</p>
-                  </td>
-                  <td className="py-4">
-                    <p>{order.status.replaceAll('_', ' ')}</p>
-                    <p className="text-sm text-slate-500">{order.paymentStatus}</p>
-                  </td>
-                  <td className="py-4">{formatDateTime(order.placedAt)}</td>
-                  <td className="py-4 font-semibold text-nearkart-700">
-                    {formatCurrency(order.totalAmount)}
-                  </td>
+        {orders.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
+              <thead>
+                <tr className="text-slate-500">
+                  <th className="pb-3 font-medium">Order</th>
+                  <th className="pb-3 font-medium">Shop</th>
+                  <th className="pb-3 font-medium">Customer</th>
+                  <th className="pb-3 font-medium">Status</th>
+                  <th className="pb-3 font-medium">Placed</th>
+                  <th className="pb-3 font-medium">Total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {orders.map((order) => (
+                  <tr key={order.id}>
+                    <td className="py-4">
+                      <p className="font-semibold text-ink-900">{order.orderNumber}</p>
+                      <p className="text-sm text-slate-500">{order.paymentMethod}</p>
+                    </td>
+                    <td className="py-4">{order.shopName}</td>
+                    <td className="py-4">
+                      <p>{order.customerName}</p>
+                      <p className="text-sm text-slate-500">{order.customerPhone}</p>
+                    </td>
+                    <td className="py-4">
+                      <p>{order.status.replaceAll('_', ' ')}</p>
+                      <p className="text-sm text-slate-500">{order.paymentStatus}</p>
+                    </td>
+                    <td className="py-4">{formatDateTime(order.placedAt)}</td>
+                    <td className="py-4 font-semibold text-nearkart-700">
+                      {formatCurrency(order.totalAmount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : errorMessage ? null : (
+          <div className="rounded-[1.35rem] bg-slate-50 px-4 py-5 text-sm text-slate-600">
+            No orders have been placed on the platform yet.
+          </div>
+        )}
       </DashboardCard>
     </div>
   )
