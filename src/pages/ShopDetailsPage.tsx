@@ -3,8 +3,10 @@ import { Link, useParams } from 'react-router-dom'
 
 import { getShopCatalog } from '@/api/shops'
 import { PageHeader } from '@/components/PageHeader'
+import { StarRating } from '@/components/StarRating'
 import { StatusPill } from '@/components/StatusPill'
 import { ProductCard } from '@/components/shop/ProductCard'
+import { ShopReviewsSection } from '@/components/shop/ShopReviewsSection'
 import { useCartStore } from '@/store/cartStore'
 import type { PublicCatalogProduct, PublicCatalogVariant, PublicShopDetail } from '@/types/api'
 import type { CartItem } from '@/types/cart'
@@ -184,6 +186,24 @@ export function ShopDetailsPage() {
         }
       />
 
+      {shop ? (
+        <div className="-mt-8 flex items-center gap-3">
+          {shop.averageRating != null ? (
+            <>
+              <StarRating value={shop.averageRating} />
+              <span className="text-sm font-bold text-ink-900">
+                {shop.averageRating.toFixed(1)}
+              </span>
+              <span className="text-sm text-ink-400">
+                ({shop.reviewCount} review{shop.reviewCount === 1 ? '' : 's'})
+              </span>
+            </>
+          ) : (
+            <span className="text-sm text-ink-400">No reviews yet</span>
+          )}
+        </div>
+      ) : null}
+
       {errorMessage ? (
         <section className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-sm text-rose-600">
           {errorMessage}
@@ -305,6 +325,13 @@ export function ShopDetailsPage() {
               >
                 Clear all filters
               </button>
+            </div>
+          ) : null}
+
+          {shop ? (
+            <div className="space-y-6">
+              <h3 className="font-display text-xl font-bold text-ink-900">Customer reviews</h3>
+              <ShopReviewsSection shopId={shop.id} />
             </div>
           ) : null}
         </div>

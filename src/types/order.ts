@@ -58,6 +58,13 @@ export interface OrderItem {
   lineTotal: number
 }
 
+export interface OrderReviewSummary {
+  id: string
+  rating: number
+  comment: string | null
+  createdAt: string
+}
+
 export interface Order {
   id: string
   orderNumber: string
@@ -94,6 +101,8 @@ export interface Order {
   /** True only while `status === 'PENDING_CONFIRMATION'` — drives whether a cancel button shows. */
   isCancellable: boolean
   items: OrderItem[]
+  /** Null until the customer has rated this (necessarily `DELIVERED`) order. */
+  review: OrderReviewSummary | null
 }
 
 export interface OrderPreview {
@@ -120,6 +129,18 @@ export interface OrderResponse {
 
 export interface OrderListResponse {
   items: OrderPreview[]
+  meta: ApiMeta & {
+    source: string
+  }
+}
+
+export interface CreateOrderReviewPayload {
+  rating: number
+  comment?: string
+}
+
+export interface OrderReviewResponse {
+  item: OrderReviewSummary
   meta: ApiMeta & {
     source: string
   }

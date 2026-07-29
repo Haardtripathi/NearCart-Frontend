@@ -62,6 +62,30 @@ export interface PublicShopDetail extends PublicShopSummary {
   openingTime: string | null
   closingTime: string | null
   serviceRadiusKm: number | null
+  /** `null` until the shop has at least one review. */
+  averageRating: number | null
+  reviewCount: number
+}
+
+export interface PublicShopReview {
+  id: string
+  rating: number
+  comment: string | null
+  createdAt: string
+  reviewerName: string
+}
+
+export interface PublicShopReviewsResponse {
+  items: PublicShopReview[]
+  meta: ApiMeta & {
+    source: string
+    page: number
+    limit: number
+    totalItems: number
+    totalPages: number
+    averageRating: number | null
+    reviewCount: number
+  }
 }
 
 export interface PublicCatalogVariant {

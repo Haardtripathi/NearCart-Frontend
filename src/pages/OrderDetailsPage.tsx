@@ -5,7 +5,8 @@ import { cancelOrder, getOrderById } from '@/api/orders'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { OrderStatusTimeline } from '@/components/order/OrderStatusTimeline'
-import type { Order } from '@/types/order'
+import { OrderReviewForm, SubmittedOrderReview } from '@/components/order/OrderReviewForm'
+import type { Order, OrderReviewSummary } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDateTime } from '@/utils/formatDateTime'
@@ -50,6 +51,10 @@ export function OrderDetailsPage() {
     // updates in Phase 1, so re-fetch on mount/navigation and let the visitor use "Refresh
     // status" (below) to check again without a full page reload.
   }, [loadOrder])
+
+  function handleReviewSubmitted(review: OrderReviewSummary) {
+    setOrder((currentOrder) => (currentOrder ? { ...currentOrder, review } : currentOrder))
+  }
 
   async function handleCancelOrder() {
     if (!order) {
@@ -180,6 +185,14 @@ export function OrderDetailsPage() {
                 ))}
               </div>
             </div>
+
+            {order.status === 'DELIVERED' ? (
+              order.review ? (
+                <SubmittedOrderReview review={order.review} />
+              ) : (
+                <OrderReviewForm onReviewSubmitted={handleReviewSubmitted} order={order} />
+              )
+            ) : null}
           </div>
 
           <aside className="space-y-6">

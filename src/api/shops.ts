@@ -7,6 +7,7 @@ import type {
   PublicShopCategoriesResponse,
   PublicShopListResponse,
   PublicShopResponse,
+  PublicShopReviewsResponse,
   PublicTrendingResponse,
 } from '@/types/api'
 
@@ -81,6 +82,18 @@ export async function getShopCatalogProduct(
     {
       params: lang ? { lang } : undefined,
     },
+  )
+
+  return data
+}
+
+export async function getShopReviews(
+  shopIdOrSlug: string,
+  query: { page?: number; limit?: number } = {},
+) {
+  const { data } = await httpClient.get<PublicShopReviewsResponse>(
+    `/public/shops/${shopIdOrSlug}/reviews`,
+    { params: query },
   )
 
   return data
