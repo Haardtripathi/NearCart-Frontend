@@ -112,6 +112,13 @@ export function CheckoutPage() {
   const [validationMessage, setValidationMessage] = useState<string | null>(null)
   const [isValidatingCart, setIsValidatingCart] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // Populated from the live cart-validation response's `summary` — the delivery fee and real
+  // total are only known server-side (shop delivery config), so until the first successful
+  // validation completes we have nothing to show for them but the item subtotal.
+  const [cartSummary, setCartSummary] = useState<{
+    deliveryFee: number
+    totalAmount: number
+  } | null>(null)
 
   const hasItems = items.length > 0
   const subtotal = getCartSubtotal()
@@ -233,6 +240,11 @@ export function CheckoutPage() {
           ),
         })
 
+        setCartSummary({
+          deliveryFee: response.item.summary.deliveryFee,
+          totalAmount: response.item.summary.totalAmount,
+        })
+
         if (
           response.item.invalidItems.length > 0 ||
           response.item.outOfStockItems.length > 0 ||
@@ -246,6 +258,7 @@ export function CheckoutPage() {
         }
       } catch (error) {
         lastValidatedCartKeyRef.current = null
+        setCartSummary(null)
 
         if (isMounted) {
           const serviceAreaInfo = getServiceAreaErrorInfo(error)
@@ -323,6 +336,11 @@ export function CheckoutPage() {
             item,
           ),
         ),
+      })
+
+      setCartSummary({
+        deliveryFee: validationResponse.item.summary.deliveryFee,
+        totalAmount: validationResponse.item.summary.totalAmount,
       })
 
       if (validationResponse.item.appliedItems.length === 0) {
@@ -663,13 +681,31 @@ export function CheckoutPage() {
                     <span className="text-ink-400">Subtotal</span>
                     <span className="font-bold text-ink-900">{formatCurrency(subtotal)}</span>
                   </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-ink-400">Delivery Fee</span>
+                    <span className="font-bold text-ink-900">
+                      {cartSummary
+                        ? cartSummary.deliveryFee > 0
+                          ? formatCurrency(cartSummary.deliveryFee)
+                          : 'Free'
+                        : 'Calculating...'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="rounded-2xl bg-ink-900 p-6 text-white shadow-lg">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold">Total Estimate</span>
-                    <span className="text-xl font-bold">{formatCurrency(subtotal)}</span>
+                    <span className="text-xl font-bold">
+                      {formatCurrency(cartSummary?.totalAmount ?? subtotal)}
+                    </span>
                   </div>
+                  {!cartSummary && (
+                    <p className="mt-3 text-[10px] font-medium opacity-60 leading-relaxed">
+                      Delivery fee is confirmed after live cart validation, before you can place
+                      the order.
+                    </p>
+                  )}
                 </div>
 
                 <button
