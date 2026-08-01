@@ -8,12 +8,19 @@ import { validateCart } from '@/api/shops'
 import { PageHeader } from '@/components/PageHeader'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
-import type { ValidatedCartItem } from '@/types/api'
+import type { ShopTodayStatus, ValidatedCartItem } from '@/types/api'
 import type { Address } from '@/types/customer'
 import type { CheckoutFormValues } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatServiceAreaMessage, getServiceAreaErrorInfo } from '@/utils/serviceArea'
+import {
+  formatShopNotOpenTodayMessage,
+  getShopNotOpenTodayErrorInfo,
+  getTodayStatusLabel,
+  getTodayStatusMessage,
+} from '@/utils/shopAvailability'
+import { formatWeatherSurchargeLabel } from '@/utils/weatherSurcharge'
 
 const initialFormValues: CheckoutFormValues = {
   addressId: '',
@@ -112,12 +119,17 @@ export function CheckoutPage() {
   const [validationMessage, setValidationMessage] = useState<string | null>(null)
   const [isValidatingCart, setIsValidatingCart] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // Populated from the live cart-validation response's `summary` — the delivery fee and real
-  // total are only known server-side (shop delivery config), so until the first successful
-  // validation completes we have nothing to show for them but the item subtotal.
+  // Populated from the live cart-validation response's `summary` (plus the shop's current daily
+  // status, off `item.shop`) — the delivery fee, weather surcharge, and real total are only known
+  // server-side (shop delivery config + live weather), so until the first successful validation
+  // completes we have nothing to show for them but the item subtotal.
   const [cartSummary, setCartSummary] = useState<{
     deliveryFee: number
+    weatherSurchargeFee: number
+    weatherCondition: string
     totalAmount: number
+    todayStatus: ShopTodayStatus
+    todayStatusReason: string | null
   } | null>(null)
 
   const hasItems = items.length > 0
@@ -242,7 +254,11 @@ export function CheckoutPage() {
 
         setCartSummary({
           deliveryFee: response.item.summary.deliveryFee,
+          weatherSurchargeFee: response.item.summary.weatherSurchargeFee,
+          weatherCondition: response.item.summary.weatherCondition,
           totalAmount: response.item.summary.totalAmount,
+          todayStatus: response.item.shop.todayStatus,
+          todayStatusReason: response.item.shop.todayStatusReason,
         })
 
         if (
@@ -261,9 +277,12 @@ export function CheckoutPage() {
         setCartSummary(null)
 
         if (isMounted) {
+          const shopNotOpenInfo = getShopNotOpenTodayErrorInfo(error)
           const serviceAreaInfo = getServiceAreaErrorInfo(error)
 
-          if (serviceAreaInfo) {
+          if (shopNotOpenInfo) {
+            setSubmitError(formatShopNotOpenTodayMessage(shopNotOpenInfo))
+          } else if (serviceAreaInfo) {
             setServiceAreaMessage(formatServiceAreaMessage(serviceAreaInfo))
           } else {
             setSubmitError(
@@ -340,11 +359,29 @@ export function CheckoutPage() {
 
       setCartSummary({
         deliveryFee: validationResponse.item.summary.deliveryFee,
+        weatherSurchargeFee: validationResponse.item.summary.weatherSurchargeFee,
+        weatherCondition: validationResponse.item.summary.weatherCondition,
         totalAmount: validationResponse.item.summary.totalAmount,
+        todayStatus: validationResponse.item.shop.todayStatus,
+        todayStatusReason: validationResponse.item.shop.todayStatusReason,
       })
 
       if (validationResponse.item.appliedItems.length === 0) {
         setSubmitError('Your cart is empty after live validation. Please add items again.')
+        return
+      }
+
+      // Belt-and-braces client-side check — the backend still rejects this with a 403 on
+      // `POST /orders` (caught below), but there's no reason to fire that request when we
+      // already know the shop's daily status flipped to non-OPEN mid-session.
+      if (validationResponse.item.shop.todayStatus !== 'OPEN') {
+        setSubmitError(
+          formatShopNotOpenTodayMessage({
+            message: 'This shop is not open today.',
+            todayStatus: validationResponse.item.shop.todayStatus,
+            reason: validationResponse.item.shop.todayStatusReason,
+          }),
+        )
         return
       }
 
@@ -377,9 +414,12 @@ export function CheckoutPage() {
         },
       })
     } catch (error) {
+      const shopNotOpenInfo = getShopNotOpenTodayErrorInfo(error)
       const serviceAreaInfo = getServiceAreaErrorInfo(error)
 
-      if (serviceAreaInfo) {
+      if (shopNotOpenInfo) {
+        setSubmitError(formatShopNotOpenTodayMessage(shopNotOpenInfo))
+      } else if (serviceAreaInfo) {
         setServiceAreaMessage(formatServiceAreaMessage(serviceAreaInfo))
       } else if (axios.isAxiosError(error)) {
         setSubmitError(getApiErrorMessage(error, 'Unable to place order.'))
@@ -461,6 +501,28 @@ export function CheckoutPage() {
             </Link>
             <Link
               className="inline-flex rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+              to="/shops"
+            >
+              Browse other shops
+            </Link>
+          </div>
+        </section>
+      ) : null}
+
+      {cartSummary && cartSummary.todayStatus !== 'OPEN' ? (
+        <section className="rounded-[1.75rem] border border-amber-200 bg-amber-50/90 p-6 text-sm text-amber-900">
+          <p className="font-semibold">
+            {getTodayStatusLabel(cartSummary.todayStatus)} — this shop can&apos;t take orders right now.
+          </p>
+          <p className="mt-1">
+            {getTodayStatusMessage({
+              todayStatus: cartSummary.todayStatus,
+              todayStatusReason: cartSummary.todayStatusReason,
+            })}
+          </p>
+          <div className="mt-4">
+            <Link
+              className="inline-flex rounded-full border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-50"
               to="/shops"
             >
               Browse other shops
@@ -691,6 +753,16 @@ export function CheckoutPage() {
                         : 'Calculating...'}
                     </span>
                   </div>
+                  {cartSummary && cartSummary.weatherSurchargeFee > 0 ? (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-ink-400">
+                        {formatWeatherSurchargeLabel(cartSummary.weatherCondition)}
+                      </span>
+                      <span className="font-bold text-ink-900">
+                        {formatCurrency(cartSummary.weatherSurchargeFee)}
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="rounded-2xl bg-ink-900 p-6 text-white shadow-lg">
@@ -710,11 +782,21 @@ export function CheckoutPage() {
 
                 <button
                   className="flex w-full h-14 items-center justify-center rounded-xl bg-nearkart-600 text-sm font-bold text-white shadow-md shadow-nearkart-600/20 transition hover:bg-nearkart-700 active:scale-95 disabled:grayscale disabled:opacity-50"
-                  disabled={isSubmitting || isValidatingCart}
+                  disabled={
+                    isSubmitting ||
+                    isValidatingCart ||
+                    Boolean(cartSummary && cartSummary.todayStatus !== 'OPEN')
+                  }
                   form="checkout-form"
                   type="submit"
                 >
-                  {isSubmitting ? 'Placing Order...' : isValidatingCart ? 'Validating...' : 'Place My Order'}
+                  {isSubmitting
+                    ? 'Placing Order...'
+                    : isValidatingCart
+                      ? 'Validating...'
+                      : cartSummary && cartSummary.todayStatus !== 'OPEN'
+                        ? getTodayStatusLabel(cartSummary.todayStatus)
+                        : 'Place My Order'}
                 </button>
 
                 <Link

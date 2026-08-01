@@ -23,6 +23,14 @@ interface ProductCardProps {
   onIncreaseVariant?: (variant: PublicCatalogVariant) => void
   onDecreaseVariant?: (variant: PublicCatalogVariant) => void
   onUpdateVariantQty?: (variant: PublicCatalogVariant, quantity: number) => void
+  /**
+   * True whenever the shop isn't accepting orders right now (its
+   * `todayStatus !== 'OPEN'`) — hides quantity controls and the variant
+   * picker in favor of a single disabled button, regardless of stock.
+   */
+  orderingDisabled?: boolean
+  /** Shown on the disabled button when `orderingDisabled` is true, e.g. "Closed today". */
+  orderingDisabledLabel?: string
 }
 
 const stockToneByStatus = {
@@ -43,6 +51,8 @@ export function ProductCard({
   onIncreaseVariant,
   onDecreaseVariant,
   onUpdateVariantQty,
+  orderingDisabled = false,
+  orderingDisabledLabel = 'Unavailable',
 }: ProductCardProps) {
   const [isVariantPickerOpen, setIsVariantPickerOpen] = useState(false)
   const showMrp = (product.mrp ?? 0) > product.price
@@ -98,7 +108,15 @@ export function ProductCard({
         </div>
 
         <div className="mt-6">
-          {hasMultipleVariants ? (
+          {orderingDisabled ? (
+            <button
+              className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-full bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-400"
+              disabled
+              type="button"
+            >
+              {orderingDisabledLabel}
+            </button>
+          ) : hasMultipleVariants ? (
             <>
               <button
                 className="inline-flex w-full items-center justify-center rounded-full bg-nearkart-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700"

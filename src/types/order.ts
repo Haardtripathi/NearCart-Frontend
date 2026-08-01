@@ -91,6 +91,10 @@ export interface Order {
   notes: string | null
   subtotal: number
   deliveryFee: number
+  /** 0 / 20 / 40 (rupees), snapshotted at order-placement time. */
+  weatherSurchargeFee: number
+  /** e.g. "Clear" / "Rain" / "Thunderstorm" / "unknown", snapshotted at order-placement time. */
+  weatherCondition: string
   platformFee: number
   totalAmount: number
   placedAt: string

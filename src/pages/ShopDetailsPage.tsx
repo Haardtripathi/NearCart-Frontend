@@ -12,6 +12,7 @@ import type { PublicCatalogProduct, PublicCatalogVariant, PublicShopDetail } fro
 import type { CartItem } from '@/types/cart'
 import { formatLiveEta, getLiveEtaTone } from '@/utils/deliveryEta'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { getTodayStatusLabel, getTodayStatusMessage } from '@/utils/shopAvailability'
 
 type CatalogSort =
   | 'featured'
@@ -156,7 +157,7 @@ export function ShopDetailsPage() {
   }
 
   function handleAddToCart(product: PublicCatalogProduct) {
-    if (!shop) {
+    if (!shop || shop.todayStatus !== 'OPEN') {
       return
     }
 
@@ -164,7 +165,7 @@ export function ShopDetailsPage() {
   }
 
   function handleAddVariant(product: PublicCatalogProduct, variant: PublicCatalogVariant) {
-    if (!shop) {
+    if (!shop || shop.todayStatus !== 'OPEN') {
       return
     }
 
@@ -173,6 +174,8 @@ export function ShopDetailsPage() {
 
   const cartCount = getCartCount()
   const cartSubtotal = getCartSubtotal()
+  const isShopOpenToday = shop ? shop.todayStatus === 'OPEN' : true
+  const todayStatusMessage = shop ? getTodayStatusMessage(shop) : null
 
   return (
     <div className="space-y-12">
@@ -202,6 +205,22 @@ export function ShopDetailsPage() {
             <span className="text-sm text-ink-400">No reviews yet</span>
           )}
         </div>
+      ) : null}
+
+      {todayStatusMessage ? (
+        <section
+          className={`rounded-[1.75rem] border p-6 text-sm ${shop?.todayStatus === 'CLOSED'
+              ? 'border-rose-200 bg-rose-50/90 text-rose-800'
+              : 'border-amber-200 bg-amber-50/90 text-amber-900'
+            }`}
+        >
+          <p className="font-semibold">
+            {shop?.todayStatus === 'CLOSED'
+              ? "This shop is closed today — you can't place an order right now."
+              : "This shop hasn't confirmed today's hours yet."}
+          </p>
+          <p className="mt-1">{todayStatusMessage}</p>
+        </section>
       ) : null}
 
       {errorMessage ? (
@@ -306,6 +325,8 @@ export function ShopDetailsPage() {
                     onUpdateVariantQty={(variant, quantity) =>
                       updateQty(`${product.id}:${variant.id}`, quantity)
                     }
+                    orderingDisabled={!isShopOpenToday}
+                    orderingDisabledLabel={shop ? getTodayStatusLabel(shop.todayStatus) : undefined}
                     product={product}
                     quantityInCart={defaultCartItem?.quantity ?? 0}
                     variantQuantities={variantQuantities}
@@ -371,12 +392,22 @@ export function ShopDetailsPage() {
                 )}
 
                 <div className="flex flex-col gap-3">
-                  <Link
-                    className="flex h-12 items-center justify-center rounded-xl bg-nearkart-600 text-sm font-bold text-white shadow-md shadow-nearkart-600/20 transition hover:bg-nearkart-700 active:scale-95"
-                    to="/cart"
-                  >
-                    Checkout Now
-                  </Link>
+                  {isShopOpenToday ? (
+                    <Link
+                      className="flex h-12 items-center justify-center rounded-xl bg-nearkart-600 text-sm font-bold text-white shadow-md shadow-nearkart-600/20 transition hover:bg-nearkart-700 active:scale-95"
+                      to="/cart"
+                    >
+                      Checkout Now
+                    </Link>
+                  ) : (
+                    <button
+                      className="flex h-12 cursor-not-allowed items-center justify-center rounded-xl bg-ink-50 text-sm font-bold text-ink-300"
+                      disabled
+                      type="button"
+                    >
+                      {shop ? getTodayStatusLabel(shop.todayStatus) : 'Unavailable'}
+                    </button>
+                  )}
                   <Link
                     className="flex h-12 items-center justify-center rounded-xl border border-ink-100 bg-white text-sm font-bold text-ink-700 transition hover:bg-ink-50 active:scale-95"
                     to="/shops"

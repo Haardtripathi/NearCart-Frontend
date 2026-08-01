@@ -4,6 +4,7 @@ import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import { getOrderById } from '@/api/orders'
 import type { Order } from '@/types/order'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { formatWeatherSurchargeLabel } from '@/utils/weatherSurcharge'
 
 export function OrderSuccessPage() {
   const { orderId } = useParams()
@@ -104,6 +105,16 @@ export function OrderSuccessPage() {
                   <p className="font-bold text-ink-900">{order.customerPhone}</p>
                 </div>
               </div>
+
+              {order.weatherSurchargeFee > 0 ? (
+                <div className="rounded-2xl bg-amber-50 px-5 py-4 text-sm text-amber-900">
+                  <span className="font-semibold">
+                    {formatWeatherSurchargeLabel(order.weatherCondition)}:
+                  </span>{' '}
+                  {formatCurrency(order.weatherSurchargeFee)} was added to this order due to
+                  live delivery conditions at the time you ordered.
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>

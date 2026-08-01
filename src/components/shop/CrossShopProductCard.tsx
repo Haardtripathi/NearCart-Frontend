@@ -12,6 +12,7 @@ import type {
 } from '@/types/api'
 import type { CartItem } from '@/types/cart'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { getTodayStatusLabel } from '@/utils/shopAvailability'
 
 interface CrossShopProductCardProps {
   product: PublicSearchResultItem
@@ -69,6 +70,7 @@ export function CrossShopProductCard({ product }: CrossShopProductCardProps) {
   const showMrp = (product.mrp ?? 0) > product.price
   const isOutOfStock = product.stockStatus === 'OUT_OF_STOCK'
   const hasMultipleVariants = product.hasVariants && product.variantCount > 1
+  const orderingDisabled = product.shop.todayStatus !== 'OPEN'
 
   const productCartItems = items.filter((item) => item.productId === product.id)
   const defaultCartItem = productCartItems.find(
@@ -146,7 +148,15 @@ export function CrossShopProductCard({ product }: CrossShopProductCardProps) {
         </div>
 
         <div className="mt-4">
-          {hasMultipleVariants ? (
+          {orderingDisabled ? (
+            <button
+              className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-full bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-400"
+              disabled
+              type="button"
+            >
+              {getTodayStatusLabel(product.shop.todayStatus)}
+            </button>
+          ) : hasMultipleVariants ? (
             <>
               <button
                 className="inline-flex w-full items-center justify-center rounded-full bg-nearkart-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-nearkart-700"

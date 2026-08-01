@@ -8,6 +8,7 @@ import { DashboardCard } from '@/components/dashboard/DashboardCard'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import type { ManagedShop } from '@/types/shop-owner'
 import { getApiErrorMessage } from '@/utils/api'
+import { getTodayStatusLabel, getTodayStatusTone } from '@/utils/shopAvailability'
 
 function getApprovalTone(status: ManagedShop['approvalStatus']) {
   switch (status) {
@@ -100,6 +101,7 @@ export function ShopOwnerShopsPage() {
                   <th className="pb-3 font-medium">Location</th>
                   <th className="pb-3 font-medium">Inventory</th>
                   <th className="pb-3 font-medium">Status</th>
+                  <th className="pb-3 font-medium">Today</th>
                   <th className="pb-3 font-medium">Action</th>
                 </tr>
               </thead>
@@ -139,6 +141,12 @@ export function ShopOwnerShopsPage() {
                           tone={shop.isActive ? 'success' : 'neutral'}
                         />
                       </div>
+                    </td>
+                    <td className="py-4">
+                      <StatusPill
+                        label={getTodayStatusLabel(shop.todayStatus)}
+                        tone={getTodayStatusTone(shop.todayStatus)}
+                      />
                     </td>
                     <td className="py-4">
                       <Link

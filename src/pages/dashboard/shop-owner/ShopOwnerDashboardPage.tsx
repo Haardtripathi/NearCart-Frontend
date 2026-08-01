@@ -9,6 +9,7 @@ import { StatCard } from '@/components/dashboard/StatCard'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import type { ManagedShop, ShopOwnerProfileResponse } from '@/types/shop-owner'
 import { getApiErrorMessage } from '@/utils/api'
+import { getTodayStatusLabel, getTodayStatusTone } from '@/utils/shopAvailability'
 
 function getApprovalTone(status: ManagedShop['approvalStatus']) {
   switch (status) {
@@ -176,10 +177,16 @@ export function ShopOwnerDashboardPage() {
                         {shop.category} • {shop.city}
                       </p>
                     </div>
-                    <StatusPill
-                      label={shop.approvalStatus}
-                      tone={getApprovalTone(shop.approvalStatus)}
-                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusPill
+                        label={shop.approvalStatus}
+                        tone={getApprovalTone(shop.approvalStatus)}
+                      />
+                      <StatusPill
+                        label={getTodayStatusLabel(shop.todayStatus)}
+                        tone={getTodayStatusTone(shop.todayStatus)}
+                      />
+                    </div>
                   </div>
                   <p className="text-sm text-slate-600">
                     {shop.isActive ? 'Active shop shell' : 'Inactive shop shell'}
