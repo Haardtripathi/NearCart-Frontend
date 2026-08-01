@@ -17,6 +17,15 @@ export interface InventoryBridgeMeta {
 
 export type StockStatus = 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK'
 
+/**
+ * Daily open/closed state a shop owner sets via `PATCH
+ * /shop-owner/shops/:id/today-status` — resets every day, distinct from the
+ * shop's static `openingTime`/`closingTime` config. `PENDING_CONFIRMATION`
+ * means the owner hasn't confirmed today's hours yet (treated the same as
+ * "can't order right now" on the customer side, just with softer copy).
+ */
+export type ShopTodayStatus = 'OPEN' | 'CLOSED' | 'PENDING_CONFIRMATION'
+
 export interface CatalogNamedValue {
   id: string
   slug: string
@@ -51,6 +60,10 @@ export interface PublicShopSummary {
    * one. Always present (not optional) — the backend always attaches it.
    */
   liveEstimatedDeliveryMinutes: number
+  /** Today's confirmed open/closed state — see `ShopTodayStatus`. */
+  todayStatus: ShopTodayStatus
+  /** Only meaningful when `todayStatus === 'CLOSED'`, e.g. "Holiday". */
+  todayStatusReason: string | null
 }
 
 export interface PublicShopDetail extends PublicShopSummary {
@@ -230,6 +243,11 @@ export interface PublicCartValidationResponse {
       currencyCode: string
       subtotal: number
       deliveryFee: number
+      /** 0 / 20 / 40 (rupees) — rain/weather-driven delivery surcharge. */
+      weatherSurchargeFee: number
+      /** e.g. "Clear" / "Rain" / "Thunderstorm" / "unknown". */
+      weatherCondition: string
+      /** Now = subtotal + deliveryFee + weatherSurchargeFee. */
       totalAmount: number
       itemCount: number
       validCount: number

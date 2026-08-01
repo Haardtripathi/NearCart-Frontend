@@ -1,4 +1,4 @@
-import type { ApiMeta } from '@/types/api'
+import type { ApiMeta, ShopTodayStatus } from '@/types/api'
 import type { AuthUser } from '@/types/auth'
 
 export type ShopApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -45,6 +45,17 @@ export interface ManagedShop {
   approvalStatus: ShopApprovalStatus
   createdAt: string
   updatedAt: string
+  /**
+   * Daily open/closed state, set via `PATCH /shop-owner/shops/:id/today-status` — resets
+   * every day, so this reflects only *today's* confirmation, not a permanent setting.
+   * Assumed to be included on the same `ManagedShop` record returned by
+   * `GET /shop-owner/shops` / `GET /shop-owner/shops/:id`, matching how `todayStatus` rides
+   * along on the public shop responses (`PublicShopSummary`) — re-verify against the backend
+   * once it lands, since the contract only spells out the PATCH response shape explicitly.
+   */
+  todayStatus: ShopTodayStatus
+  todayStatusReason: string | null
+  todayStatusUpdatedAt: string | null
 }
 
 export interface ShopOwnerProfileResponse {
@@ -130,4 +141,22 @@ export interface ShopListResponse {
 export interface ShopLogoUploadResponse {
   item: { url: string }
   meta: ApiMeta
+}
+
+export interface ShopTodayStatusPayload {
+  isOpen: boolean
+  reason?: string
+}
+
+/**
+ * `PATCH /shop-owner/shops/:id/today-status` per the rain-fee/shop-availability contract responds
+ * with these three fields directly (no `item`/`meta` envelope spelled out in the contract, unlike
+ * every other endpoint in this file) — matched literally here rather than assumed-wrapped, since
+ * the backend agent was briefed with the identical literal shape. Worth a quick integration check
+ * once the backend lands, in case it actually does wrap this like everything else.
+ */
+export interface ShopTodayStatusResult {
+  todayStatus: ShopTodayStatus
+  todayStatusReason: string | null
+  todayStatusUpdatedAt: string
 }

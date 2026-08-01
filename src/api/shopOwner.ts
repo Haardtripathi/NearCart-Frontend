@@ -6,6 +6,8 @@ import type {
   ShopOwnerProfileUpdatePayload,
   ShopPayload,
   ShopResponse,
+  ShopTodayStatusPayload,
+  ShopTodayStatusResult,
 } from '@/types/shop-owner'
 
 export async function getShopOwnerProfile() {
@@ -50,6 +52,21 @@ export async function getShopOwnerShop(shopId: string) {
 export async function updateShop(shopId: string, payload: ShopPayload) {
   const { data } = await httpClient.patch<ShopResponse>(
     `/shop-owner/shops/${shopId}`,
+    payload,
+  )
+
+  return data
+}
+
+// Daily open/closed toggle — resets every day on the backend, so this only ever confirms
+// *today's* status, never a permanent setting. See `ShopTodayStatusResult` for a note on the
+// (unwrapped) response shape.
+export async function updateShopTodayStatus(
+  shopId: string,
+  payload: ShopTodayStatusPayload,
+) {
+  const { data } = await httpClient.patch<ShopTodayStatusResult>(
+    `/shop-owner/shops/${shopId}/today-status`,
     payload,
   )
 

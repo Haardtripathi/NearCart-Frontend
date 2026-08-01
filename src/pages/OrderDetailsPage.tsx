@@ -11,6 +11,7 @@ import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDateTime } from '@/utils/formatDateTime'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from '@/utils/orderStatus'
+import { formatWeatherSurchargeLabel } from '@/utils/weatherSurcharge'
 
 export function OrderDetailsPage() {
   const { orderId = '' } = useParams()
@@ -230,6 +231,22 @@ export function OrderDetailsPage() {
                     <span className="text-ink-400">Subtotal</span>
                     <span className="font-bold text-ink-900">{formatCurrency(order.subtotal)}</span>
                   </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-ink-400">Delivery Fee</span>
+                    <span className="font-bold text-ink-900">
+                      {order.deliveryFee > 0 ? formatCurrency(order.deliveryFee) : 'Free'}
+                    </span>
+                  </div>
+                  {order.weatherSurchargeFee > 0 ? (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-ink-400">
+                        {formatWeatherSurchargeLabel(order.weatherCondition)}
+                      </span>
+                      <span className="font-bold text-ink-900">
+                        {formatCurrency(order.weatherSurchargeFee)}
+                      </span>
+                    </div>
+                  ) : null}
                   <div className="flex justify-between text-xs">
                     <span className="text-ink-400">Payment</span>
                     <span className="font-bold text-ink-900 uppercase tracking-tight">{order.paymentMethod.replaceAll('_', ' ')}</span>

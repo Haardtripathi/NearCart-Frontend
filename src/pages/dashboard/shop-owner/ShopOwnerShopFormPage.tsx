@@ -5,6 +5,7 @@ import {
   createShop,
   getShopOwnerShop,
   updateShop,
+  updateShopTodayStatus,
   uploadShopLogo,
 } from '@/api/shopOwner'
 import { PageHeader } from '@/components/PageHeader'
@@ -22,6 +23,8 @@ import type { PickedLocation } from '@/components/dashboard/shop-owner/ShopFormS
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import type { ManagedShop, ShopFormValues, ShopPayload } from '@/types/shop-owner'
 import { getApiErrorMessage } from '@/utils/api'
+import { formatDateTime } from '@/utils/formatDateTime'
+import { getTodayStatusLabel, getTodayStatusTone } from '@/utils/shopAvailability'
 
 // Matches the backend's default IMAGE_UPLOAD_MAX_BYTES (backend/src/config/env.ts) — kept as a
 // literal here since the frontend has no runtime visibility into the backend's env config; if
@@ -166,6 +169,9 @@ export function ShopOwnerShopFormPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isUploadingLogo, setIsUploadingLogo] = useState(false)
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null)
+  const [todayStatusReasonInput, setTodayStatusReasonInput] = useState('')
+  const [isUpdatingTodayStatus, setIsUpdatingTodayStatus] = useState(false)
+  const [todayStatusError, setTodayStatusError] = useState<string | null>(null)
   // Wizard state only used in create mode — an existing shop is edited as a single page (see
   // reasoning in the report: stepping through 4 screens to fix one field on an established shop
   // is friction, not help).
@@ -290,6 +296,46 @@ export function ShopOwnerShopFormPage() {
       )
     } finally {
       setIsUploadingLogo(false)
+    }
+  }
+
+  async function handleUpdateTodayStatus(isOpen: boolean) {
+    if (!shopId) {
+      return
+    }
+
+    setTodayStatusError(null)
+    setIsUpdatingTodayStatus(true)
+
+    try {
+      const result = await updateShopTodayStatus(shopId, {
+        isOpen,
+        reason:
+          !isOpen && todayStatusReasonInput.trim()
+            ? todayStatusReasonInput.trim()
+            : undefined,
+      })
+
+      setShop((currentShop) =>
+        currentShop
+          ? {
+            ...currentShop,
+            todayStatus: result.todayStatus,
+            todayStatusReason: result.todayStatusReason,
+            todayStatusUpdatedAt: result.todayStatusUpdatedAt,
+          }
+          : currentShop,
+      )
+
+      if (isOpen) {
+        setTodayStatusReasonInput('')
+      }
+    } catch (error) {
+      setTodayStatusError(
+        getApiErrorMessage(error, "Unable to update today's status right now."),
+      )
+    } finally {
+      setIsUpdatingTodayStatus(false)
     }
   }
 
@@ -567,6 +613,7 @@ export function ShopOwnerShopFormPage() {
           </form>
         </DashboardCard>
 
+        <div className="space-y-4">
         <DashboardCard
           description="Approval and identity details for this shop. Admin review happens from the platform dashboard."
           title="Shop status"
@@ -618,6 +665,75 @@ export function ShopOwnerShopFormPage() {
             </div>
           )}
         </DashboardCard>
+
+        {shop ? (
+          <DashboardCard
+            description="Tell customers whether you're taking orders today. This is separate from your regular opening hours and resets automatically — you'll need to confirm it again tomorrow."
+            title="Today's status"
+          >
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusPill
+                  label={getTodayStatusLabel(shop.todayStatus)}
+                  tone={getTodayStatusTone(shop.todayStatus)}
+                />
+                {shop.todayStatus === 'CLOSED' && shop.todayStatusReason ? (
+                  <span className="text-sm text-slate-500">
+                    Reason: {shop.todayStatusReason}
+                  </span>
+                ) : null}
+              </div>
+
+              {shop.todayStatusUpdatedAt ? (
+                <p className="text-xs text-slate-400">
+                  Last updated {formatDateTime(shop.todayStatusUpdatedAt)}
+                </p>
+              ) : null}
+
+              {todayStatusError ? (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {todayStatusError}
+                </div>
+              ) : null}
+
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isUpdatingTodayStatus || shop.todayStatus === 'OPEN'}
+                  onClick={() => void handleUpdateTodayStatus(true)}
+                  type="button"
+                >
+                  Open today
+                </button>
+                <button
+                  className="inline-flex items-center justify-center rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isUpdatingTodayStatus || shop.todayStatus === 'CLOSED'}
+                  onClick={() => void handleUpdateTodayStatus(false)}
+                  type="button"
+                >
+                  {isUpdatingTodayStatus ? 'Updating...' : 'Mark closed today'}
+                </button>
+              </div>
+
+              <label className="block space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Reason (optional, shown to customers when closed)
+                </span>
+                <input
+                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-ink-900 outline-none transition focus:border-nearkart-300 focus:ring-2 focus:ring-nearkart-100"
+                  onChange={(event) => setTodayStatusReasonInput(event.target.value)}
+                  placeholder="e.g. Holiday, staff unavailable"
+                  value={todayStatusReasonInput}
+                />
+              </label>
+
+              <p className="text-xs italic text-slate-400">
+                You&apos;ll need to confirm this again tomorrow — today&apos;s status resets daily.
+              </p>
+            </div>
+          </DashboardCard>
+        ) : null}
+        </div>
       </section>
     </div>
   )
