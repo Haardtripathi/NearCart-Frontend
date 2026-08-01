@@ -24,6 +24,8 @@ export interface CheckoutFormValues {
   area: string
   pincode: string
   landmark: string
+  latitude: number | null
+  longitude: number | null
   notes: string
   paymentMethod: PaymentMethod
 }

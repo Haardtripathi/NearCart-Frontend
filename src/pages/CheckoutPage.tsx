@@ -5,6 +5,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getCustomerAddresses, getCustomerProfile } from '@/api/customer'
 import { createOrder } from '@/api/orders'
 import { validateCart } from '@/api/shops'
+import { AddressMapPicker } from '@/components/location/AddressMapPicker'
+import type { PickedLocation } from '@/components/location/AddressMapPicker'
 import { PageHeader } from '@/components/PageHeader'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
@@ -33,6 +35,8 @@ const initialFormValues: CheckoutFormValues = {
   area: '',
   pincode: '',
   landmark: '',
+  latitude: null,
+  longitude: null,
   notes: '',
   paymentMethod: 'COD',
 }
@@ -191,6 +195,8 @@ export function CheckoutPage() {
           area: currentState.area || defaultAddress?.area || '',
           pincode: currentState.pincode || defaultAddress?.pincode || '',
           landmark: currentState.landmark || defaultAddress?.landmark || '',
+          latitude: currentState.latitude ?? defaultAddress?.latitude ?? null,
+          longitude: currentState.longitude ?? defaultAddress?.longitude ?? null,
         }))
       } catch {
         if (isMounted) {
@@ -319,6 +325,33 @@ export function CheckoutPage() {
     }))
   }
 
+  function handleLocationChange(location: PickedLocation) {
+    setFormValues((currentState) => ({
+      ...currentState,
+      // Dropping/searching a pin picks a specific ad-hoc location — no longer "the saved
+      // address" even if one was selected from the dropdown, since the pin may have moved it.
+      addressId: '',
+      latitude: location.latitude,
+      longitude: location.longitude,
+      // Only fill in text fields the user hasn't already typed something into — the pin/search
+      // result is a convenience prefill, not an override of manual edits.
+      deliveryAddressLine1:
+        currentState.deliveryAddressLine1 ||
+        location.formattedAddress ||
+        currentState.deliveryAddressLine1,
+      city: currentState.city || location.addressComponents?.city || currentState.city,
+      area: currentState.area || location.addressComponents?.area || currentState.area,
+      pincode:
+        currentState.pincode || location.addressComponents?.pincode || currentState.pincode,
+    }))
+    setFieldErrors((currentState) => ({
+      ...currentState,
+      deliveryAddressLine1: undefined,
+      city: undefined,
+      pincode: undefined,
+    }))
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -397,6 +430,8 @@ export function CheckoutPage() {
         area: formValues.area,
         pincode: formValues.pincode,
         landmark: formValues.landmark,
+        latitude: formValues.latitude,
+        longitude: formValues.longitude,
         notes: formValues.notes,
         paymentMethod: formValues.paymentMethod,
         items: validationResponse.item.appliedItems.map((item) => ({
@@ -618,6 +653,8 @@ export function CheckoutPage() {
                           area: selectedAddress.area || '',
                           pincode: selectedAddress.pincode,
                           landmark: selectedAddress.landmark || '',
+                          latitude: selectedAddress.latitude,
+                          longitude: selectedAddress.longitude,
                         }))
                       }
                     }}
@@ -632,6 +669,14 @@ export function CheckoutPage() {
                   </select>
                 </div>
               )}
+            </div>
+
+            <div className="mb-6">
+              <AddressMapPicker
+                latitude={formValues.latitude}
+                longitude={formValues.longitude}
+                onLocationChange={handleLocationChange}
+              />
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2">
