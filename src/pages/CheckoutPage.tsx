@@ -155,6 +155,18 @@ export function CheckoutPage() {
     [items],
   )
   const lastValidatedCartKeyRef = useRef<string | null>(null)
+  // "Latest items" ref, read inside the validation effect instead of `items` directly. `items` is
+  // NOT a dependency of that effect (see its deps array below) on purpose: `replaceCart()` inside
+  // the effect's own success branch produces a brand-new `items` array reference every time (even
+  // when the content is logically identical, echoed straight back from the server response) —
+  // with `items` as a direct dependency, every successful validation retriggered the exact same
+  // effect again, which called replaceCart again, forever. Confirmed live: 19 back-to-back
+  // /cart/validate requests firing in an unbroken loop, hammering the backend (and the live
+  // weather API it calls) continuously. `cartValidationKey` is what should gate re-runs — it's a
+  // content-derived string (stable primitive equality across replaceCart's new-but-equal arrays),
+  // not an object reference.
+  const itemsRef = useRef(items)
+  itemsRef.current = items
 
   useEffect(() => {
     let isMounted = true
@@ -216,7 +228,9 @@ export function CheckoutPage() {
     let isMounted = true
 
     async function runInitialCartValidation() {
-      if (!shopId || !shopName || items.length === 0) {
+      const currentItems = itemsRef.current
+
+      if (!shopId || !shopName || currentItems.length === 0) {
         lastValidatedCartKeyRef.current = null
         setIsValidatingCart(false)
         return
@@ -233,7 +247,7 @@ export function CheckoutPage() {
       try {
         const response = await validateCart({
           shopId,
-          items: items.map((item) => ({
+          items: currentItems.map((item) => ({
             productId: item.productId,
             variantId: item.variantId,
             quantity: item.quantity,
@@ -307,8 +321,17 @@ export function CheckoutPage() {
 
     return () => {
       isMounted = false
+      // Bug found via live testing: without this, React StrictMode's dev-mode double-invoke
+      // (mount -> cleanup -> remount) leaves the UI stuck on "Validating.../Calculating..."
+      // forever. The first invocation's in-flight validateCart() response gets discarded by
+      // the `isMounted` guard once cleanup flips it to false, but lastValidatedCartKeyRef was
+      // never reset — so the second (real) invocation sees the same key already marked
+      // "validated" and skips re-fetching entirely, and cartSummary/isValidatingCart never
+      // recover. Resetting the ref here only affects genuine unmount/remount cycles (a
+      // same-render dependency-unchanged case never runs this cleanup), so it's safe.
+      lastValidatedCartKeyRef.current = null
     }
-  }, [cartValidationKey, items, replaceCart, shopId, shopName])
+  }, [cartValidationKey, replaceCart, shopId, shopName])
 
   function updateField<Key extends keyof CheckoutFormValues>(
     field: Key,
