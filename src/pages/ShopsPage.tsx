@@ -6,6 +6,7 @@ import { CategoryChips } from '@/components/category/CategoryChips'
 import { PageHeader } from '@/components/PageHeader'
 import { ShopCard } from '@/components/shop/ShopCard'
 import { useCustomerCity } from '@/hooks/useCustomerCity'
+import { useGeolocation } from '@/hooks/useGeolocation'
 import type { PublicShopCategorySummary, PublicShopSummary } from '@/types/api'
 
 export function ShopsPage() {
@@ -13,6 +14,9 @@ export function ShopsPage() {
   const search = searchParams.get('search') ?? ''
   const category = searchParams.get('category') ?? ''
   const { city } = useCustomerCity()
+  // Hyperlocal distance filtering/sorting (server-side) — fails open to the unfiltered list
+  // below when location is unavailable/declined, see useGeolocation's doc comment.
+  const { coordinates } = useGeolocation()
 
   const [shops, setShops] = useState<PublicShopSummary[]>([])
   const [categories, setCategories] = useState<PublicShopCategorySummary[]>([])
@@ -29,6 +33,8 @@ export function ShopsPage() {
           search: search || undefined,
           category: category || undefined,
           city,
+          lat: coordinates?.latitude,
+          lng: coordinates?.longitude,
         })
 
         if (!isMounted) {
@@ -55,7 +61,7 @@ export function ShopsPage() {
     return () => {
       isMounted = false
     }
-  }, [search, category, city])
+  }, [search, category, city, coordinates])
 
   useEffect(() => {
     let isMounted = true

@@ -64,6 +64,12 @@ export interface PublicShopSummary {
   todayStatus: ShopTodayStatus
   /** Only meaningful when `todayStatus === 'CLOSED'`, e.g. "Holiday". */
   todayStatusReason: string | null
+  /**
+   * Straight-line distance from the caller's `lat`/`lng` query params to this shop, in km
+   * (1 decimal place). Only present when the request included `lat`/`lng` — omitted entirely
+   * on an anonymous/no-location request rather than `null`, since there's nothing to compute.
+   */
+  distanceKm?: number
 }
 
 export interface PublicShopDetail extends PublicShopSummary {

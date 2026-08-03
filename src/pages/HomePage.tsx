@@ -6,6 +6,7 @@ import { CategoryChips } from '@/components/category/CategoryChips'
 import { TrendingRail } from '@/components/home/TrendingRail'
 import { ShopCard } from '@/components/shop/ShopCard'
 import { useCustomerCity } from '@/hooks/useCustomerCity'
+import { useGeolocation } from '@/hooks/useGeolocation'
 import type { PublicShopSummary } from '@/types/api'
 
 const MIN_QUERY_LENGTH = 2
@@ -13,6 +14,9 @@ const MIN_QUERY_LENGTH = 2
 export function HomePage() {
   const navigate = useNavigate()
   const { city } = useCustomerCity()
+  // Same hyperlocal filtering/sorting as ShopsPage — fails open when location is
+  // unavailable/declined, see useGeolocation's doc comment.
+  const { coordinates } = useGeolocation()
   const [heroQuery, setHeroQuery] = useState('')
   const [nearbyShops, setNearbyShops] = useState<PublicShopSummary[]>([])
   const [isLoadingShops, setIsLoadingShops] = useState(true)
@@ -22,7 +26,11 @@ export function HomePage() {
 
     async function loadShops() {
       try {
-        const response = await getShops({ city })
+        const response = await getShops({
+          city,
+          lat: coordinates?.latitude,
+          lng: coordinates?.longitude,
+        })
 
         if (isMounted) {
           setNearbyShops(response.items.slice(0, 3))
@@ -43,7 +51,7 @@ export function HomePage() {
     return () => {
       isMounted = false
     }
-  }, [city])
+  }, [city, coordinates])
 
   function handleHeroSearchSubmit(event: FormEvent) {
     event.preventDefault()

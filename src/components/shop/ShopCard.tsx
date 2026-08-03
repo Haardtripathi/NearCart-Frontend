@@ -44,6 +44,9 @@ export function ShopCard({ shop }: ShopCardProps) {
           </h3>
           <p className="mt-1 text-xs font-medium text-ink-400">
             {[shop.area, shop.city].filter(Boolean).join(' • ')}
+            {shop.distanceKm != null ? (
+              <span className="font-bold text-nearkart-600"> • {shop.distanceKm} km away</span>
+            ) : null}
           </p>
         </div>
 
