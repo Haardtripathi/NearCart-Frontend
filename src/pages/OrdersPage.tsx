@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { getCustomerOrders } from '@/api/customer'
@@ -10,43 +10,91 @@ import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDateTime } from '@/utils/formatDateTime'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from '@/utils/orderStatus'
 
+// Mirrors the backend's `TERMINAL_ORDER_STATUSES` (`orders.service.ts`) and the same set used in
+// `OrderDetailsPage.tsx` — an order in one of these states never changes again, so it shouldn't
+// keep this list polling.
+const TERMINAL_ORDER_STATUSES = new Set<OrderPreview['status']>([
+  'DELIVERED',
+  'REJECTED',
+  'CANCELLED',
+])
+
+// Same interval as `OrderDetailsPage.tsx`'s per-order polling — see that file's comment for the
+// reasoning (no websocket/SSE server exists yet; this closes most of the "is this stale?" gap
+// cheaply for a visitor with their order list open).
+const ORDER_LIST_POLL_INTERVAL_MS = 18_000
+
 export function OrdersPage() {
   const [orders, setOrders] = useState<OrderPreview[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const isMountedRef = useRef(true)
+  // Read fresh inside the interval callback below without making the interval-setup effect
+  // depend on (and re-run for) every `orders` update — same "ref, not a dependency" pattern used
+  // for `itemsRef`/`formValuesRef` in `CheckoutPage.tsx`.
+  const ordersRef = useRef(orders)
+  ordersRef.current = orders
 
   useEffect(() => {
-    let isMounted = true
+    isMountedRef.current = true
 
-    async function loadOrders() {
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    async function loadOrders({ silent }: { silent: boolean }) {
+      if (!silent) {
+        setIsLoading(true)
+      }
+
       try {
         const nextOrders = (await getCustomerOrders()).items
 
-        if (!isMounted) {
+        if (!isMountedRef.current) {
           return
         }
 
         setOrders(nextOrders)
         setErrorMessage(null)
       } catch (error) {
-        if (!isMounted) {
+        if (!isMountedRef.current) {
           return
         }
 
-        setErrorMessage(
-          getApiErrorMessage(error, 'Unable to load your orders right now.'),
-        )
+        // Only surface the error on the initial (non-silent) load — a background poll hiccup
+        // shouldn't replace an already-visible, still-valid order list with an error banner.
+        if (!silent) {
+          setErrorMessage(
+            getApiErrorMessage(error, 'Unable to load your orders right now.'),
+          )
+        }
       } finally {
-        if (isMounted) {
+        if (isMountedRef.current && !silent) {
           setIsLoading(false)
         }
       }
     }
 
-    void loadOrders()
+    void loadOrders({ silent: false })
+
+    const intervalId = window.setInterval(() => {
+      const currentOrders = ordersRef.current
+
+      // Nothing left that could still change (empty list, or every order already terminal) —
+      // skip the network call rather than polling forever with no possible-to-observe effect.
+      // Doesn't clear the interval itself: a customer could place a brand-new order in another
+      // tab while this one sits open, and the next tick should pick that up.
+      if (currentOrders.length > 0 && currentOrders.every((order) => TERMINAL_ORDER_STATUSES.has(order.status))) {
+        return
+      }
+
+      void loadOrders({ silent: true })
+    }, ORDER_LIST_POLL_INTERVAL_MS)
 
     return () => {
-      isMounted = false
+      window.clearInterval(intervalId)
     }
   }, [])
 

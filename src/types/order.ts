@@ -102,6 +102,21 @@ export interface Order {
   placedAt: string
   acceptedAt: string | null
   deliveredAt: string | null
+  /** Delivery-proof photo URL (Cloudinary), relayed from NearCart-Inventory's driver app on a
+   *  DELIVERED event/poll. Null for orders delivered before this field existed, or when the
+   *  driver didn't capture a photo. */
+  deliveryProofPhotoUrl: string | null
+  /** Coupon applied at checkout, if any — backend already resolves/validates this at order-creation time. */
+  couponCode: string | null
+  discountAmount: number
+  /** Set once the order reaches DELIVERED and loyalty points are credited; null until then. */
+  loyaltyPointsEarned: number | null
+  /** Populated once a driver is assigned (typically at/after READY_FOR_PICKUP) — mirrors
+   *  `mapOrder()` in the backend's `utils/serializers.ts`. All null together until assignment. */
+  driverName: string | null
+  driverPhone: string | null
+  driverVehicleType: string | null
+  driverAssignedAt: string | null
   createdAt: string
   updatedAt: string
   /** True only while `status === 'PENDING_CONFIRMATION'` — drives whether a cancel button shows. */

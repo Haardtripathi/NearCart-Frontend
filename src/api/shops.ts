@@ -133,6 +133,13 @@ export async function validateCart(payload: {
     expectedMrp?: number | null
   }>
   lang?: string
+  // Optional ad-hoc customer coordinates — when present, the backend also enforces the shop's
+  // service-radius check at validate-time (previously only enforced at checkout), matching the
+  // 403/400 error shapes `getShopNotOpenTodayErrorInfo`/`getServiceAreaErrorInfo` already know
+  // how to render. Omit if the caller has no coordinates yet (e.g. before an address is chosen)
+  // — the backend skips only the radius check in that case, not the shop-open check.
+  latitude?: number | null
+  longitude?: number | null
 }) {
   const { data } = await httpClient.post<PublicCartValidationResponse>(
     '/public/cart/validate',

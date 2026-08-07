@@ -13,6 +13,15 @@ import { formatDateTime } from '@/utils/formatDateTime'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from '@/utils/orderStatus'
 import { formatWeatherSurchargeLabel } from '@/utils/weatherSurcharge'
 
+// Mirrors the backend's `TERMINAL_ORDER_STATUSES` (`orders.service.ts`) — once an order reaches
+// one of these, nothing about it changes server-side anymore, so polling for updates is pointless.
+const TERMINAL_ORDER_STATUSES = new Set<Order['status']>(['DELIVERED', 'REJECTED', 'CANCELLED'])
+
+// How often to silently re-check order status while this page is open and the order is still
+// active. 18s: frequent enough to feel close to live for a customer watching their order, not so
+// frequent it meaningfully increases backend load for a single open tab.
+const ORDER_POLL_INTERVAL_MS = 18_000
+
 export function OrderDetailsPage() {
   const { orderId = '' } = useParams()
   const [order, setOrder] = useState<Order | null>(null)
@@ -48,10 +57,36 @@ export function OrderDetailsPage() {
 
   useEffect(() => {
     void loadOrder({ silent: false })
-    // Status changes are synced by a shop's back-office on its own schedule — no live/websocket
-    // updates in Phase 1, so re-fetch on mount/navigation and let the visitor use "Refresh
-    // status" (below) to check again without a full page reload.
+    // Previously fetch-on-mount only (see the old comment this replaced: "no live/websocket
+    // updates in Phase 1, re-fetch on mount/navigation, use 'Refresh status' to check again").
+    // Lightweight polling closes most of that gap without needing a websocket/SSE server: while
+    // this page is open and the order hasn't reached a terminal state, silently refetch every
+    // 18s so a status change made by the shop/driver shows up without the visitor having to
+    // tap "Refresh status" or navigate away and back. No library primitive available for this
+    // (no TanStack Query/SWR in this codebase's dependencies — checked package.json), so a plain
+    // interval is the codebase-consistent approach here, matching the manual `loadOrder({
+    // silent: true })` call the existing "Refresh status" button already uses.
   }, [loadOrder])
+
+  useEffect(() => {
+    // Keyed off `order?.status` (a stable primitive), not `order` itself — `order` gets a brand-
+    // new object reference on every fetch (see `loadOrder`'s `setOrder(response.item)`), which
+    // would otherwise tear down and restart this interval on every single poll tick even when
+    // the status hasn't changed. Keying off `status` means the interval is only reset when the
+    // order genuinely transitions to a new status (or on the terminal check re-evaluating).
+    if (!order || TERMINAL_ORDER_STATUSES.has(order.status)) {
+      return
+    }
+
+    const intervalId = window.setInterval(() => {
+      void loadOrder({ silent: true })
+    }, ORDER_POLL_INTERVAL_MS)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed off order?.status, see comment above
+  }, [order?.status, loadOrder])
 
   function handleReviewSubmitted(review: OrderReviewSummary) {
     setOrder((currentOrder) => (currentOrder ? { ...currentOrder, review } : currentOrder))
@@ -187,6 +222,23 @@ export function OrderDetailsPage() {
               </div>
             </div>
 
+            {/* Delivery-proof photo — captured by the driver on the NearCart-Inventory side and
+                relayed here via the DELIVERED webhook/poll (see `deliveryProofPhotoUrl` on
+                `Order`). Null for orders delivered before this field existed, so this section
+                simply doesn't render rather than showing an empty placeholder. */}
+            {order.deliveryProofPhotoUrl ? (
+              <div className="rounded-[2.5rem] border border-ink-100 bg-white p-8 shadow-sm">
+                <h3 className="mb-6 font-display text-xl font-bold text-ink-900">
+                  Delivery proof
+                </h3>
+                <img
+                  alt="Proof of delivery, provided by your delivery partner"
+                  className="max-h-96 w-full rounded-2xl object-cover"
+                  src={order.deliveryProofPhotoUrl}
+                />
+              </div>
+            ) : null}
+
             {order.status === 'DELIVERED' ? (
               order.review ? (
                 <SubmittedOrderReview review={order.review} />
@@ -197,6 +249,45 @@ export function OrderDetailsPage() {
           </div>
 
           <aside className="space-y-6">
+            {/* Driver Info — only once a driver has actually been assigned (typically at/after
+                READY_FOR_PICKUP); the backend already returns these fields on every order, they
+                were just never rendered anywhere in this app until now. */}
+            {order.driverName ? (
+              <article className="rounded-3xl border border-nearkart-100 bg-nearkart-50/40 p-6 shadow-sm">
+                <h4 className="mb-4 text-[10px] font-bold uppercase tracking-wider text-nearkart-600">
+                  Delivery Driver
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg shadow-sm">
+                      🛵
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-ink-900">{order.driverName}</p>
+                      {order.driverVehicleType && (
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-ink-400">
+                          {order.driverVehicleType.replaceAll('_', ' ')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {order.driverPhone && (
+                    <a
+                      className="flex h-10 items-center justify-center rounded-xl border border-nearkart-200 bg-white text-xs font-bold text-nearkart-700 transition hover:bg-nearkart-50"
+                      href={`tel:${order.driverPhone}`}
+                    >
+                      Call {order.driverPhone}
+                    </a>
+                  )}
+                  {order.driverAssignedAt && (
+                    <p className="text-[10px] text-ink-400">
+                      Assigned {formatDateTime(order.driverAssignedAt)}
+                    </p>
+                  )}
+                </div>
+              </article>
+            ) : null}
+
             {/* Delivery Info */}
             <article className="rounded-3xl border border-ink-100 bg-white p-6 shadow-sm">
               <h4 className="mb-4 text-[10px] font-bold uppercase tracking-wider text-nearkart-600">Delivery Details</h4>
@@ -247,6 +338,16 @@ export function OrderDetailsPage() {
                       </span>
                     </div>
                   ) : null}
+                  {order.discountAmount > 0 ? (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-emerald-600">
+                        Coupon {order.couponCode ? `(${order.couponCode})` : ''}
+                      </span>
+                      <span className="font-bold text-emerald-600">
+                        -{formatCurrency(order.discountAmount)}
+                      </span>
+                    </div>
+                  ) : null}
                   <div className="flex justify-between text-xs">
                     <span className="text-ink-400">Payment</span>
                     <span className="font-bold text-ink-900 uppercase tracking-tight">{order.paymentMethod.replaceAll('_', ' ')}</span>
@@ -258,6 +359,12 @@ export function OrderDetailsPage() {
                     <span className="text-lg font-bold">{formatCurrency(order.totalAmount)}</span>
                   </div>
                 </div>
+                {order.loyaltyPointsEarned != null ? (
+                  <div className="flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3 text-xs">
+                    <span className="font-bold text-amber-700">Loyalty points earned</span>
+                    <span className="font-bold text-amber-700">+{order.loyaltyPointsEarned}</span>
+                  </div>
+                ) : null}
                 <Link
                   className="flex h-11 items-center justify-center rounded-xl border border-ink-100 bg-white text-xs font-bold text-ink-700 transition hover:bg-ink-50 active:scale-95"
                   to="/shops"

@@ -168,6 +168,13 @@ export function CheckoutPage() {
   const itemsRef = useRef(items)
   itemsRef.current = items
 
+  // Same "ref, not a dependency" reasoning as `itemsRef` above — read fresh inside the
+  // validation effect (for the optional latitude/longitude sent to `validateCart`) without
+  // making the effect re-run on every keystroke/field edit, which `formValues` as a direct
+  // dependency would do.
+  const formValuesRef = useRef(formValues)
+  formValuesRef.current = formValues
+
   useEffect(() => {
     let isMounted = true
 
@@ -254,6 +261,12 @@ export function CheckoutPage() {
             expectedPrice: item.price,
             expectedMrp: item.mrp,
           })),
+          // Send whatever coordinates are already known (saved default address, or a
+          // previously-dropped pin) so an out-of-radius cart is caught here instead of only at
+          // final submit — falls back to skipping just the radius check server-side if neither
+          // is set yet (e.g. first render, before the address effect above has resolved).
+          latitude: formValuesRef.current.latitude,
+          longitude: formValuesRef.current.longitude,
         })
 
         if (!isMounted) {
@@ -399,6 +412,11 @@ export function CheckoutPage() {
           expectedPrice: item.price,
           expectedMrp: item.mrp,
         })),
+        // Final pre-submit re-validation — send the address the customer actually settled on,
+        // so an out-of-radius address surfaces here as the same `serviceAreaMessage` UI already
+        // used for `createOrder`'s 400, one call earlier than before.
+        latitude: formValues.latitude,
+        longitude: formValues.longitude,
       })
 
       replaceCart({
