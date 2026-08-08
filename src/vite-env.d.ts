@@ -9,3 +9,12 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+// Google Maps JS API's documented global auth-failure hook — invoked for any key-auth-related
+// failure (ApiTargetBlockedMapError, RefererNotAllowedMapError, InvalidKeyMapError, etc), which
+// fires *after* the script has already loaded successfully so `@react-google-maps/api`'s own
+// `loadError` never sees it. See `components/location/AddressMapPicker.tsx` for why this needs
+// wiring up at all.
+interface Window {
+  gm_authFailure?: () => void
+}

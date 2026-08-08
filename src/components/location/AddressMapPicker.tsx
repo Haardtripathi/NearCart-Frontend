@@ -40,6 +40,28 @@ export function AddressMapPicker({
     googleMapsApiKey: apiKey || '',
   })
 
+  // `useJsApiLoader`'s `loadError` only fires when the Maps JS *script itself* fails to fetch —
+  // it does NOT fire for key-level auth failures (ApiTargetBlockedMapError,
+  // RefererNotAllowedMapError, InvalidKeyMapError, etc). Those happen *after* the script has
+  // already loaded successfully, when the Maps runtime tries to actually stand up a map
+  // instance — Google's own JS then renders its own "Oops! Something went wrong" placeholder
+  // directly inside the map container, bypassing React entirely. Confirmed live via Playwright:
+  // with a key that's restricted away from the Maps JavaScript API, `isMapScriptLoaded` was
+  // true and `mapScriptError` stayed null, so the code below rendered `<GoogleMap>`, which then
+  // silently mounted Google's raw error box inside the checkout flow. The one hook Google
+  // provides for this is the documented global `window.gm_authFailure` callback, invoked for any
+  // key-auth-related failure — wiring it lets the friendly fallback (below) cover this case too,
+  // and manual address entry keeps working either way since it never depended on the map.
+  const [hasMapAuthFailure, setHasMapAuthFailure] = useState(false)
+
+  useEffect(() => {
+    window.gm_authFailure = () => setHasMapAuthFailure(true)
+
+    return () => {
+      delete window.gm_authFailure
+    }
+  }, [])
+
   const [searchInput, setSearchInput] = useState('')
   const [predictions, setPredictions] = useState<AddressPrediction[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -332,7 +354,7 @@ export function AddressMapPicker({
         ) : null}
       </div>
 
-      {apiKey && !mapScriptError ? (
+      {apiKey && !mapScriptError && !hasMapAuthFailure ? (
         isMapScriptLoaded ? (
           <div className="overflow-hidden rounded-[1.35rem]">
             <GoogleMap
@@ -362,16 +384,18 @@ export function AddressMapPicker({
         )
       ) : (
         <div className="rounded-[1.35rem] border border-dashed border-slate-300 bg-white px-4 py-5 text-sm text-slate-500">
-          {mapScriptError
-            ? 'The map failed to load. You can still search or use your current location — coordinates will be saved without the visual pin.'
-            : 'Map preview is unavailable (no VITE_GOOGLE_MAPS_API_KEY configured). Search or use your current location to set coordinates without the pin map.'}
+          {hasMapAuthFailure
+            ? 'Map preview is temporarily unavailable. You can still search or use your current location — coordinates will be saved without the visual pin.'
+            : mapScriptError
+              ? 'The map failed to load. You can still search or use your current location — coordinates will be saved without the visual pin.'
+              : 'Map preview is unavailable (no VITE_GOOGLE_MAPS_API_KEY configured). Search or use your current location to set coordinates without the pin map.'}
         </div>
       )}
 
       {hasPin ? (
         <p className="text-xs text-slate-500">
           Pin location: {(latitude as number).toFixed(6)}, {(longitude as number).toFixed(6)}
-          {apiKey && isMapScriptLoaded ? ' — drag the pin above to nudge it.' : ''}
+          {apiKey && isMapScriptLoaded && !hasMapAuthFailure ? ' — drag the pin above to nudge it.' : ''}
         </p>
       ) : (
         <p className="text-xs text-slate-500">
