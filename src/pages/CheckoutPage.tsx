@@ -41,6 +41,73 @@ const initialFormValues: CheckoutFormValues = {
   paymentMethod: 'COD',
 }
 
+// Bug found via real browser back/forward testing: `formValues` is plain `useState`, so it lives
+// only on this component instance. `useCartStore` is persisted (Zustand + localStorage), so the
+// cart itself survives a browser-back to /cart and forward again to /checkout — but CheckoutPage
+// itself fully unmounts and remounts on that round trip, which reset every typed field (name,
+// phone, address lines, city, pincode, notes, payment method) back to blank with zero warning.
+// The "Place My Order" button stayed visibly enabled the whole time (it only reflects cart
+// validation, not form completeness), so clicking it just silently re-surfaced client-side
+// "required" errors next to the now-empty fields instead of doing anything — confusing given nothing
+// about the page looked reset. sessionStorage (not localStorage — this is a live in-progress draft,
+// not something that should survive after the tab/browser closes) closes the gap: it's read once on
+// mount to seed the initial state, and every change is written back below, so back-then-forward
+// within the same tab restores exactly what the customer had typed. Cleared on successful order
+// placement so a later, unrelated checkout doesn't inherit stale field values.
+const CHECKOUT_DRAFT_STORAGE_KEY_PREFIX = 'nearkart:checkout-draft:'
+
+// Scoped by user id so a draft never leaks across accounts sharing one browser tab (e.g. customer
+// A abandons checkout mid-way, logs out, and customer B logs into the same tab afterwards — B must
+// never see A's half-typed name/phone/address auto-filled in).
+function draftStorageKey(userId: string): string {
+  return `${CHECKOUT_DRAFT_STORAGE_KEY_PREFIX}${userId}`
+}
+
+function readCheckoutDraft(userId: string | undefined): CheckoutFormValues {
+  if (!userId) {
+    return initialFormValues
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(draftStorageKey(userId))
+
+    if (!raw) {
+      return initialFormValues
+    }
+
+    return { ...initialFormValues, ...(JSON.parse(raw) as Partial<CheckoutFormValues>) }
+  } catch {
+    // Corrupt JSON, storage disabled (private browsing), or any other read failure — fall back to
+    // a blank form rather than let this crash checkout entirely.
+    return initialFormValues
+  }
+}
+
+function writeCheckoutDraft(userId: string | undefined, values: CheckoutFormValues): void {
+  if (!userId) {
+    return
+  }
+
+  try {
+    window.sessionStorage.setItem(draftStorageKey(userId), JSON.stringify(values))
+  } catch {
+    // Storage full/disabled — the draft simply won't survive a remount, no worse than before this
+    // fix existed.
+  }
+}
+
+function clearCheckoutDraft(userId: string | undefined): void {
+  if (!userId) {
+    return
+  }
+
+  try {
+    window.sessionStorage.removeItem(draftStorageKey(userId))
+  } catch {
+    // Nothing to do if storage access itself throws.
+  }
+}
+
 function validateCheckoutForm(values: CheckoutFormValues) {
   const errors: Partial<Record<keyof CheckoutFormValues, string>> = {}
 
@@ -112,8 +179,9 @@ export function CheckoutPage() {
     clearCart,
     replaceCart,
   } = useCartStore((state) => state)
-  const [formValues, setFormValues] =
-    useState<CheckoutFormValues>(initialFormValues)
+  const [formValues, setFormValues] = useState<CheckoutFormValues>(() =>
+    readCheckoutDraft(user?.id),
+  )
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof CheckoutFormValues, string>>
@@ -174,6 +242,13 @@ export function CheckoutPage() {
   // dependency would do.
   const formValuesRef = useRef(formValues)
   formValuesRef.current = formValues
+
+  // Persist every change so a mid-checkout unmount/remount (e.g. browser back to /cart, then
+  // forward again — see readCheckoutDraft's comment above) doesn't silently discard what the
+  // customer already typed.
+  useEffect(() => {
+    writeCheckoutDraft(user?.id, formValues)
+  }, [formValues, user?.id])
 
   useEffect(() => {
     let isMounted = true
@@ -484,6 +559,7 @@ export function CheckoutPage() {
       })
 
       clearCart()
+      clearCheckoutDraft(user?.id)
       navigate(`/order-success/${response.item.id}`, {
         state: {
           order: response.item,
