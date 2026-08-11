@@ -20,8 +20,8 @@ export function CartItemCard({
   const showMrp = (item.mrp ?? 0) > item.price
 
   return (
-    <article className="flex flex-col gap-4 rounded-[1.5rem] border border-white/80 bg-white/95 p-4 shadow-[0_20px_70px_-45px_rgba(17,33,23,0.55)] sm:flex-row sm:items-center sm:p-5">
-      <div className="h-24 w-24 overflow-hidden rounded-[1.25rem] bg-nearkart-50">
+    <article className="flex flex-col gap-4 rounded-[1.5rem] border border-ink-100 bg-white p-4 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-card-hover)] sm:flex-row sm:items-center sm:p-5">
+      <div className="h-24 w-24 shrink-0 overflow-hidden rounded-[1.25rem] bg-nearkart-50">
         {item.image ? (
           <img
             alt={item.name}
@@ -29,7 +29,7 @@ export function CartItemCard({
             src={item.image}
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+          <div className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-[0.24em] text-ink-400">
             No image
           </div>
         )}
@@ -37,23 +37,23 @@ export function CartItemCard({
 
       <div className="min-w-0 flex-1 space-y-3">
         <div className="space-y-1">
-          <h2 className="font-display text-xl text-ink-900">{item.name}</h2>
-          <p className="text-sm text-slate-600">
+          <h2 className="font-display text-lg font-bold text-ink-900">{item.name}</h2>
+          <p className="text-sm text-ink-500">
             {[item.brand, item.unitLabel].filter(Boolean).join(' • ')}
           </p>
         </div>
 
         <div className="flex flex-wrap items-end gap-3">
-          <div className="text-base font-semibold text-ink-900">
+          <div className="text-base font-bold text-ink-900">
             {formatCurrency(item.price)}
           </div>
           {showMrp ? (
-            <div className="text-sm text-slate-400 line-through">
+            <div className="text-sm text-ink-400 line-through">
               {formatCurrency(item.mrp ?? 0)}
             </div>
           ) : null}
-          <div className="text-sm text-slate-500">
-            Item total {formatCurrency(item.price * item.quantity)}
+          <div className="text-sm text-ink-500">
+            Item total <span className="font-semibold text-ink-700">{formatCurrency(item.price * item.quantity)}</span>
           </div>
         </div>
 
@@ -67,7 +67,7 @@ export function CartItemCard({
           />
 
           <button
-            className="rounded-full border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+            className="rounded-full border border-accent-200 px-4 py-2 text-sm font-semibold text-accent-600 transition hover:bg-accent-50"
             onClick={onRemove}
             type="button"
           >

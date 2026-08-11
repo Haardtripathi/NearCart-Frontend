@@ -19,24 +19,21 @@ export function VerifyEmailBanner() {
   }
 
   return (
-    <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-900">
+    <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-sun-200 bg-sun-50 px-6 py-4 text-sm text-sun-900 shadow-sm">
       <div className="flex items-center gap-3">
-        <span className="text-lg">✉️</span>
-        <p className="font-medium">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm">✉️</span>
+        <p className="font-medium leading-snug">
           Please verify your email address. You can keep browsing, but you&apos;ll need to
           verify before checking out.
         </p>
       </div>
-      <div className="flex items-center gap-3">
-        <Link
-          className="inline-flex items-center justify-center rounded-full bg-amber-900 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-amber-800"
-          to="/verify-email"
-        >
+      <div className="flex items-center gap-4">
+        <Link className="btn-primary h-10 px-5 text-xs uppercase tracking-wider" to="/verify-email">
           Verify now
         </Link>
         <button
           aria-label="Dismiss verification reminder"
-          className="text-xs font-bold uppercase tracking-wider text-amber-700 transition hover:text-amber-900"
+          className="text-xs font-bold uppercase tracking-wider text-sun-700 transition hover:text-sun-900"
           onClick={() => setIsDismissed(true)}
           type="button"
         >

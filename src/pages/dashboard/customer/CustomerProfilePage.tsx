@@ -89,23 +89,36 @@ export function CustomerProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        description="Update the identity details that NearKart uses across your dashboard and checkout experience."
-        eyebrow="Customer profile"
-        title="Profile settings"
-      />
+    <div className="space-y-6 animate-nk-fade-in">
+      <div className="animate-nk-fade-slide-up">
+        <PageHeader
+          description="Update the identity details that NearKart uses across your dashboard and checkout experience."
+          eyebrow="Customer profile"
+          title="Profile settings"
+        />
+      </div>
 
-      <DashboardCard
-        description="Your saved name and phone help checkout prefill faster when you place orders while signed in."
-        title="Update your profile"
+      {/* Ring pulses once whenever a save just succeeded — the class flips off (setSuccessMessage(null))
+          at the start of every submit and back on after the API call resolves, so each successful
+          save re-triggers the animation, not just the first one. */}
+      <div
+        className={[
+          'rounded-[1.75rem] animate-nk-fade-slide-up nk-stagger-1',
+          successMessage ? 'animate-nk-pulse-ring' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
+        <DashboardCard
+          description="Your saved name and phone help checkout prefill faster when you place orders while signed in."
+          title="Update your profile"
+        >
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="grid gap-5 md:grid-cols-2">
             <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">Full name</span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+                className="field-input"
                 onChange={(event) =>
                   setFormValues((currentState) => ({
                     ...currentState,
@@ -119,7 +132,7 @@ export function CustomerProfilePage() {
             <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">Phone number</span>
               <input
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+                className="field-input"
                 onChange={(event) =>
                   setFormValues((currentState) => ({
                     ...currentState,
@@ -132,26 +145,33 @@ export function CustomerProfilePage() {
           </div>
 
           {submitError ? (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <div
+              className="animate-nk-shake rounded-2xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-700"
+              key={submitError}
+            >
               {submitError}
             </div>
           ) : null}
 
           {successMessage ? (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <div
+              className="animate-nk-scale-in rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+              key={successMessage}
+            >
               {successMessage}
             </div>
           ) : null}
 
           <button
-            className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition-all duration-150 hover:bg-nearkart-700 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
             disabled={isSaving}
             type="submit"
           >
             {isSaving ? 'Saving...' : 'Save changes'}
           </button>
         </form>
-      </DashboardCard>
+        </DashboardCard>
+      </div>
     </div>
   )
 }

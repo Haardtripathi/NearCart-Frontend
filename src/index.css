@@ -1,49 +1,88 @@
-@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
+/*
+ * NearKart design system tokens.
+ *
+ * Brand language (shared with mobile — see ../../CLAUDE.md): vivid appetite orange primary,
+ * warm red secondary/alert, warm off-white background, charcoal text. Class names below are kept
+ * as `nearkart-*` / `accent-*` / `sun-*` / `ink-*` on purpose — those semantic names are already
+ * used 700+ times across the app (bg-nearkart-600 for CTAs, text-ink-900 for headings, etc.), so
+ * re-pointing the underlying hex values here re-themes the entire app from one file instead of
+ * hand-editing every call site. `slate-*` is also overridden (Tailwind v4 lets you redefine
+ * built-in palette tokens in `@theme`) so the default gray family reads warm instead of cool-blue.
+ */
 @theme {
-  --font-display: 'Space Grotesk', 'Trebuchet MS', sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Trebuchet MS', sans-serif;
   --font-body: 'Public Sans', 'Segoe UI', sans-serif;
 
-  --color-nearkart-50: #f5f3ff;
-  --color-nearkart-100: #ede9fe;
-  --color-nearkart-200: #ddd6fe;
-  --color-nearkart-300: #c4b5fd;
-  --color-nearkart-400: #a78bfa;
-  --color-nearkart-500: #8b5cf6;
-  --color-nearkart-600: #7c3aed;
-  --color-nearkart-700: #6d28d9;
-  --color-nearkart-800: #5b21b6;
-  --color-nearkart-900: #4c1d95;
+  /* Primary — vivid appetite orange (~#FC8019) */
+  --color-nearkart-50: #fff4ec;
+  --color-nearkart-100: #ffe6d2;
+  --color-nearkart-200: #ffcca3;
+  --color-nearkart-300: #ffad73;
+  --color-nearkart-400: #fd9748;
+  --color-nearkart-500: #fd8b2e;
+  --color-nearkart-600: #fc8019;
+  --color-nearkart-700: #dd6b0f;
+  --color-nearkart-800: #b4560a;
+  --color-nearkart-900: #7a3907;
 
-  --color-sun-50: #fff7ed;
-  --color-sun-100: #ffedd5;
-  --color-sun-200: #fed7aa;
-  --color-sun-300: #fdba74;
-  --color-sun-400: #fc9750;
-  --color-sun-500: #ff7a1a;
+  /* Secondary / alert — warm red (~#E23744), offers/badges/destructive actions */
+  --color-accent-50: #fdeef0;
+  --color-accent-100: #fcd9dd;
+  --color-accent-200: #f7b3ba;
+  --color-accent-300: #f08a94;
+  --color-accent-400: #e85f6d;
+  --color-accent-500: #e23744;
+  --color-accent-600: #c92535;
+  --color-accent-700: #a11b29;
+  --color-accent-900: #5c0f19;
 
-  --color-accent-50: #fff0f6;
-  --color-accent-100: #ffe0ed;
-  --color-accent-200: #ffb8d2;
-  --color-accent-300: #ff8bb3;
-  --color-accent-400: #ff5f96;
-  --color-accent-500: #ff3d81;
-  --color-accent-600: #e01f66;
+  /* Gold/amber highlight — ratings, warning banners, secondary CTA accents */
+  --color-sun-50: #fffbeb;
+  --color-sun-100: #fef3c7;
+  --color-sun-200: #fde68a;
+  --color-sun-300: #fcd34d;
+  --color-sun-400: #fbbf24;
+  --color-sun-500: #f5a623;
+  --color-sun-600: #d68910;
+  --color-sun-700: #a66508;
+  --color-sun-900: #5c3a05;
 
-  --color-ink-50: #f5f4f8;
-  --color-ink-100: #eae8ef;
-  --color-ink-200: #d3cfdd;
-  --color-ink-300: #b3adc4;
-  --color-ink-400: #8f87a5;
-  --color-ink-500: #6f6686;
-  --color-ink-600: #584f6d;
-  --color-ink-700: #453d58;
-  --color-ink-800: #322c41;
-  --color-ink-900: #1e192b;
+  /* Charcoal text scale (near-black ~#1C1C1E primary, warm muted grays for secondary text) */
+  --color-ink-50: #f7f3ec;
+  --color-ink-100: #ede8df;
+  --color-ink-200: #d8d3c9;
+  --color-ink-300: #b7b2aa;
+  --color-ink-400: #96918a;
+  --color-ink-500: #78746c;
+  --color-ink-600: #605c55;
+  --color-ink-700: #47443f;
+  --color-ink-800: #2e2c2a;
+  --color-ink-900: #1c1c1e;
 
-  --shadow-glass: 0 8px 32px 0 rgba(76, 29, 149, 0.1);
-  --shadow-glass-strong: 0 12px 48px 0 rgba(76, 29, 149, 0.18);
+  /* Override Tailwind's built-in `slate-*` so the default gray utility family also reads warm,
+     matching `ink-*` — used interchangeably as secondary text/borders throughout the app. */
+  --color-slate-50: #f7f3ec;
+  --color-slate-100: #ede8df;
+  --color-slate-200: #d8d3c9;
+  --color-slate-300: #b7b2aa;
+  --color-slate-400: #96918a;
+  --color-slate-500: #78746c;
+  --color-slate-600: #605c55;
+  --color-slate-700: #47443f;
+  --color-slate-800: #2e2c2a;
+  --color-slate-900: #1c1c1e;
+
+  /* Warm off-white background */
+  --color-canvas: #fffbf7;
+  --color-canvas-soft: #fff8f1;
+
+  --shadow-glass: 0 8px 32px 0 rgba(28, 20, 10, 0.1);
+  --shadow-glass-strong: 0 16px 56px 0 rgba(28, 20, 10, 0.16);
+  --shadow-card: 0 2px 10px 0 rgba(28, 20, 10, 0.06), 0 1px 2px 0 rgba(28, 20, 10, 0.04);
+  --shadow-card-hover: 0 18px 40px -18px rgba(28, 20, 10, 0.28);
 }
 
 @layer base {
@@ -55,12 +94,11 @@
     min-height: 100vh;
     margin: 0;
     background:
-      radial-gradient(circle at top left, rgba(255, 122, 26, 0.16), transparent 24%),
-      radial-gradient(circle at top right, rgba(124, 58, 237, 0.14), transparent 28%),
-      radial-gradient(circle at center, rgba(255, 255, 255, 0.55), transparent 36%),
-      linear-gradient(180deg, #fdfbff 0%, #f7f5fb 56%, #f2eef9 100%);
+      radial-gradient(circle at top left, rgba(252, 128, 25, 0.1), transparent 30%),
+      radial-gradient(circle at 90% 0%, rgba(226, 55, 68, 0.06), transparent 32%),
+      linear-gradient(180deg, #fffbf7 0%, #fff8f1 100%);
     background-attachment: fixed;
-    color: #221c33;
+    color: #1c1c1e;
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -78,5 +116,189 @@
 
   #root {
     min-height: 100vh;
+  }
+}
+
+/* `@utility` (not `@layer components`) — Tailwind v4 only lets `@apply` compose *registered
+   utilities*, and a plain `@layer components` class doesn't count as one. `.btn` needs to be
+   `@apply`-able from `.btn-primary`/`.btn-secondary`/etc. below, so it's declared here instead. */
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-2xl text-sm font-bold transition-all duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100;
+}
+
+@layer components {
+  /* Shared primitives — see src/components/shared/Button.tsx, Input.tsx, Card.tsx, which apply
+     these classes so every button/input/card in the app stays visually consistent from one
+     source instead of ad-hoc per-page class strings. */
+  .btn-primary {
+    @apply btn bg-nearkart-600 text-white shadow-md shadow-nearkart-600/25 hover:bg-nearkart-700 hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply btn border border-ink-200 bg-white text-ink-800 hover:border-nearkart-300 hover:bg-nearkart-50 hover:text-nearkart-700;
+  }
+
+  .btn-danger {
+    @apply btn bg-accent-500 text-white shadow-md shadow-accent-500/25 hover:bg-accent-600;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-ink-600 hover:bg-ink-100/70 hover:text-ink-900;
+  }
+
+  .field-input {
+    @apply w-full rounded-2xl border border-ink-200 bg-white px-4 py-3 text-sm font-medium text-ink-900 outline-none transition placeholder:text-ink-400 focus:border-nearkart-400 focus:ring-4 focus:ring-nearkart-100;
+  }
+
+  .field-label {
+    @apply text-sm font-semibold text-ink-700;
+  }
+
+  .card-surface {
+    @apply rounded-2xl border border-ink-100 bg-white shadow-[var(--shadow-card)];
+  }
+}
+
+/*
+ * Motion utilities — additive polish pass (see NearCart/CLAUDE.md history). Kept CSS-only (no
+ * runtime motion library) since every effect here is a one-shot mount transition or a simple
+ * hover/press micro-interaction; none need spring physics or gesture tracking.
+ *
+ * Split into two groups so `prefers-reduced-motion: reduce` is a correctness requirement, not an
+ * afterthought:
+ *  - "Entrance" animations (fade/slide/scale/shake/pulse) run once on mount. Under reduced motion
+ *    they're neutralized to their resting state instead of removed outright, so content stays
+ *    visible immediately with zero motion.
+ *  - "Ambient" animations (continuous/looping) are only ever defined inside a
+ *    `prefers-reduced-motion: no-preference` guard, so they simply never exist for users who
+ *    asked for reduced motion — no override needed.
+ */
+@layer utilities {
+  @keyframes nk-fade-slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes nk-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes nk-scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes nk-shake {
+    10%,
+    90% {
+      transform: translateX(-1px);
+    }
+    20%,
+    80% {
+      transform: translateX(2px);
+    }
+    30%,
+    50%,
+    70% {
+      transform: translateX(-3px);
+    }
+    40%,
+    60% {
+      transform: translateX(3px);
+    }
+  }
+
+  @keyframes nk-pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(252, 128, 25, 0.32);
+    }
+    100% {
+      box-shadow: 0 0 0 10px rgba(252, 128, 25, 0);
+    }
+  }
+
+  @keyframes nk-drift {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(-14px, 10px);
+    }
+  }
+
+  .animate-nk-fade-slide-up {
+    animation: nk-fade-slide-up 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-nk-fade-in {
+    animation: nk-fade-in 380ms ease-out both;
+  }
+
+  .animate-nk-scale-in {
+    animation: nk-scale-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-nk-shake {
+    animation: nk-shake 380ms ease-in-out;
+  }
+
+  .animate-nk-pulse-ring {
+    animation: nk-pulse-ring 900ms ease-out;
+  }
+
+  /* Stagger steps for list/grid entrance reveals — apply alongside an animate-nk-* class above. */
+  .nk-stagger-1 {
+    animation-delay: 60ms;
+  }
+  .nk-stagger-2 {
+    animation-delay: 120ms;
+  }
+  .nk-stagger-3 {
+    animation-delay: 180ms;
+  }
+  .nk-stagger-4 {
+    animation-delay: 240ms;
+  }
+  .nk-stagger-5 {
+    animation-delay: 300ms;
+  }
+  .nk-stagger-6 {
+    animation-delay: 360ms;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-nk-drift {
+    animation: nk-drift 9s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-nk-fade-slide-up,
+  .animate-nk-fade-in,
+  .animate-nk-scale-in,
+  .animate-nk-shake,
+  .animate-nk-pulse-ring {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

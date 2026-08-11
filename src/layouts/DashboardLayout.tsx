@@ -74,7 +74,7 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,rgba(252,253,248,0.88),rgba(241,243,232,0.95))]">
+    <div className="min-h-screen bg-[linear-gradient(180deg,rgba(255,251,247,0.9),rgba(255,244,236,0.85))]">
       <div className="mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 py-5 lg:grid-cols-[280px_1fr] lg:px-6">
         <aside className="rounded-[2rem] border border-white/80 bg-white/80 p-5 shadow-[0_20px_70px_-50px_rgba(17,33,23,0.45)] backdrop-blur">
           <Link className="flex items-center gap-3" to="/">

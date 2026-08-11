@@ -54,7 +54,7 @@ export function OrderReviewForm({ order, onReviewSubmitted }: OrderReviewFormPro
   const displayedRating = hoverRating || rating
 
   return (
-    <div className="rounded-[2.5rem] border border-ink-100 bg-white p-8 shadow-sm">
+    <div className="rounded-[2rem] border border-ink-100 bg-white p-8 shadow-[var(--shadow-card)]">
       <h3 className="font-display text-xl font-bold text-ink-900">Rate your order</h3>
       <p className="mt-1 text-sm text-ink-400">
         How was your experience with {order.shopName}?
@@ -77,7 +77,7 @@ export function OrderReviewForm({ order, onReviewSubmitted }: OrderReviewFormPro
       </div>
 
       <textarea
-        className="mt-6 w-full rounded-2xl border-none bg-ink-50/50 px-5 py-4 text-sm font-medium text-ink-900 outline-none transition focus:bg-white focus:ring-1 focus:ring-nearkart-200"
+        className="field-input mt-6 min-h-24 resize-y"
         onChange={(event) => setComment(event.target.value)}
         placeholder="Tell other customers about your experience (optional)"
         rows={3}
@@ -85,11 +85,11 @@ export function OrderReviewForm({ order, onReviewSubmitted }: OrderReviewFormPro
       />
 
       {errorMessage ? (
-        <p className="mt-3 text-sm font-medium text-rose-600">{errorMessage}</p>
+        <p className="mt-3 text-sm font-medium text-accent-600">{errorMessage}</p>
       ) : null}
 
       <button
-        className="mt-6 flex h-12 w-full items-center justify-center rounded-xl bg-nearkart-600 text-sm font-bold text-white shadow-md shadow-nearkart-600/20 transition hover:bg-nearkart-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-8"
+        className="btn-primary mt-6 h-12 w-full sm:w-auto sm:px-8"
         disabled={isSubmitting}
         onClick={() => void handleSubmit()}
         type="button"
@@ -106,7 +106,7 @@ interface SubmittedOrderReviewProps {
 
 export function SubmittedOrderReview({ review }: SubmittedOrderReviewProps) {
   return (
-    <div className="rounded-[2.5rem] border border-ink-100 bg-white p-8 shadow-sm">
+    <div className="rounded-[2rem] border border-ink-100 bg-white p-8 shadow-[var(--shadow-card)]">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-xl font-bold text-ink-900">Your review</h3>
         <StarRating value={review.rating} />

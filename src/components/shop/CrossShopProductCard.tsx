@@ -99,7 +99,7 @@ export function CrossShopProductCard({ product }: CrossShopProductCardProps) {
   }
 
   return (
-    <article className="flex h-full w-full flex-col rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-[0_20px_70px_-45px_rgba(76,29,149,0.5)]">
+    <article className="flex h-full w-full flex-col rounded-[1.75rem] border border-white/80 bg-white/95 p-5 shadow-[0_20px_70px_-45px_rgba(28,20,10,0.45)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_70px_-40px_rgba(28,20,10,0.5)]">
       <Link className="mb-4 block overflow-hidden rounded-[1.35rem] bg-nearkart-50" to={`/shops/${product.shop.slug}`}>
         {product.image ? (
           <img

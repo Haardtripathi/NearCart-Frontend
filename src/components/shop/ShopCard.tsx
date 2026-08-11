@@ -16,7 +16,7 @@ export function ShopCard({ shop }: ShopCardProps) {
 
   return (
     <article
-      className={`group relative flex flex-col rounded-3xl border border-ink-100 bg-white p-6 transition-all ${isOpenToday ? 'hover:-translate-y-1 hover:shadow-glass' : 'opacity-80'
+      className={`group relative flex flex-col rounded-3xl border border-ink-100 bg-white p-6 shadow-[var(--shadow-card)] transition-all ${isOpenToday ? 'hover:-translate-y-1 hover:shadow-glass' : 'opacity-80'
         }`}
     >
       <div className="flex flex-1 flex-col space-y-4">

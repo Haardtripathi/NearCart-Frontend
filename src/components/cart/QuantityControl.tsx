@@ -17,11 +17,11 @@ export function QuantityControl({
 }: QuantityControlProps) {
   return (
     <div
-      className={`inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-2 shadow-[0_12px_30px_-24px_rgba(17,33,23,0.8)] ${className}`.trim()}
+      className={`inline-flex items-center gap-2 rounded-full border border-nearkart-200 bg-nearkart-50/60 px-2 py-2 ${className}`.trim()}
     >
       <button
         aria-label="Decrease quantity"
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-lg font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700 disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-bold text-nearkart-700 shadow-sm transition hover:bg-nearkart-600 hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-nearkart-700"
         disabled={quantity <= 1}
         onClick={onDecrease}
         type="button"
@@ -31,7 +31,7 @@ export function QuantityControl({
 
       <input
         aria-label="Quantity"
-        className="w-14 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 text-center text-sm font-semibold text-slate-800 outline-none transition focus:border-nearkart-400"
+        className="w-12 rounded-xl border-none bg-transparent px-1 py-2 text-center text-sm font-bold text-ink-900 outline-none"
         max={max ?? undefined}
         min={1}
         onChange={(event) => {
@@ -45,7 +45,7 @@ export function QuantityControl({
 
       <button
         aria-label="Increase quantity"
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-lg font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700 disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-bold text-nearkart-700 shadow-sm transition hover:bg-nearkart-600 hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-nearkart-700"
         disabled={max != null ? quantity >= max : false}
         onClick={onIncrease}
         type="button"

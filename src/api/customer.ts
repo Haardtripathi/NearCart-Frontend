@@ -7,6 +7,7 @@ import type {
   CustomerProfileResponse,
   CustomerProfileUpdatePayload,
 } from '@/types/customer'
+import type { CouponPreviewResponse } from '@/types/order'
 
 export async function getCustomerProfile() {
   const { data } = await httpClient.get<CustomerProfileResponse>('/customer/profile')
@@ -60,6 +61,21 @@ export async function deleteCustomerAddress(addressId: string) {
 
 export async function getCustomerOrders() {
   const { data } = await httpClient.get<CustomerOrdersResponse>('/customer/orders')
+
+  return data
+}
+
+/**
+ * Advisory-only coupon preview for the checkout screen's "Apply" button (see
+ * `coupon.service.ts`'s `previewCoupon` doc comment on the backend) — the real, trusted discount
+ * is always recomputed server-side inside `createOrder()` against the authoritative subtotal, so
+ * this is purely to show "You saved ₹X" (or why a code didn't apply) before submitting.
+ */
+export async function validateCoupon(code: string, subtotal: number) {
+  const { data } = await httpClient.post<CouponPreviewResponse>('/customer/coupons/validate', {
+    code,
+    subtotal,
+  })
 
   return data
 }

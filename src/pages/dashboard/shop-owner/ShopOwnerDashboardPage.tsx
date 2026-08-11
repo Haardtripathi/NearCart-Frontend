@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
 import { StatCard } from '@/components/dashboard/StatCard'
+import { getButtonClassName } from '@/components/shared/Button'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import type { ManagedShop, ShopOwnerProfileResponse } from '@/types/shop-owner'
 import { getApiErrorMessage } from '@/utils/api'
@@ -77,7 +78,7 @@ export function ShopOwnerDashboardPage() {
   if (!profile) {
     return (
       <DashboardCard title="Merchant dashboard unavailable">
-        <p className="text-sm text-rose-700">
+        <p className="text-sm text-accent-700">
           {errorMessage || 'We could not load your shop owner dashboard.'}
         </p>
       </DashboardCard>
@@ -93,7 +94,7 @@ export function ShopOwnerDashboardPage() {
       />
 
       {errorMessage ? (
-        <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">
+        <div className="rounded-[1.5rem] border border-accent-200 bg-accent-50 px-5 py-4 text-sm text-accent-700">
           {errorMessage}
         </div>
       ) : null}
@@ -120,34 +121,34 @@ export function ShopOwnerDashboardPage() {
         <DashboardCard
           actions={
             <Link
-              className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearkart-700"
+              className={getButtonClassName('primary', 'md')}
               to="/dashboard/shop-owner/shops/new"
             >
-              Create a shop
+              + Create a shop
             </Link>
           }
           description="Your merchant profile powers future multi-shop operations, platform approvals, and the next inventory and order-management steps."
           title="Merchant summary"
         >
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
-              <p className="text-sm text-slate-500">Owner</p>
+            <div className="rounded-2xl bg-nearkart-50/70 px-4 py-4 ring-1 ring-nearkart-100">
+              <p className="text-xs font-semibold uppercase tracking-wide text-nearkart-700">Owner</p>
               <p className="mt-2 font-semibold text-ink-900">{profile.user.fullName}</p>
             </div>
-            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
-              <p className="text-sm text-slate-500">Business</p>
+            <div className="rounded-2xl bg-nearkart-50/70 px-4 py-4 ring-1 ring-nearkart-100">
+              <p className="text-xs font-semibold uppercase tracking-wide text-nearkart-700">Business</p>
               <p className="mt-2 font-semibold text-ink-900">
                 {profile.profile.businessName}
               </p>
             </div>
-            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
-              <p className="text-sm text-slate-500">GST number</p>
+            <div className="rounded-2xl bg-nearkart-50/70 px-4 py-4 ring-1 ring-nearkart-100">
+              <p className="text-xs font-semibold uppercase tracking-wide text-nearkart-700">GST number</p>
               <p className="mt-2 font-semibold text-ink-900">
                 {profile.profile.gstNumber || 'Not provided yet'}
               </p>
             </div>
-            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
-              <p className="text-sm text-slate-500">Merchant approval</p>
+            <div className="rounded-2xl bg-nearkart-50/70 px-4 py-4 ring-1 ring-nearkart-100">
+              <p className="text-xs font-semibold uppercase tracking-wide text-nearkart-700">Merchant approval</p>
               <div className="mt-2">
                 <StatusPill
                   label={profile.profile.isApproved ? 'Approved' : 'Pending'}
@@ -167,13 +168,13 @@ export function ShopOwnerDashboardPage() {
               {shops.slice(0, 5).map((shop) => (
                 <Link
                   key={shop.id}
-                  className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-100 bg-slate-50/80 px-4 py-4 transition hover:border-nearkart-200 hover:bg-white"
+                  className="flex flex-col gap-3 rounded-2xl border border-ink-100 bg-white/70 px-4 py-4 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5 hover:border-nearkart-200 hover:shadow-[var(--shadow-card-hover)]"
                   to={`/dashboard/shop-owner/shops/${shop.id}`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="font-semibold text-ink-900">{shop.name}</p>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-ink-500">
                         {shop.category} • {shop.city}
                       </p>
                     </div>
@@ -188,14 +189,14 @@ export function ShopOwnerDashboardPage() {
                       />
                     </div>
                   </div>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-ink-500">
                     {shop.isActive ? 'Active shop shell' : 'Inactive shop shell'}
                   </p>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="rounded-[1.35rem] bg-slate-50 px-4 py-5 text-sm text-slate-600">
+            <div className="rounded-2xl bg-ink-50 px-4 py-5 text-sm text-ink-500">
               No shops created yet. Create your first shop to start the merchant approval flow.
             </div>
           )}
@@ -211,12 +212,15 @@ export function ShopOwnerDashboardPage() {
             'Inventory and stock modules can attach to each approved shop without replacing the auth layer.',
             'Order operations can plug into the same shop records and approval workflow.',
             'Public storefront exposure can later switch from mock-only shops to approved database-backed shops.',
-          ].map((point) => (
+          ].map((point, index) => (
             <div
               key={point}
-              className="rounded-[1.35rem] bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600"
+              className="rounded-2xl bg-ink-50 px-4 py-4 text-sm leading-7 text-ink-600"
             >
-              {point}
+              <span className="mb-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-nearkart-600 text-xs font-bold text-white">
+                {index + 1}
+              </span>
+              <p>{point}</p>
             </div>
           ))}
         </div>

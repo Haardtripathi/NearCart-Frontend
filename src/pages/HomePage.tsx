@@ -6,7 +6,7 @@ import { CategoryChips } from '@/components/category/CategoryChips'
 import { TrendingRail } from '@/components/home/TrendingRail'
 import { ShopCard } from '@/components/shop/ShopCard'
 import { useCustomerCity } from '@/hooks/useCustomerCity'
-import { useGeolocation } from '@/hooks/useGeolocation'
+import { useDeliveryCoordinates } from '@/hooks/useDeliveryCoordinates'
 import type { PublicShopSummary } from '@/types/api'
 
 const MIN_QUERY_LENGTH = 2
@@ -14,9 +14,9 @@ const MIN_QUERY_LENGTH = 2
 export function HomePage() {
   const navigate = useNavigate()
   const { city } = useCustomerCity()
-  // Same hyperlocal filtering/sorting as ShopsPage — fails open when location is
-  // unavailable/declined, see useGeolocation's doc comment.
-  const { coordinates } = useGeolocation()
+  // Same hyperlocal filtering/sorting as ShopsPage — prefers a manually selected LocationBar
+  // address over raw device geolocation, see useDeliveryCoordinates's doc comment.
+  const { coordinates } = useDeliveryCoordinates()
   const [heroQuery, setHeroQuery] = useState('')
   const [nearbyShops, setNearbyShops] = useState<PublicShopSummary[]>([])
   const [isLoadingShops, setIsLoadingShops] = useState(true)
@@ -86,7 +86,7 @@ export function HomePage() {
     <div className="space-y-16 sm:space-y-24">
       {/* Hero Section */}
       <section className="relative overflow-hidden rounded-[2.5rem] bg-ink-900 px-6 py-16 text-white shadow-glass-strong sm:px-12 sm:py-20 lg:px-20 lg:py-28">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,122,26,0.18),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(139,92,246,0.22),transparent_40%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,128,25,0.28),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(226,55,68,0.2),transparent_40%)]" />
         <div className="relative z-10 mx-auto max-w-4xl space-y-8 text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 backdrop-blur-md ring-1 ring-white/20">
             <span className="h-2 w-2 animate-pulse rounded-full bg-accent-400" />

@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
 import { StatCard } from '@/components/dashboard/StatCard'
+import { getButtonClassName } from '@/components/shared/Button'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import type { CustomerProfileResponse } from '@/types/customer'
 import type { OrderPreview } from '@/types/order'
@@ -65,7 +66,7 @@ export function CustomerDashboardPage() {
   if (!profile) {
     return (
       <DashboardCard title="Customer dashboard unavailable">
-        <p className="text-sm text-rose-700">
+        <p className="text-sm text-accent-700">
           {errorMessage || 'We could not load your customer dashboard.'}
         </p>
       </DashboardCard>
@@ -81,7 +82,7 @@ export function CustomerDashboardPage() {
       />
 
       {errorMessage ? (
-        <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">
+        <div className="rounded-[1.5rem] border border-accent-200 bg-accent-50 px-5 py-4 text-sm font-medium text-accent-700">
           {errorMessage}
         </div>
       ) : null}
@@ -108,14 +109,11 @@ export function CustomerDashboardPage() {
         <DashboardCard
           actions={
             <div className="flex flex-wrap gap-2">
-              <Link
-                className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearkart-700"
-                to="/shops"
-              >
+              <Link className={getButtonClassName('primary', 'sm')} to="/shops">
                 Continue shopping
               </Link>
               <Link
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
+                className={getButtonClassName('secondary', 'sm')}
                 to="/dashboard/customer/addresses"
               >
                 Manage addresses
@@ -126,23 +124,25 @@ export function CustomerDashboardPage() {
           title="Profile summary"
         >
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
-              <p className="text-sm text-slate-500">Name</p>
-              <p className="mt-2 font-semibold text-ink-900">{profile.user.fullName}</p>
+            <div className="rounded-2xl border border-nearkart-100 bg-nearkart-50/70 px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">Name</p>
+              <p className="mt-2 truncate font-semibold text-ink-900">{profile.user.fullName}</p>
             </div>
-            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
-              <p className="text-sm text-slate-500">Email</p>
-              <p className="mt-2 font-semibold text-ink-900">{profile.user.email}</p>
+            <div className="rounded-2xl border border-nearkart-100 bg-nearkart-50/70 px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">Email</p>
+              <p className="mt-2 truncate font-semibold text-ink-900">{profile.user.email}</p>
             </div>
-            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
-              <p className="text-sm text-slate-500">Phone</p>
+            <div className="rounded-2xl border border-nearkart-100 bg-nearkart-50/70 px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">Phone</p>
               <p className="mt-2 font-semibold text-ink-900">
                 {profile.user.phone || 'Add from profile settings'}
               </p>
             </div>
-            <div className="rounded-[1.35rem] bg-nearkart-50 px-4 py-4">
-              <p className="text-sm text-slate-500">Default address</p>
-              <p className="mt-2 font-semibold text-ink-900">
+            <div className="rounded-2xl border border-nearkart-100 bg-nearkart-50/70 px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
+                Default address
+              </p>
+              <p className="mt-2 truncate font-semibold text-ink-900">
                 {profile.profile.defaultAddress?.label || 'Not set yet'}
               </p>
             </div>
@@ -158,7 +158,7 @@ export function CustomerDashboardPage() {
               {orders.map((order) => (
                 <Link
                   key={order.id}
-                  className="flex flex-col gap-3 rounded-[1.35rem] border border-slate-100 bg-slate-50/80 px-4 py-4 transition hover:border-nearkart-200 hover:bg-white"
+                  className="flex flex-col gap-3 rounded-2xl border border-ink-100 bg-ink-50/60 px-4 py-4 transition duration-150 hover:-translate-y-0.5 hover:border-nearkart-200 hover:bg-white hover:shadow-[var(--shadow-card-hover)]"
                   to={`/orders/${order.id}`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -166,13 +166,13 @@ export function CustomerDashboardPage() {
                       <p className="text-sm font-semibold text-ink-900">
                         {order.orderNumber}
                       </p>
-                      <p className="text-sm text-slate-500">{order.shopName}</p>
+                      <p className="text-sm text-ink-500">{order.shopName}</p>
                     </div>
                     <StatusPill label={order.status.replaceAll('_', ' ')} tone="warning" />
                   </div>
-                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-ink-500">
                     <span>{formatDateTime(order.placedAt)}</span>
-                    <span className="font-semibold text-nearkart-700">
+                    <span className="font-bold text-nearkart-700">
                       {formatCurrency(order.totalAmount)}
                     </span>
                   </div>
@@ -180,7 +180,7 @@ export function CustomerDashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-[1.35rem] bg-slate-50 px-4 py-5 text-sm text-slate-600">
+            <div className="rounded-2xl border border-dashed border-ink-200 bg-ink-50/60 px-4 py-6 text-center text-sm text-ink-500">
               No signed-in orders yet. Browse local shops and place your next order to see it here.
             </div>
           )}

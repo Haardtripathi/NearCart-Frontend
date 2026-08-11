@@ -131,12 +131,12 @@ export function HeaderSearchBar() {
   return (
     <div className="relative w-full max-w-md" ref={containerRef}>
       <form onSubmit={handleSubmit}>
-        <div className="flex items-center gap-2 rounded-full border border-ink-100 bg-white px-4 py-2 shadow-sm transition focus-within:border-nearkart-300 focus-within:ring-1 focus-within:ring-nearkart-200">
-          <span aria-hidden="true" className="text-ink-300">
+        <div className="flex items-center gap-2 rounded-full border border-ink-100 bg-ink-50/60 px-4 py-2 transition focus-within:border-nearkart-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-nearkart-100">
+          <span aria-hidden="true" className="text-base text-ink-400">
             🔍
           </span>
           <input
-            className="w-full border-none bg-transparent text-sm font-medium text-ink-900 outline-none placeholder:text-ink-300"
+            className="w-full border-none bg-transparent text-sm font-medium text-ink-900 outline-none placeholder:text-ink-400"
             onChange={(event) => {
               setQuery(event.target.value)
               setIsOpen(true)

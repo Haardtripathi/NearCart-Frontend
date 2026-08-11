@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { getCustomerAddresses, getCustomerProfile } from '@/api/customer'
+import { getCustomerAddresses, getCustomerProfile, validateCoupon } from '@/api/customer'
 import { createOrder } from '@/api/orders'
 import { validateCart } from '@/api/shops'
 import { AddressMapPicker } from '@/components/location/AddressMapPicker'
@@ -39,6 +39,7 @@ const initialFormValues: CheckoutFormValues = {
   longitude: null,
   notes: '',
   paymentMethod: 'COD',
+  couponCode: '',
 }
 
 // Bug found via real browser back/forward testing: `formValues` is plain `useState`, so it lives
@@ -203,6 +204,16 @@ export function CheckoutPage() {
     todayStatus: ShopTodayStatus
     todayStatusReason: string | null
   } | null>(null)
+
+  // Coupon UI state, deliberately separate from `formValues.couponCode` (the box the customer is
+  // typing into vs. the code that's actually been confirmed-applied and will be sent with the
+  // order). `couponPreview.discountAmount` is advisory only — see `api/customer.ts`'s
+  // `validateCoupon` doc comment — the authoritative discount always comes back on the created
+  // `Order` itself; this is purely to show "You saved ₹X" before submitting.
+  const [couponInput, setCouponInput] = useState('')
+  const [couponPreview, setCouponPreview] = useState<{ discountAmount: number; description: string | null } | null>(null)
+  const [couponError, setCouponError] = useState<string | null>(null)
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
 
   const hasItems = items.length > 0
   const subtotal = getCartSubtotal()
@@ -421,6 +432,65 @@ export function CheckoutPage() {
     }
   }, [cartValidationKey, replaceCart, shopId, shopName])
 
+  // A coupon's eligibility (min order amount, discount ceiling) was only checked against the
+  // subtotal at the moment it was applied — if the cart changes afterwards (qty edit, an item
+  // dropping out of stock during re-validation, etc.) that preview is stale. Rather than risk
+  // showing a discount that `createOrder`'s authoritative re-check would then reject, clear it
+  // and make the customer re-apply against the new subtotal.
+  const previousCartValidationKeyRef = useRef(cartValidationKey)
+  useEffect(() => {
+    if (previousCartValidationKeyRef.current !== cartValidationKey) {
+      previousCartValidationKeyRef.current = cartValidationKey
+      setCouponPreview(null)
+      setCouponError(null)
+      setFormValues((currentState) =>
+        currentState.couponCode ? { ...currentState, couponCode: '' } : currentState,
+      )
+    }
+  }, [cartValidationKey])
+
+  async function handleApplyCoupon() {
+    const code = couponInput.trim()
+
+    if (!code) {
+      setCouponError('Enter a coupon code.')
+      return
+    }
+
+    setIsApplyingCoupon(true)
+    setCouponError(null)
+
+    try {
+      const response = await validateCoupon(code, subtotal)
+
+      if (!response.item.valid) {
+        setCouponPreview(null)
+        setFormValues((currentState) => ({ ...currentState, couponCode: '' }))
+        setCouponError(response.item.reason || 'This coupon cannot be applied.')
+        return
+      }
+
+      setCouponPreview({
+        discountAmount: response.item.discountAmount,
+        description: response.item.description,
+      })
+      setFormValues((currentState) => ({ ...currentState, couponCode: code }))
+    } catch (error) {
+      setCouponPreview(null)
+      setFormValues((currentState) => ({ ...currentState, couponCode: '' }))
+      setCouponError(getApiErrorMessage(error, 'Unable to check that coupon right now.'))
+    } finally {
+      setIsApplyingCoupon(false)
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setCouponInput('')
+    setCouponPreview(null)
+    setCouponError(null)
+    setFormValues((currentState) => ({ ...currentState, couponCode: '' }))
+  }
+
   function updateField<Key extends keyof CheckoutFormValues>(
     field: Key,
     value: CheckoutFormValues[Key],
@@ -520,6 +590,27 @@ export function CheckoutPage() {
         return
       }
 
+      // Bug found via live cross-repo testing 2026-08-09: this final pre-submit `validateCart`
+      // call already computes `changedPriceItems` (same signal the page-load validation above
+      // warns about via `validationMessage`), but this submit-time call used to silently ignore
+      // it and proceed straight to `createOrder` with the cart already replaced at the new price
+      // — a customer who reviewed the cart on page load, then took a minute to fill in the
+      // address/payment form, could have an item's price change in that window and be charged
+      // the new amount with zero visible warning (confirmed live: a 100% price increase went
+      // through as a normal 201, no warning field anywhere in the response). `POST /orders` now
+      // also accepts `expectedPrice`/`expectedMrp` per item (see the `createOrder` call below)
+      // and enforces the same check server-side, closing the gap between this validate call
+      // returning and that request being sent — but this earlier, cheaper client-side check
+      // still fires first so we don't make a doomed network call, the same way the shop-closed
+      // check just below already does, rather than letting the customer pay a price they never
+      // saw or agreed to.
+      if (validationResponse.item.changedPriceItems.length > 0) {
+        setSubmitError(
+          'Prices changed for one or more items in your cart. Your cart has been refreshed with the latest prices — please review the updated total below and place your order again.',
+        )
+        return
+      }
+
       // Belt-and-braces client-side check — the backend still rejects this with a 403 on
       // `POST /orders` (caught below), but there's no reason to fire that request when we
       // already know the shop's daily status flipped to non-OPEN mid-session.
@@ -550,11 +641,25 @@ export function CheckoutPage() {
         longitude: formValues.longitude,
         notes: formValues.notes,
         paymentMethod: formValues.paymentMethod,
+        couponCode: formValues.couponCode,
         items: validationResponse.item.appliedItems.map((item) => ({
           productId: item.productId,
           variantId: item.variantId,
           shopId: validationResponse.item.shop.id,
           quantity: item.quantity,
+          // Lock in the price this exact submit-time `validateCart` call just confirmed, so
+          // `POST /orders`'s own `changedPriceItems` check (see `orders.validation.ts` /
+          // `getAuthoritativeCheckoutSnapshot`) has something to compare against if the price
+          // changes again in the brief gap between this validate call and the request below —
+          // closes the race the client-side-only `changedPriceItems.length > 0` check above
+          // can't cover by itself.
+          //
+          // `expectedPrice` (unlike `expectedMrp`) is optional-but-not-nullable server-side
+          // (`public.validation.ts`: `z.number().min(0).optional()` vs. `.nullable()` for mrp) —
+          // sending `null` would be rejected as a validation error, so coerce to `undefined`
+          // (which the price-change check simply skips, same as never having sent it).
+          expectedPrice: item.price ?? undefined,
+          expectedMrp: item.mrp,
         })),
       })
 
@@ -690,7 +795,7 @@ export function CheckoutPage() {
       ) : null}
 
       {submitError ? (
-        <section className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-sm text-rose-600">
+        <section className="rounded-2xl border border-accent-100 bg-accent-50/60 p-4 text-sm text-accent-700">
           {submitError}
         </section>
       ) : null}
@@ -925,19 +1030,92 @@ export function CheckoutPage() {
                       </span>
                     </div>
                   ) : null}
+                  {couponPreview ? (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-emerald-600">
+                        Coupon ({formValues.couponCode})
+                      </span>
+                      <span className="font-bold text-emerald-600">
+                        -{formatCurrency(couponPreview.discountAmount)}
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-ink-400">
+                    Coupon code
+                  </span>
+                  {couponPreview ? (
+                    <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-emerald-700">{formValues.couponCode} applied</p>
+                        {couponPreview.description ? (
+                          <p className="text-xs text-emerald-600">{couponPreview.description}</p>
+                        ) : null}
+                      </div>
+                      <button
+                        className="text-xs font-bold text-emerald-700 underline underline-offset-2 hover:text-emerald-800"
+                        onClick={handleRemoveCoupon}
+                        type="button"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        className="w-full rounded-xl border border-ink-100 bg-ink-50/30 px-4 py-2.5 text-sm font-medium uppercase text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                        onChange={(event) => {
+                          setCouponInput(event.target.value.toUpperCase())
+                          setCouponError(null)
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault()
+                            void handleApplyCoupon()
+                          }
+                        }}
+                        placeholder="Enter code"
+                        value={couponInput}
+                      />
+                      <button
+                        className="shrink-0 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-xs font-bold text-ink-700 transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={isApplyingCoupon || !couponInput.trim()}
+                        onClick={() => void handleApplyCoupon()}
+                        type="button"
+                      >
+                        {isApplyingCoupon ? 'Checking...' : 'Apply'}
+                      </button>
+                    </div>
+                  )}
+                  {couponError ? (
+                    <p className="text-xs font-medium text-rose-500">{couponError}</p>
+                  ) : null}
                 </div>
 
                 <div className="rounded-2xl bg-ink-900 p-6 text-white shadow-lg">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold">Total Estimate</span>
                     <span className="text-xl font-bold">
-                      {formatCurrency(cartSummary?.totalAmount ?? subtotal)}
+                      {formatCurrency(
+                        Math.max(
+                          0,
+                          (cartSummary?.totalAmount ?? subtotal) - (couponPreview?.discountAmount ?? 0),
+                        ),
+                      )}
                     </span>
                   </div>
                   {!cartSummary && (
                     <p className="mt-3 text-[10px] font-medium opacity-60 leading-relaxed">
                       Delivery fee is confirmed after live cart validation, before you can place
                       the order.
+                    </p>
+                  )}
+                  {couponPreview && (
+                    <p className="mt-3 text-[10px] font-medium opacity-60 leading-relaxed">
+                      Coupon savings shown here are an estimate — the exact discount is confirmed
+                      when your order is placed.
                     </p>
                   )}
                 </div>

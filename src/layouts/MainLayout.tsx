@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import brandMark from '@/assets/nearkart-mark.svg'
 import { VerifyEmailBanner } from '@/components/auth/VerifyEmailBanner'
+import { LocationBar } from '@/components/location/LocationBar'
 import { HeaderSearchBar } from '@/components/search/HeaderSearchBar'
 import { primaryNavigation } from '@/routes/navigation'
 import { useAuthStore } from '@/store/authStore'
@@ -11,10 +12,10 @@ import { formatRoleLabel } from '@/utils/auth'
 
 const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
   [
-    'rounded-full px-4 py-2 text-sm font-medium transition-all duration-200',
+    'rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200',
     isActive
-      ? 'bg-ink-900 text-white shadow-[0_16px_30px_-20px_rgba(17,33,23,0.85)]'
-      : 'text-slate-600 hover:bg-white hover:text-nearkart-700 hover:shadow-[0_16px_30px_-24px_rgba(17,33,23,0.35)]',
+      ? 'bg-nearkart-600 text-white shadow-md shadow-nearkart-600/25'
+      : 'text-ink-600 hover:bg-white hover:text-nearkart-700 hover:shadow-sm',
   ].join(' ')
 
 export function MainLayout() {
@@ -37,15 +38,15 @@ export function MainLayout() {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-20 border-b border-ink-100/50 bg-[rgba(252,253,248,0.85)] backdrop-blur-xl transition-all">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-6 px-6 py-4 sm:px-8 lg:px-10">
+      <header className="sticky top-0 z-20 border-b border-ink-100/60 bg-[rgba(255,251,247,0.88)] backdrop-blur-xl transition-all">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-3 sm:px-8 lg:px-10">
           <NavLink className="flex items-center gap-3 transition-transform hover:scale-[1.02]" to="/">
             <img
               alt="NearKart"
               className="h-10 w-10 rounded-xl border border-white/70 bg-white/80 shadow-md"
               src={brandMark}
             />
-            <div>
+            <div className="hidden sm:block">
               <p className="font-display text-xl font-bold tracking-tight text-ink-900">NearKart</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-nearkart-600/80">
                 Local Commerce
@@ -53,11 +54,15 @@ export function MainLayout() {
             </div>
           </NavLink>
 
-          <div className="order-3 w-full md:order-none md:w-auto md:flex-1 md:px-4">
+          <div className="hidden shrink-0 border-l border-ink-100 pl-2 lg:block">
+            <LocationBar />
+          </div>
+
+          <div className="order-4 w-full lg:order-none lg:w-auto lg:flex-1 lg:px-4">
             <HeaderSearchBar />
           </div>
 
-          <nav className="flex flex-1 flex-wrap justify-start gap-1 rounded-2xl border border-ink-100/50 bg-ink-50/30 p-1 md:w-auto md:flex-none md:justify-end">
+          <nav className="flex flex-1 flex-wrap justify-start gap-1 rounded-2xl border border-ink-100/50 bg-ink-50/30 p-1 lg:w-auto lg:flex-none lg:justify-end">
             {primaryNavigation
               .filter((item) => !item.customerOnly || !user || user.role === 'CUSTOMER')
               .map((item) => (
@@ -112,6 +117,10 @@ export function MainLayout() {
               </>
             )}
           </div>
+        </div>
+
+        <div className="border-t border-ink-100/60 px-6 py-2 sm:px-8 lg:hidden lg:px-10">
+          <LocationBar compact />
         </div>
       </header>
 

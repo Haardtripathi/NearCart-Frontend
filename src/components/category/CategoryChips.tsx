@@ -64,7 +64,7 @@ export function CategoryChips({ activeCategory, onSelect, className = '' }: Cate
         {Array.from({ length: 6 }, (_, index) => (
           <div
             key={`category-skeleton-${index}`}
-            className="h-24 w-28 shrink-0 animate-pulse rounded-3xl bg-ink-50"
+            className="h-28 w-28 shrink-0 animate-pulse rounded-3xl bg-ink-50"
           />
         ))}
       </div>
@@ -76,7 +76,7 @@ export function CategoryChips({ activeCategory, onSelect, className = '' }: Cate
   }
 
   return (
-    <div className={`flex gap-3 overflow-x-auto pb-2 ${className}`.trim()}>
+    <div className={`flex gap-3 overflow-x-auto pb-2 [scrollbar-width:thin] ${className}`.trim()}>
       {categories.map((category) => {
         const isActive = activeCategory === category.category
 
@@ -84,15 +84,21 @@ export function CategoryChips({ activeCategory, onSelect, className = '' }: Cate
           <button
             key={category.category}
             className={[
-              'flex w-28 shrink-0 flex-col items-center gap-2 rounded-3xl border p-4 text-center transition-all active:scale-95',
+              'group flex w-28 shrink-0 flex-col items-center gap-2.5 rounded-3xl border p-4 text-center transition-all active:scale-95',
               isActive
-                ? 'border-nearkart-500 bg-nearkart-50 shadow-glass'
-                : 'border-ink-100 bg-white hover:-translate-y-0.5 hover:shadow-glass',
+                ? 'border-nearkart-400 bg-nearkart-50 shadow-[var(--shadow-card-hover)]'
+                : 'border-ink-100 bg-white shadow-[var(--shadow-card)] hover:-translate-y-0.5 hover:border-nearkart-200 hover:shadow-[var(--shadow-card-hover)]',
             ].join(' ')}
             onClick={() => handleSelect(category.category)}
             type="button"
           >
-            <span className="text-3xl" aria-hidden="true">
+            <span
+              className={[
+                'flex h-12 w-12 items-center justify-center rounded-2xl text-2xl transition-colors',
+                isActive ? 'bg-nearkart-600/10' : 'bg-ink-50 group-hover:bg-nearkart-50',
+              ].join(' ')}
+              aria-hidden="true"
+            >
               {getCategoryIcon(category.category)}
             </span>
             <span className="text-xs font-bold text-ink-900 line-clamp-1">

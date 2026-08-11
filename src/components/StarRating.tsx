@@ -17,10 +17,10 @@ export function StarRating({ value, size = 'md' }: StarRatingProps) {
   const roundedValue = Math.round(Math.min(5, Math.max(0, value)))
 
   return (
-    <span className={`inline-flex items-center gap-0.5 ${SIZE_CLASSES[size]}`} role="img" aria-label={`${value} out of 5 stars`}>
+    <span className={`inline-flex items-center gap-0.5 leading-none ${SIZE_CLASSES[size]}`} role="img" aria-label={`${value} out of 5 stars`}>
       {Array.from({ length: 5 }, (_, index) => (
         <span
-          className={index < roundedValue ? 'text-sun-500' : 'text-ink-200'}
+          className={index < roundedValue ? 'text-sun-500 drop-shadow-[0_1px_1px_rgba(166,101,8,0.15)]' : 'text-ink-200'}
           key={index}
         >
           ★

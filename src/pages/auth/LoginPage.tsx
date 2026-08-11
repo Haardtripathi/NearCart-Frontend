@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { AuthPageShell } from '@/components/auth/AuthPageShell'
+import { Button } from '@/components/shared/Button'
+import { Input } from '@/components/shared/Input'
 import { getApiErrorMessage } from '@/utils/api'
 import { useAuthStore } from '@/store/authStore'
 
@@ -91,56 +93,46 @@ export function LoginPage() {
       footerTo="/register/customer"
       title="Access your Commerce OS"
     >
-      <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="email">
-            Email address
-          </label>
-          <input
-            className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
-            id="email"
-            onChange={(event) => updateField('email', event.target.value)}
-            placeholder="john@example.com"
-            type="email"
-            value={formValues.email}
-          />
-          {fieldErrors.email && (
-            <p className="text-xs font-medium text-rose-500">{fieldErrors.email}</p>
-          )}
-        </div>
+      <div className="mb-7 space-y-1 lg:hidden animate-nk-fade-slide-up">
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-nearkart-600">Welcome back</p>
+        <h2 className="font-display text-2xl font-bold text-ink-900">Sign in to NearKart</h2>
+      </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="password">
-              Password
-            </label>
-          </div>
-          <input
-            className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
-            id="password"
-            onChange={(event) => updateField('password', event.target.value)}
-            placeholder="••••••••"
-            type="password"
-            value={formValues.password}
-          />
-          {fieldErrors.password && (
-            <p className="text-xs font-medium text-rose-500">{fieldErrors.password}</p>
-          )}
-        </div>
+      <form className="space-y-5 animate-nk-fade-slide-up nk-stagger-1" onSubmit={handleSubmit}>
+        <Input
+          autoComplete="email"
+          error={fieldErrors.email}
+          id="email"
+          label="Email address"
+          onChange={(event) => updateField('email', event.target.value)}
+          placeholder="john@example.com"
+          type="email"
+          value={formValues.email}
+        />
+
+        <Input
+          autoComplete="current-password"
+          error={fieldErrors.password}
+          id="password"
+          label="Password"
+          onChange={(event) => updateField('password', event.target.value)}
+          placeholder="••••••••"
+          type="password"
+          value={formValues.password}
+        />
 
         {submitError && (
-          <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4 text-xs font-medium text-rose-600">
+          <div
+            className="animate-nk-shake rounded-xl border border-accent-100 bg-accent-50 p-4 text-xs font-medium text-accent-700"
+            key={submitError}
+          >
             {submitError}
           </div>
         )}
 
-        <button
-          className="flex h-12 w-full items-center justify-center rounded-xl bg-ink-900 px-8 text-sm font-bold text-white shadow-lg transition hover:shadow-xl active:scale-95 disabled:grayscale disabled:opacity-50"
-          disabled={loading}
-          type="submit"
-        >
-          {loading ? 'Signing in...' : 'Sign in to Account'}
-        </button>
+        <Button className="w-full" disabled={loading} isLoading={loading} loadingLabel="Signing in..." size="lg" type="submit">
+          Sign in to Account
+        </Button>
       </form>
     </AuthPageShell>
   )

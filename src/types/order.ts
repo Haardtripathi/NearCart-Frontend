@@ -28,6 +28,9 @@ export interface CheckoutFormValues {
   longitude: number | null
   notes: string
   paymentMethod: PaymentMethod
+  /** Optional promo code, resolved/re-validated authoritatively server-side inside
+   *  `createOrder()` — never trust the client-previewed discount amount for the real charge. */
+  couponCode: string
 }
 
 export interface CreateOrderPayload extends CheckoutFormValues {
@@ -39,7 +42,19 @@ export interface CreateOrderPayload extends CheckoutFormValues {
       | 'variantId'
       | 'shopId'
       | 'quantity'
-    >
+    > & {
+      // Mirrors `expectedPrice`/`expectedMrp` on `validateCart`'s item payload (see
+      // `api/shops.ts`) — `POST /orders` (`orders.validation.ts`) now accepts these too and
+      // rejects with 400 `CART_PRICE_CHANGED` if they've drifted since this value was captured.
+      // Without sending them here, that server-side check was unreachable in practice: the
+      // submit-time `validateCart` call in `CheckoutPage.tsx` catches a price change that
+      // happened *before* it runs, but a price that changes in the gap between that call
+      // returning and this `createOrder` call being sent had nothing to catch it — confirmed
+      // live 2026-08-10, a price doubled in that window and the order was created at the new
+      // price with a normal 201, no warning anywhere.
+      expectedPrice?: number
+      expectedMrp?: number | null
+    }
   >
 }
 
@@ -153,6 +168,17 @@ export interface OrderListResponse {
   meta: ApiMeta & {
     source: string
   }
+}
+
+export interface CouponPreview {
+  valid: boolean
+  discountAmount: number
+  reason: string | null
+  description: string | null
+}
+
+export interface CouponPreviewResponse {
+  item: CouponPreview
 }
 
 export interface CreateOrderReviewPayload {

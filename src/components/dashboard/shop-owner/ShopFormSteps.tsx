@@ -55,8 +55,7 @@ interface StepIndicatorProps {
   onStepSelect: (index: number) => void
 }
 
-const inputClassName =
-  'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400'
+const inputClassName = 'field-input'
 
 export function ShopFormStepIndicator({
   steps,
@@ -128,32 +127,32 @@ export function ShopBasicsFields({
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Shop name</span>
+          <span className="field-label">Shop name</span>
           <input
             className={inputClassName}
             onChange={(event) => updateField('name', event.target.value)}
             value={formValues.name}
           />
           {fieldErrors.name ? (
-            <span className="text-sm text-rose-600">{fieldErrors.name}</span>
+            <span className="text-sm text-accent-600">{fieldErrors.name}</span>
           ) : null}
         </label>
 
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Category</span>
+          <span className="field-label">Category</span>
           <input
             className={inputClassName}
             onChange={(event) => updateField('category', event.target.value)}
             value={formValues.category}
           />
           {fieldErrors.category ? (
-            <span className="text-sm text-rose-600">{fieldErrors.category}</span>
+            <span className="text-sm text-accent-600">{fieldErrors.category}</span>
           ) : null}
         </label>
       </div>
 
       <label className="space-y-2">
-        <span className="text-sm font-medium text-slate-700">Description</span>
+        <span className="field-label">Description</span>
         <textarea
           className={`min-h-28 ${inputClassName}`}
           onChange={(event) => updateField('description', event.target.value)}
@@ -178,19 +177,19 @@ export function ShopLocationContactFields({
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Phone</span>
+          <span className="field-label">Phone</span>
           <input
             className={inputClassName}
             onChange={(event) => updateField('phone', event.target.value)}
             value={formValues.phone}
           />
           {fieldErrors.phone ? (
-            <span className="text-sm text-rose-600">{fieldErrors.phone}</span>
+            <span className="text-sm text-accent-600">{fieldErrors.phone}</span>
           ) : null}
         </label>
 
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Email</span>
+          <span className="field-label">Email</span>
           <input
             className={inputClassName}
             onChange={(event) => updateField('email', event.target.value)}
@@ -206,19 +205,19 @@ export function ShopLocationContactFields({
       />
 
       <label className="space-y-2">
-        <span className="text-sm font-medium text-slate-700">Address line 1</span>
+        <span className="field-label">Address line 1</span>
         <input
           className={inputClassName}
           onChange={(event) => updateField('addressLine1', event.target.value)}
           value={formValues.addressLine1}
         />
         {fieldErrors.addressLine1 ? (
-          <span className="text-sm text-rose-600">{fieldErrors.addressLine1}</span>
+          <span className="text-sm text-accent-600">{fieldErrors.addressLine1}</span>
         ) : null}
       </label>
 
       <label className="space-y-2">
-        <span className="text-sm font-medium text-slate-700">Address line 2</span>
+        <span className="field-label">Address line 2</span>
         <input
           className={inputClassName}
           onChange={(event) => updateField('addressLine2', event.target.value)}
@@ -228,19 +227,19 @@ export function ShopLocationContactFields({
 
       <div className="grid gap-4 sm:grid-cols-3">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">City</span>
+          <span className="field-label">City</span>
           <input
             className={inputClassName}
             onChange={(event) => updateField('city', event.target.value)}
             value={formValues.city}
           />
           {fieldErrors.city ? (
-            <span className="text-sm text-rose-600">{fieldErrors.city}</span>
+            <span className="text-sm text-accent-600">{fieldErrors.city}</span>
           ) : null}
         </label>
 
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Area</span>
+          <span className="field-label">Area</span>
           <input
             className={inputClassName}
             onChange={(event) => updateField('area', event.target.value)}
@@ -249,14 +248,14 @@ export function ShopLocationContactFields({
         </label>
 
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Pincode</span>
+          <span className="field-label">Pincode</span>
           <input
             className={inputClassName}
             onChange={(event) => updateField('pincode', event.target.value)}
             value={formValues.pincode}
           />
           {fieldErrors.pincode ? (
-            <span className="text-sm text-rose-600">{fieldErrors.pincode}</span>
+            <span className="text-sm text-accent-600">{fieldErrors.pincode}</span>
           ) : null}
         </label>
       </div>
@@ -281,7 +280,7 @@ export function ShopPhotoFields({
 }: ShopPhotoFieldsProps) {
   return (
     <div className="space-y-2">
-      <span className="text-sm font-medium text-slate-700">Shop logo / photo</span>
+      <span className="field-label">Shop logo / photo</span>
       <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
         {formValues.logoImageUrl ? (
           <img
@@ -314,7 +313,7 @@ export function ShopPhotoFields({
             </p>
           ) : null}
           {logoUploadError ? (
-            <p className="text-sm text-rose-600">{logoUploadError}</p>
+            <p className="text-sm text-accent-600">{logoUploadError}</p>
           ) : null}
         </div>
       </div>
@@ -327,7 +326,7 @@ export function ShopHoursDeliveryFields({ formValues, updateField }: StepFieldsP
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Opening time</span>
+          <span className="field-label">Opening time</span>
           <input
             className={inputClassName}
             onChange={(event) => updateField('openingTime', event.target.value)}
@@ -337,7 +336,7 @@ export function ShopHoursDeliveryFields({ formValues, updateField }: StepFieldsP
         </label>
 
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Closing time</span>
+          <span className="field-label">Closing time</span>
           <input
             className={inputClassName}
             onChange={(event) => updateField('closingTime', event.target.value)}
@@ -349,7 +348,7 @@ export function ShopHoursDeliveryFields({ formValues, updateField }: StepFieldsP
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Minimum order amount</span>
+          <span className="field-label">Minimum order amount</span>
           <input
             className={inputClassName}
             min={0}
@@ -365,7 +364,7 @@ export function ShopHoursDeliveryFields({ formValues, updateField }: StepFieldsP
         </label>
 
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Default delivery fee</span>
+          <span className="field-label">Default delivery fee</span>
           <input
             className={inputClassName}
             min={0}
@@ -383,7 +382,7 @@ export function ShopHoursDeliveryFields({ formValues, updateField }: StepFieldsP
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">
+          <span className="field-label">
             Estimated delivery minutes
           </span>
           <input
@@ -401,7 +400,7 @@ export function ShopHoursDeliveryFields({ formValues, updateField }: StepFieldsP
         </label>
 
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Service radius (km)</span>
+          <span className="field-label">Service radius (km)</span>
           <input
             className={inputClassName}
             min={0}

@@ -6,7 +6,7 @@ import { CategoryChips } from '@/components/category/CategoryChips'
 import { PageHeader } from '@/components/PageHeader'
 import { ShopCard } from '@/components/shop/ShopCard'
 import { useCustomerCity } from '@/hooks/useCustomerCity'
-import { useGeolocation } from '@/hooks/useGeolocation'
+import { useDeliveryCoordinates } from '@/hooks/useDeliveryCoordinates'
 import type { PublicShopCategorySummary, PublicShopSummary } from '@/types/api'
 
 export function ShopsPage() {
@@ -14,9 +14,10 @@ export function ShopsPage() {
   const search = searchParams.get('search') ?? ''
   const category = searchParams.get('category') ?? ''
   const { city } = useCustomerCity()
-  // Hyperlocal distance filtering/sorting (server-side) — fails open to the unfiltered list
-  // below when location is unavailable/declined, see useGeolocation's doc comment.
-  const { coordinates } = useGeolocation()
+  // Hyperlocal distance filtering/sorting (server-side) — prefers a manually selected
+  // LocationBar address over raw device geolocation (see useDeliveryCoordinates), and fails
+  // open to the unfiltered list below when neither is available.
+  const { coordinates } = useDeliveryCoordinates()
 
   const [shops, setShops] = useState<PublicShopSummary[]>([])
   const [categories, setCategories] = useState<PublicShopCategorySummary[]>([])
@@ -140,7 +141,7 @@ export function ShopsPage() {
         </select>
         {(search || category) && (
           <button
-            className="text-xs font-bold text-nearkart-600 underline underline-offset-4"
+            className="rounded-xl px-3 py-2 text-xs font-bold text-accent-600 underline underline-offset-4 hover:bg-accent-50"
             onClick={clearFilters}
             type="button"
           >
@@ -150,7 +151,7 @@ export function ShopsPage() {
       </div>
 
       {errorMessage ? (
-        <section className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-sm text-rose-600">
+        <section className="rounded-2xl border border-accent-100 bg-accent-50/60 p-4 text-sm text-accent-700">
           {errorMessage}
         </section>
       ) : null}

@@ -138,7 +138,7 @@ export function VariantPickerModal({
                   />
                 ) : (
                   <button
-                    className="inline-flex h-10 items-center justify-center rounded-full bg-nearkart-600 px-5 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:bg-ink-200 disabled:text-ink-400"
+                    className="btn-primary h-10 px-5 disabled:bg-ink-200 disabled:text-ink-400 disabled:shadow-none"
                     disabled={isOutOfStock}
                     onClick={() => onAdd(variant)}
                     type="button"

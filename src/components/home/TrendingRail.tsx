@@ -63,14 +63,19 @@ export function TrendingRail({
 
   return (
     <section className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-end justify-between gap-4">
         <h2 className="font-display text-2xl font-bold text-ink-900 sm:text-3xl">{title}</h2>
+        {!isLoading && !hasError && items.length > 0 ? (
+          <span className="hidden shrink-0 text-xs font-semibold text-ink-400 sm:inline">
+            Scroll for more →
+          </span>
+        ) : null}
       </div>
 
       {hasError ? (
         <p className="text-sm text-ink-400">Unable to load trending products right now.</p>
       ) : (
-        <div className="flex gap-5 overflow-x-auto pb-2">
+        <div className="flex snap-x snap-proximity gap-5 overflow-x-auto pb-2 [scrollbar-width:thin]">
           {isLoading
             ? Array.from({ length: 4 }, (_, index) => (
               <div
@@ -79,7 +84,7 @@ export function TrendingRail({
               />
             ))
             : items.map((item) => (
-              <div className="w-64 shrink-0" key={`${item.id}:${item.variantId}`}>
+              <div className="w-64 shrink-0 snap-start" key={`${item.id}:${item.variantId}`}>
                 <CrossShopProductCard product={item} />
               </div>
             ))}

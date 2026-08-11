@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { AuthPageShell } from '@/components/auth/AuthPageShell'
+import { Button } from '@/components/shared/Button'
+import { Input } from '@/components/shared/Input'
 import { getApiErrorMessage } from '@/utils/api'
 import { useAuthStore } from '@/store/authStore'
 
@@ -116,116 +118,85 @@ export function RegisterShopOwnerPage() {
       footerTo="/login"
       title="Start your workspace"
     >
-      <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="fullName">
-            Full name
-          </label>
-          <input
-            className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
-            id="fullName"
-            onChange={(event) => updateField('fullName', event.target.value)}
-            placeholder="Jane Smith"
-            value={formValues.fullName}
+      <div className="mb-7 space-y-1 lg:hidden">
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-nearkart-600">Merchant Portal</p>
+        <h2 className="font-display text-2xl font-bold text-ink-900">Start your workspace</h2>
+      </div>
+
+      <form className="space-y-5" onSubmit={handleSubmit}>
+        <Input
+          autoComplete="name"
+          error={fieldErrors.fullName}
+          id="fullName"
+          label="Full name"
+          onChange={(event) => updateField('fullName', event.target.value)}
+          placeholder="Jane Smith"
+          value={formValues.fullName}
+        />
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Input
+            autoComplete="email"
+            error={fieldErrors.email}
+            id="email"
+            label="Email address"
+            onChange={(event) => updateField('email', event.target.value)}
+            placeholder="jane@business.com"
+            type="email"
+            value={formValues.email}
           />
-          {fieldErrors.fullName && (
-            <p className="text-xs font-medium text-rose-500">{fieldErrors.fullName}</p>
-          )}
-        </div>
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="email">
-              Email address
-            </label>
-            <input
-              className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
-              id="email"
-              onChange={(event) => updateField('email', event.target.value)}
-              placeholder="jane@business.com"
-              type="email"
-              value={formValues.email}
-            />
-            {fieldErrors.email && (
-              <p className="text-xs font-medium text-rose-500">{fieldErrors.email}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="phone">
-              Phone number
-            </label>
-            <input
-              className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
-              id="phone"
-              onChange={(event) => updateField('phone', event.target.value)}
-              placeholder="+91 00000 00000"
-              value={formValues.phone}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="businessName">
-            Business Name
-          </label>
-          <input
-            className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
-            id="businessName"
-            onChange={(event) => updateField('businessName', event.target.value)}
-            placeholder="Acme Retail Solutions"
-            value={formValues.businessName}
+          <Input
+            autoComplete="tel"
+            hint="Optional"
+            id="phone"
+            label="Phone number"
+            onChange={(event) => updateField('phone', event.target.value)}
+            placeholder="+91 00000 00000"
+            value={formValues.phone}
           />
-          {fieldErrors.businessName && (
-            <p className="text-xs font-medium text-rose-500">{fieldErrors.businessName}</p>
-          )}
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="gstNumber">
-              GST Number
-            </label>
-            <input
-              className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
-              id="gstNumber"
-              onChange={(event) => updateField('gstNumber', event.target.value)}
-              placeholder="Optional"
-              value={formValues.gstNumber}
-            />
-          </div>
+        <Input
+          error={fieldErrors.businessName}
+          id="businessName"
+          label="Business name"
+          onChange={(event) => updateField('businessName', event.target.value)}
+          placeholder="Acme Retail Solutions"
+          value={formValues.businessName}
+        />
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="password">
-              Password
-            </label>
-            <input
-              className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
-              id="password"
-              onChange={(event) => updateField('password', event.target.value)}
-              placeholder="At least 8 characters"
-              type="password"
-              value={formValues.password}
-            />
-            {fieldErrors.password && (
-              <p className="text-xs font-medium text-rose-500">{fieldErrors.password}</p>
-            )}
-          </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Input
+            hint="Optional"
+            id="gstNumber"
+            label="GST number"
+            onChange={(event) => updateField('gstNumber', event.target.value)}
+            placeholder="Optional"
+            value={formValues.gstNumber}
+          />
+
+          <Input
+            autoComplete="new-password"
+            error={fieldErrors.password}
+            id="password"
+            label="Password"
+            onChange={(event) => updateField('password', event.target.value)}
+            placeholder="At least 8 characters"
+            type="password"
+            value={formValues.password}
+          />
         </div>
 
         {submitError && (
-          <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4 text-xs font-medium text-rose-600">
+          <div className="rounded-xl border border-accent-100 bg-accent-50 p-4 text-xs font-medium text-accent-700">
             {submitError}
           </div>
         )}
 
-        <button
-          className="flex h-12 w-full items-center justify-center rounded-xl bg-ink-900 px-8 text-sm font-bold text-white shadow-lg transition hover:shadow-xl active:scale-95 disabled:grayscale disabled:opacity-50"
-          disabled={loading}
-          type="submit"
-        >
-          {loading ? 'Creating workspace...' : 'Create Merchant Workspace'}
-        </button>
+        <Button className="w-full" disabled={loading} isLoading={loading} loadingLabel="Creating workspace..." size="lg" type="submit">
+          Create Merchant Workspace
+        </Button>
       </form>
     </AuthPageShell>
   )

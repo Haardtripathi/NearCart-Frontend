@@ -298,13 +298,13 @@ export function AddressMapPicker({
   }
 
   return (
-    <div className="space-y-3 rounded-[1.35rem] border border-slate-200 bg-slate-50/70 p-4">
+    <div className="space-y-3 rounded-[1.35rem] border border-nearkart-100 bg-nearkart-50/40 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-sm font-medium text-slate-700">
-          Confirm the exact location
+        <span className="flex items-center gap-1.5 text-sm font-bold text-ink-800">
+          📍 Confirm the exact location
         </span>
         <button
-          className="inline-flex items-center gap-2 rounded-full border border-nearkart-200 bg-white px-3 py-1.5 text-xs font-semibold text-nearkart-700 transition hover:bg-nearkart-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-full border border-nearkart-300 bg-white px-3 py-1.5 text-xs font-bold text-nearkart-700 shadow-sm transition hover:bg-nearkart-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isLocating}
           onClick={handleUseCurrentLocation}
           type="button"
@@ -315,7 +315,7 @@ export function AddressMapPicker({
 
       <div className="relative">
         <input
-          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-nearkart-400"
+          className="field-input"
           onChange={(event) => handleSearchInputChange(event.target.value)}
           placeholder="Search for your address, area, or landmark"
           value={searchInput}

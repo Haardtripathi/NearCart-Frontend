@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { getCustomerAddresses } from '@/api/customer'
 import { reverseGeocode } from '@/api/location'
+import { useAddressStore } from '@/store/addressStore'
 import { useAuthStore } from '@/store/authStore'
 
 const STORAGE_KEY = 'nearkart_customer_city'
@@ -27,6 +28,8 @@ function cacheCity(city: string) {
  * trending) — anonymous and fully client-side, matching Swiggy/Zomato UX (no login required).
  *
  * Priority order:
+ *   0. The address explicitly selected in the header's location bar (`store/addressStore.ts`) —
+ *      a manual choice always wins over auto-detection, same as Swiggy/Zomato's location picker.
  *   1. A logged-in customer's saved default address (`Address.city`) — skips the reverse-geocode
  *      call entirely for the common case of a returning customer at home.
  *   2. A one-shot browser geolocation + the backend's existing
@@ -38,10 +41,27 @@ export function useCustomerCity() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const userId = useAuthStore((state) => state.user?.id)
   const userRole = useAuthStore((state) => state.user?.role)
-  const [city, setCity] = useState<string | null>(() => readCachedCity())
+  const selectedAddress = useAddressStore((state) => state.selectedAddress)
+  const [city, setCity] = useState<string | null>(() => selectedAddress?.city ?? readCachedCity())
   const [isDetecting, setIsDetecting] = useState(false)
+  // Read inside async auto-detect callbacks so a manual header-bar pick made *while* a
+  // detection request is in flight can't overwrite it once that request resolves later.
+  const hasManualSelectionRef = useRef(Boolean(selectedAddress?.city))
+  hasManualSelectionRef.current = Boolean(selectedAddress?.city)
 
   useEffect(() => {
+    if (selectedAddress?.city) {
+      setCity(selectedAddress.city)
+      cacheCity(selectedAddress.city)
+    }
+  }, [selectedAddress])
+
+  useEffect(() => {
+    if (selectedAddress?.city) {
+      // A manual header-bar selection always wins — skip auto-detection entirely.
+      return
+    }
+
     let isCancelled = false
 
     async function detectFromSavedAddress(): Promise<boolean> {
@@ -54,7 +74,7 @@ export function useCustomerCity() {
         const defaultAddress =
           response.items.find((address) => address.isDefault) ?? null
 
-        if (defaultAddress?.city && !isCancelled) {
+        if (defaultAddress?.city && !isCancelled && !hasManualSelectionRef.current) {
           setCity(defaultAddress.city)
           cacheCity(defaultAddress.city)
           return true
@@ -78,7 +98,7 @@ export function useCustomerCity() {
             .then((result) => {
               const detectedCity = result?.components.city
 
-              if (detectedCity && !isCancelled) {
+              if (detectedCity && !isCancelled && !hasManualSelectionRef.current) {
                 setCity(detectedCity)
                 cacheCity(detectedCity)
               }

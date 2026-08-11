@@ -74,7 +74,7 @@ export function OrderSuccessPage() {
         </div>
 
         {errorMessage ? (
-          <section className="mb-8 rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-sm text-rose-600">
+          <section className="mb-8 rounded-2xl border border-accent-100 bg-accent-50/60 p-4 text-sm text-accent-700">
             {errorMessage}
           </section>
         ) : null}

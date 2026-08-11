@@ -67,15 +67,18 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
   return (
     <div className="space-y-5">
       {isTerminalNegative ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-          <p className="font-semibold">
-            {order.status === 'REJECTED' ? 'Order was rejected by the shop.' : 'Order was cancelled.'}
-          </p>
-          <p className="mt-1 text-rose-700">
-            {order.status === 'REJECTED'
-              ? 'The shop was unable to confirm this order. Any payment collected on delivery does not apply.'
-              : 'This order will not be fulfilled.'}
-          </p>
+        <div className="flex items-start gap-3 rounded-2xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-900">
+          <span className="mt-0.5 text-lg">⚠️</span>
+          <div>
+            <p className="font-semibold">
+              {order.status === 'REJECTED' ? 'Order was rejected by the shop.' : 'Order was cancelled.'}
+            </p>
+            <p className="mt-1 text-accent-700">
+              {order.status === 'REJECTED'
+                ? 'The shop was unable to confirm this order. Any payment collected on delivery does not apply.'
+                : 'This order will not be fulfilled.'}
+            </p>
+          </div>
         </div>
       ) : null}
 
@@ -94,12 +97,12 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
                   className={[
                     'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
                     isDone
-                      ? 'bg-nearkart-600 text-white'
+                      ? 'bg-nearkart-600 text-white shadow-sm shadow-nearkart-600/30'
                       : isCurrent
-                        ? 'bg-nearkart-100 text-nearkart-700 ring-2 ring-nearkart-400'
+                        ? 'bg-nearkart-100 text-nearkart-700 ring-2 ring-nearkart-400 animate-pulse'
                         : isStoppedBefore
-                          ? 'bg-rose-100 text-rose-400'
-                          : 'bg-slate-100 text-slate-400',
+                          ? 'bg-accent-100 text-accent-400'
+                          : 'bg-ink-100 text-ink-400',
                   ].join(' ')}
                 >
                   {isDone ? '✓' : index + 1}
@@ -110,7 +113,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
                       'my-1 w-px flex-1',
                       isDone && index < lastCompletedIndex
                         ? 'bg-nearkart-400'
-                        : 'bg-slate-200',
+                        : 'bg-ink-200',
                     ].join(' ')}
                   />
                 ) : null}
@@ -123,15 +126,15 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
                     isDone || isCurrent
                       ? 'text-ink-900'
                       : isStoppedBefore
-                        ? 'text-rose-400'
-                        : 'text-slate-400',
+                        ? 'text-accent-400'
+                        : 'text-ink-400',
                   ].join(' ')}
                 >
                   {step.label}
                 </p>
-                <p className="mt-0.5 text-sm text-slate-500">{step.description}</p>
+                <p className="mt-0.5 text-sm text-ink-500">{step.description}</p>
                 {timestamp ? (
-                  <p className="mt-1 text-xs font-medium text-slate-400">
+                  <p className="mt-1 text-xs font-medium text-ink-400">
                     {formatDateTime(timestamp)}
                   </p>
                 ) : null}

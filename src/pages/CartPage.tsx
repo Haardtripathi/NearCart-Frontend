@@ -127,14 +127,11 @@ export function CartPage() {
                   </div>
 
                   <div className="flex flex-col gap-3">
-                    <Link
-                      className="flex h-12 items-center justify-center rounded-xl bg-nearkart-600 text-sm font-bold text-white shadow-md shadow-nearkart-600/20 transition hover:bg-nearkart-700 active:scale-95"
-                      to="/checkout"
-                    >
-                      Proceed to Checkout
+                    <Link className="btn-primary h-12 w-full" to="/checkout">
+                      Proceed to Checkout →
                     </Link>
                     <button
-                      className="text-xs font-bold text-rose-500 transition hover:text-rose-600"
+                      className="text-xs font-bold text-accent-600 transition hover:text-accent-700"
                       onClick={clearCart}
                     >
                       Clear entire cart

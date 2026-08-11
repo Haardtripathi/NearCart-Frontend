@@ -208,24 +208,24 @@ function AddressStep({
         <label className="space-y-2">
           <span className="text-sm font-medium text-slate-700">Recipient name</span>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+            className="field-input"
             onChange={(event) => updateField('fullName', event.target.value)}
             value={formValues.fullName}
           />
           {fieldErrors.fullName ? (
-            <span className="text-sm text-rose-600">{fieldErrors.fullName}</span>
+            <span className="text-sm text-accent-600">{fieldErrors.fullName}</span>
           ) : null}
         </label>
 
         <label className="space-y-2">
           <span className="text-sm font-medium text-slate-700">Phone number</span>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+            className="field-input"
             onChange={(event) => updateField('phone', event.target.value)}
             value={formValues.phone}
           />
           {fieldErrors.phone ? (
-            <span className="text-sm text-rose-600">{fieldErrors.phone}</span>
+            <span className="text-sm text-accent-600">{fieldErrors.phone}</span>
           ) : null}
         </label>
       </div>
@@ -239,12 +239,12 @@ function AddressStep({
       <label className="space-y-2">
         <span className="text-sm font-medium text-slate-700">Address line 1</span>
         <input
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+          className="field-input"
           onChange={(event) => updateField('line1', event.target.value)}
           value={formValues.line1}
         />
         {fieldErrors.line1 ? (
-          <span className="text-sm text-rose-600">{fieldErrors.line1}</span>
+          <span className="text-sm text-accent-600">{fieldErrors.line1}</span>
         ) : null}
       </label>
 
@@ -252,19 +252,19 @@ function AddressStep({
         <label className="space-y-2">
           <span className="text-sm font-medium text-slate-700">City</span>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+            className="field-input"
             onChange={(event) => updateField('city', event.target.value)}
             value={formValues.city}
           />
           {fieldErrors.city ? (
-            <span className="text-sm text-rose-600">{fieldErrors.city}</span>
+            <span className="text-sm text-accent-600">{fieldErrors.city}</span>
           ) : null}
         </label>
 
         <label className="space-y-2">
           <span className="text-sm font-medium text-slate-700">Area</span>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+            className="field-input"
             onChange={(event) => updateField('area', event.target.value)}
             value={formValues.area}
           />
@@ -273,18 +273,18 @@ function AddressStep({
         <label className="space-y-2">
           <span className="text-sm font-medium text-slate-700">Pincode</span>
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-nearkart-400"
+            className="field-input"
             onChange={(event) => updateField('pincode', event.target.value)}
             value={formValues.pincode}
           />
           {fieldErrors.pincode ? (
-            <span className="text-sm text-rose-600">{fieldErrors.pincode}</span>
+            <span className="text-sm text-accent-600">{fieldErrors.pincode}</span>
           ) : null}
         </label>
       </div>
 
       {submitError ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-2xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-700">
           {submitError}
         </div>
       ) : null}

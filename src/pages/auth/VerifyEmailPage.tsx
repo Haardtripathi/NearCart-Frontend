@@ -3,6 +3,8 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { sendEmailOtp, verifyEmailOtp } from '@/api/auth'
 import { AuthPageShell } from '@/components/auth/AuthPageShell'
+import { Button } from '@/components/shared/Button'
+import { Input } from '@/components/shared/Input'
 import { useAuthStore } from '@/store/authStore'
 import {
   getApiErrorMessage,
@@ -154,63 +156,64 @@ export function VerifyEmailPage() {
       footerTo={redirectTo}
       title="Verify your email"
     >
-      <form className="space-y-6" onSubmit={handleVerifySubmit}>
-        <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-ink-400" htmlFor="otp-code">
-            6-digit verification code
-          </label>
-          <input
-            autoComplete="one-time-code"
-            className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-center text-2xl font-bold tracking-[0.5em] text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
-            id="otp-code"
-            inputMode="numeric"
-            maxLength={6}
-            onChange={(event) => {
-              setCode(sanitizeCodeInput(event.target.value))
-              setVerifyError(null)
-            }}
-            placeholder="000000"
-            value={code}
-          />
-          {verifyError && (
-            <p className="text-xs font-medium text-rose-500">{verifyError}</p>
-          )}
-        </div>
+      <div className="mb-7 space-y-1 lg:hidden animate-nk-fade-slide-up">
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-nearkart-600">One more step</p>
+        <h2 className="font-display text-2xl font-bold text-ink-900">Verify your email</h2>
+      </div>
+
+      <form className="space-y-5 animate-nk-fade-slide-up nk-stagger-1" onSubmit={handleVerifySubmit}>
+        <Input
+          autoComplete="one-time-code"
+          className={[
+            'text-center text-2xl font-bold tracking-[0.5em]',
+            verifyError ? 'animate-nk-shake' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          error={verifyError ?? undefined}
+          id="otp-code"
+          inputMode="numeric"
+          label="6-digit verification code"
+          maxLength={6}
+          onChange={(event) => {
+            setCode(sanitizeCodeInput(event.target.value))
+            setVerifyError(null)
+          }}
+          placeholder="000000"
+          value={code}
+        />
 
         {sendNotice && !verifyError && (
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 text-xs font-medium text-emerald-700">
+          <div className="animate-nk-fade-slide-up rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 text-xs font-medium text-emerald-700">
             {sendNotice}
           </div>
         )}
 
         {sendError && (
-          <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4 text-xs font-medium text-rose-600">
+          <div className="animate-nk-fade-slide-up rounded-xl border border-accent-100 bg-accent-50 p-4 text-xs font-medium text-accent-700">
             {sendError}
           </div>
         )}
 
-        <button
-          className="flex h-12 w-full items-center justify-center rounded-xl bg-ink-900 px-8 text-sm font-bold text-white shadow-lg transition hover:shadow-xl active:scale-95 disabled:grayscale disabled:opacity-50"
-          disabled={isVerifying || code.length !== 6}
-          type="submit"
-        >
-          {isVerifying ? 'Verifying...' : 'Verify email'}
-        </button>
+        <Button className="w-full" disabled={isVerifying || code.length !== 6} isLoading={isVerifying} loadingLabel="Verifying..." size="lg" type="submit">
+          Verify email
+        </Button>
 
-        <button
-          className="flex h-11 w-full items-center justify-center rounded-xl border border-ink-100 bg-white px-8 text-xs font-bold uppercase tracking-wider text-ink-600 transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-50"
+        <Button
+          className="w-full"
           disabled={isSending || (hasSentOnce && cooldownSeconds > 0)}
+          isLoading={isSending}
+          loadingLabel="Sending..."
           onClick={() => void requestCode()}
           type="button"
+          variant="secondary"
         >
-          {isSending
-            ? 'Sending...'
-            : cooldownSeconds > 0
-              ? `Resend code in ${cooldownSeconds}s`
-              : hasSentOnce
-                ? 'Resend code'
-                : 'Send code'}
-        </button>
+          {cooldownSeconds > 0
+            ? `Resend code in ${cooldownSeconds}s`
+            : hasSentOnce
+              ? 'Resend code'
+              : 'Send code'}
+        </Button>
       </form>
     </AuthPageShell>
   )

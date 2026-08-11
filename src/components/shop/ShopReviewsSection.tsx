@@ -93,7 +93,7 @@ export function ShopReviewsSection({ shopId }: ShopReviewsSectionProps) {
 
   if (errorMessage && reviews.length === 0) {
     return (
-      <p className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-sm text-rose-600">
+      <p className="rounded-2xl border border-accent-100 bg-accent-50/60 p-4 text-sm text-accent-700">
         {errorMessage}
       </p>
     )
