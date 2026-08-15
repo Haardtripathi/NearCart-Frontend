@@ -20,6 +20,8 @@ export interface CheckoutFormValues {
   customerEmail: string
   deliveryAddressLine1: string
   deliveryAddressLine2: string
+  country: string
+  state: string
   city: string
   area: string
   pincode: string

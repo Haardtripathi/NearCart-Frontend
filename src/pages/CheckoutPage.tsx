@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
+import { Country, State, City } from 'country-state-city'
 
 import { getCustomerAddresses, getCustomerProfile, validateCoupon } from '@/api/customer'
 import { createOrder } from '@/api/orders'
@@ -33,6 +34,8 @@ const initialFormValues: CheckoutFormValues = {
   customerEmail: '',
   deliveryAddressLine1: '',
   deliveryAddressLine2: '',
+  country: '',
+  state: '',
   city: '',
   area: '',
   pincode: '',
@@ -128,6 +131,14 @@ function validateCheckoutForm(values: CheckoutFormValues) {
 
   if (!values.deliveryAddressLine1.trim()) {
     errors.deliveryAddressLine1 = 'Address line 1 is required.'
+  }
+
+  if (!values.country.trim()) {
+    errors.country = 'Country is required.'
+  }
+
+  if (!values.state.trim()) {
+    errors.state = 'State is required.'
   }
 
   if (!values.city.trim()) {
@@ -305,6 +316,8 @@ export function CheckoutPage() {
             currentState.deliveryAddressLine1 || defaultAddress?.line1 || '',
           deliveryAddressLine2:
             currentState.deliveryAddressLine2 || defaultAddress?.line2 || '',
+          country: currentState.country || '',
+          state: currentState.state || '',
           city: currentState.city || defaultAddress?.city || '',
           area: currentState.area || defaultAddress?.area || '',
           pincode: currentState.pincode || defaultAddress?.pincode || '',
@@ -529,6 +542,8 @@ export function CheckoutPage() {
         currentState.deliveryAddressLine1 ||
         location.formattedAddress ||
         currentState.deliveryAddressLine1,
+      country: currentState.country || '',
+      state: currentState.state || '',
       city: currentState.city || location.addressComponents?.city || currentState.city,
       area: currentState.area || location.addressComponents?.area || currentState.area,
       pincode:
@@ -642,6 +657,8 @@ export function CheckoutPage() {
         customerEmail: formValues.customerEmail,
         deliveryAddressLine1: formValues.deliveryAddressLine1,
         deliveryAddressLine2: formValues.deliveryAddressLine2,
+        country: formValues.country,
+        state: formValues.state,
         city: formValues.city,
         area: formValues.area,
         pincode: formValues.pincode,
@@ -920,6 +937,8 @@ export function CheckoutPage() {
                           customerPhone: currentState.customerPhone || selectedAddress.phone,
                           deliveryAddressLine1: selectedAddress.line1,
                           deliveryAddressLine2: selectedAddress.line2 || '',
+                          country: currentState.country || '',
+                          state: currentState.state || '',
                           city: selectedAddress.city,
                           area: selectedAddress.area || '',
                           pincode: selectedAddress.pincode,
@@ -971,12 +990,61 @@ export function CheckoutPage() {
                 />
               </label>
               <label className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-400">Country</span>
+                <select
+                  className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                  onChange={(event) => {
+                    updateField('country', event.target.value)
+                    updateField('state', '')
+                    updateField('city', '')
+                  }}
+                  value={formValues.country}
+                >
+                  <option value="">Select a country</option>
+                  {Country.getAllCountries().map((c) => (
+                    <option key={c.isoCode} value={c.isoCode}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.country && <p className="text-xs font-medium text-rose-500">{fieldErrors.country}</p>}
+              </label>
+              <label className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-400">State</span>
+                <select
+                  className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                  onChange={(event) => {
+                    updateField('state', event.target.value)
+                    updateField('city', '')
+                  }}
+                  value={formValues.state}
+                  disabled={!formValues.country}
+                >
+                  <option value="">Select a state</option>
+                  {formValues.country && State.getStatesOfCountry(formValues.country).map((s) => (
+                    <option key={s.isoCode} value={s.isoCode}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.state && <p className="text-xs font-medium text-rose-500">{fieldErrors.state}</p>}
+              </label>
+              <label className="space-y-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-ink-400">City</span>
-                <input
+                <select
                   className="w-full rounded-2xl border border-ink-100 bg-ink-50/30 px-5 py-3.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
                   onChange={(event) => updateField('city', event.target.value)}
                   value={formValues.city}
-                />
+                  disabled={!formValues.state}
+                >
+                  <option value="">Select a city</option>
+                  {formValues.country && formValues.state && City.getCitiesOfState(formValues.country, formValues.state).map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.city && <p className="text-xs font-medium text-rose-500">{fieldErrors.city}</p>}
               </label>
               <label className="space-y-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-ink-400">Pincode</span>
