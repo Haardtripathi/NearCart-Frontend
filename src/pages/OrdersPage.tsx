@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import { getOrderById } from '@/api/orders'
 import { getCustomerOrders } from '@/api/customer'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
+import { useAuthStore } from '@/store/authStore'
 import type { OrderPreview } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDateTime } from '@/utils/formatDateTime'
+import { getGuestOrderIds } from '@/utils/guestOrders'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from '@/utils/orderStatus'
 
 // Mirrors the backend's `TERMINAL_ORDER_STATUSES` (`orders.service.ts`) and the same set used in
@@ -25,7 +28,41 @@ const TERMINAL_ORDER_STATUSES = new Set<OrderPreview['status']>([
 // cheaply for a visitor with their order list open).
 const ORDER_LIST_POLL_INTERVAL_MS = 18_000
 
+async function getGuestOrders(): Promise<OrderPreview[]> {
+  const guestOrderIds = getGuestOrderIds()
+
+  if (guestOrderIds.length === 0) {
+    return []
+  }
+
+  const orders = await Promise.all(
+    guestOrderIds.map(async (orderId) => {
+      const response = await getOrderById(orderId)
+
+      return {
+        id: response.item.id,
+        orderNumber: response.item.orderNumber,
+        customerUserId: response.item.customerUserId,
+        shopId: response.item.shopId,
+        shopName: response.item.shopName,
+        status: response.item.status,
+        paymentStatus: response.item.paymentStatus,
+        paymentMethod: response.item.paymentMethod,
+        totalAmount: response.item.totalAmount,
+        customerName: response.item.customerName,
+        placedAt: response.item.placedAt,
+        deliveredAt: response.item.deliveredAt,
+      } satisfies OrderPreview
+    }),
+  )
+
+  return orders.sort((left, right) => {
+    return new Date(right.placedAt).getTime() - new Date(left.placedAt).getTime()
+  })
+}
+
 export function OrdersPage() {
+  const user = useAuthStore((state) => state.user)
   const [orders, setOrders] = useState<OrderPreview[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -51,7 +88,8 @@ export function OrdersPage() {
       }
 
       try {
-        const nextOrders = (await getCustomerOrders()).items
+        const nextOrders =
+          user?.role === 'CUSTOMER' ? (await getCustomerOrders()).items : await getGuestOrders()
 
         if (!isMountedRef.current) {
           return
@@ -68,7 +106,12 @@ export function OrdersPage() {
         // shouldn't replace an already-visible, still-valid order list with an error banner.
         if (!silent) {
           setErrorMessage(
-            getApiErrorMessage(error, 'Unable to load your orders right now.'),
+            getApiErrorMessage(
+              error,
+              user?.role === 'CUSTOMER'
+                ? 'Unable to load your orders right now.'
+                : 'Unable to load your saved guest orders right now.',
+            ),
           )
         }
       } finally {
@@ -97,14 +140,18 @@ export function OrdersPage() {
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [])
+  }, [user])
 
   return (
     <div className="space-y-12">
       <PageHeader
         eyebrow="My Orders"
         title="Track your recent purchases"
-        description="Monitor the status of your orders and review your shopping history."
+        description={
+          user?.role === 'CUSTOMER'
+            ? 'Monitor the status of your orders and review your shopping history.'
+            : 'See the orders saved on this device from your guest storefront flow.'
+        }
       />
 
       {errorMessage ? (
@@ -130,7 +177,9 @@ export function OrdersPage() {
             </div>
             <h3 className="font-display text-2xl font-bold text-ink-900">No orders yet</h3>
             <p className="mt-3 max-w-xs text-sm text-ink-400">
-              Your order history will appear here once you place your first purchase on NearKart.
+              {user?.role === 'CUSTOMER'
+                ? 'Your order history will appear here once you place your first purchase on NearKart.'
+                : 'No saved guest orders yet. Place an order from the storefront and it will show up here on this device.'}
             </p>
             <Link
               className="mt-10 inline-flex h-12 items-center justify-center rounded-xl bg-ink-900 px-8 text-sm font-bold text-white transition hover:shadow-lg active:scale-95"

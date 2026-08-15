@@ -16,6 +16,7 @@ import type { Address } from '@/types/customer'
 import type { CheckoutFormValues } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { addGuestOrderId } from '@/utils/guestOrders'
 import { formatServiceAreaMessage, getServiceAreaErrorInfo } from '@/utils/serviceArea'
 import {
   formatShopNotOpenTodayMessage,
@@ -670,6 +671,10 @@ export function CheckoutPage() {
           expectedMrp: item.mrp,
         })),
       })
+
+      if (user?.role !== 'CUSTOMER') {
+        addGuestOrderId(response.item.id)
+      }
 
       clearCart()
       clearCheckoutDraft(user?.id)
