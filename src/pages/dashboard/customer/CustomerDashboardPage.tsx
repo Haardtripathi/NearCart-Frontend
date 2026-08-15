@@ -8,6 +8,7 @@ import { DashboardCard } from '@/components/dashboard/DashboardCard'
 import { StatCard } from '@/components/dashboard/StatCard'
 import { getButtonClassName } from '@/components/shared/Button'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
+import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import type { CustomerProfileResponse } from '@/types/customer'
 import type { OrderPreview } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
@@ -87,23 +88,29 @@ export function CustomerDashboardPage() {
         </div>
       ) : null}
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <StatCard
-          description="Saved delivery addresses ready for checkout."
-          label="Address book"
-          value={profile.stats.addressCount}
-        />
-        <StatCard
-          description="Orders linked to your signed-in NearKart account."
-          label="Orders"
-          value={profile.stats.orderCount}
-        />
-        <StatCard
-          description="Your account is ready for signed-in storefront checkout."
-          label="Account"
-          value={profile.user.isVerified ? 'Verified' : 'Pending'}
-        />
-      </section>
+      <StaggerGrid className="grid gap-4 md:grid-cols-3">
+        <StaggerItem>
+          <StatCard
+            description="Saved delivery addresses ready for checkout."
+            label="Address book"
+            value={profile.stats.addressCount}
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard
+            description="Orders linked to your signed-in NearKart account."
+            label="Orders"
+            value={profile.stats.orderCount}
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard
+            description="Your account is ready for signed-in storefront checkout."
+            label="Account"
+            value={profile.user.isVerified ? 'Verified' : 'Pending'}
+          />
+        </StaggerItem>
+      </StaggerGrid>
 
       <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
         <DashboardCard
@@ -154,31 +161,32 @@ export function CustomerDashboardPage() {
           title="Recent orders"
         >
           {orders.length > 0 ? (
-            <div className="space-y-3">
+            <StaggerGrid className="space-y-3">
               {orders.map((order) => (
-                <Link
-                  key={order.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-ink-100 bg-ink-50/60 px-4 py-4 transition duration-150 hover:-translate-y-0.5 hover:border-nearkart-200 hover:bg-white hover:shadow-[var(--shadow-card-hover)]"
-                  to={`/orders/${order.id}`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-ink-900">
-                        {order.orderNumber}
-                      </p>
-                      <p className="text-sm text-ink-500">{order.shopName}</p>
+                <StaggerItem key={order.id}>
+                  <Link
+                    className="flex flex-col gap-3 rounded-2xl border border-ink-100 bg-ink-50/60 px-4 py-4 transition duration-150 hover:-translate-y-0.5 hover:border-nearkart-200 hover:bg-white hover:shadow-[var(--shadow-card-hover)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100"
+                    to={`/orders/${order.id}`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-ink-900">
+                          {order.orderNumber}
+                        </p>
+                        <p className="text-sm text-ink-500">{order.shopName}</p>
+                      </div>
+                      <StatusPill label={order.status.replaceAll('_', ' ')} tone="warning" />
                     </div>
-                    <StatusPill label={order.status.replaceAll('_', ' ')} tone="warning" />
-                  </div>
-                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-ink-500">
-                    <span>{formatDateTime(order.placedAt)}</span>
-                    <span className="font-bold text-nearkart-700">
-                      {formatCurrency(order.totalAmount)}
-                    </span>
-                  </div>
-                </Link>
+                    <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-ink-500">
+                      <span>{formatDateTime(order.placedAt)}</span>
+                      <span className="font-bold text-nearkart-700">
+                        {formatCurrency(order.totalAmount)}
+                      </span>
+                    </div>
+                  </Link>
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerGrid>
           ) : (
             <div className="rounded-2xl border border-dashed border-ink-200 bg-ink-50/60 px-4 py-6 text-center text-sm text-ink-500">
               No signed-in orders yet. Browse local shops and place your next order to see it here.

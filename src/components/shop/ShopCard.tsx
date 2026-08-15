@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { motion, useReducedMotion } from 'framer-motion'
 
 import { StatusPill } from '@/components/StatusPill'
+import { ShopImage } from '@/components/shop/ShopImage'
 import type { PublicShopSummary } from '@/types/api'
 import { getCategoryIcon } from '@/utils/categoryIcons'
 import { formatLiveEta, getLiveEtaTone } from '@/utils/deliveryEta'
@@ -13,18 +15,23 @@ interface ShopCardProps {
 export function ShopCard({ shop }: ShopCardProps) {
   const isOpenToday = shop.todayStatus === 'OPEN'
   const todayStatusMessage = getTodayStatusMessage(shop)
+  const prefersReducedMotion = useReducedMotion()
 
   return (
-    <article
-      className={`group relative flex flex-col rounded-3xl border border-ink-100 bg-white p-6 shadow-[var(--shadow-card)] transition-all ${isOpenToday ? 'hover:-translate-y-1 hover:shadow-glass' : 'opacity-80'
-        }`}
+    <motion.article
+      className={`group relative flex flex-col overflow-hidden rounded-3xl border border-ink-100 bg-white shadow-[var(--shadow-card)] ${isOpenToday ? '' : 'opacity-80'}`}
+      transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+      whileHover={isOpenToday && !prefersReducedMotion ? { y: -6, boxShadow: '0 18px 40px -18px rgba(28, 20, 10, 0.28)' } : undefined}
     >
-      <div className="flex flex-1 flex-col space-y-4">
-        <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-nearkart-600">
-            <span aria-hidden="true">{getCategoryIcon(shop.category)}</span>
-            {shop.category}
-          </span>
+      <div className="relative h-36 w-full">
+        <ShopImage
+          category={shop.category}
+          className="h-full w-full"
+          iconClassName="text-5xl"
+          logoImageUrl={shop.logoImageUrl}
+          name={shop.name}
+        />
+        <div className="absolute right-3 top-3">
           {isOpenToday ? (
             <StatusPill
               label={formatLiveEta(shop.liveEstimatedDeliveryMinutes)}
@@ -37,6 +44,20 @@ export function ShopCard({ shop }: ShopCardProps) {
             />
           )}
         </div>
+        {shop.deliveryFee != null ? (
+          <div className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-ink-900/75 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
+            {shop.distanceKm != null ? <span>{shop.distanceKm} km</span> : null}
+            {shop.distanceKm != null ? <span aria-hidden="true">·</span> : null}
+            <span>₹{shop.deliveryFee} delivery</span>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex flex-1 flex-col space-y-4 p-6">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-nearkart-600">
+          <span aria-hidden="true">{getCategoryIcon(shop.category)}</span>
+          {shop.category}
+        </div>
 
         <div>
           <h3 className="font-display text-xl font-bold text-ink-900 group-hover:text-nearkart-600 transition-colors">
@@ -44,9 +65,6 @@ export function ShopCard({ shop }: ShopCardProps) {
           </h3>
           <p className="mt-1 text-xs font-medium text-ink-400">
             {[shop.area, shop.city].filter(Boolean).join(' • ')}
-            {shop.distanceKm != null ? (
-              <span className="font-bold text-nearkart-600"> • {shop.distanceKm} km away</span>
-            ) : null}
           </p>
         </div>
 
@@ -81,17 +99,17 @@ export function ShopCard({ shop }: ShopCardProps) {
             {shop.description}
           </p>
         )}
-      </div>
 
-      <Link
-        className={`mt-6 flex h-11 items-center justify-center rounded-xl px-6 text-sm font-bold shadow-md transition active:scale-95 ${isOpenToday
-            ? 'bg-nearkart-600 text-white shadow-nearkart-600/10 hover:bg-nearkart-700'
-            : 'bg-ink-50 text-ink-500 shadow-none hover:bg-ink-100'
-          }`}
-        to={`/shops/${shop.slug}`}
-      >
-        {isOpenToday ? 'Open Shop' : 'View Shop'}
-      </Link>
-    </article>
+        <Link
+          className={`mt-auto flex h-11 items-center justify-center rounded-xl px-6 text-sm font-bold shadow-md transition active:scale-95 ${isOpenToday
+              ? 'bg-nearkart-600 text-white shadow-nearkart-600/10 hover:bg-nearkart-700'
+              : 'bg-ink-50 text-ink-500 shadow-none hover:bg-ink-100'
+            }`}
+          to={`/shops/${shop.slug}`}
+        >
+          {isOpenToday ? 'Open Shop' : 'View Shop'}
+        </Link>
+      </div>
+    </motion.article>
   )
 }

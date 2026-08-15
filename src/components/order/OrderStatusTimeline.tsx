@@ -1,3 +1,5 @@
+import { motion, useReducedMotion } from 'framer-motion'
+
 import type { Order, OrderStatus } from '@/types/order'
 import { formatDateTime } from '@/utils/formatDateTime'
 
@@ -57,6 +59,7 @@ interface OrderStatusTimelineProps {
 }
 
 export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
+  const prefersReducedMotion = useReducedMotion()
   const isTerminalNegative = TERMINAL_NEGATIVE_STATUSES.has(order.status)
   const currentIndex = HAPPY_PATH.findIndex((step) => step.status === order.status)
   // If the order was rejected/cancelled we don't know exactly which step it stopped at from the
@@ -95,27 +98,46 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
               <div className="flex flex-col items-center">
                 <span
                   className={[
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                    'relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
                     isDone
                       ? 'bg-nearkart-600 text-white shadow-sm shadow-nearkart-600/30'
                       : isCurrent
-                        ? 'bg-nearkart-100 text-nearkart-700 ring-2 ring-nearkart-400 animate-pulse'
+                        ? 'bg-nearkart-100 text-nearkart-700 ring-2 ring-nearkart-400'
                         : isStoppedBefore
                           ? 'bg-accent-100 text-accent-400'
                           : 'bg-ink-100 text-ink-400',
                   ].join(' ')}
                 >
-                  {isDone ? '✓' : index + 1}
+                  {/* Live-tracking pulse on the active step only — a subtle expanding ring rather
+                      than the previous blanket `animate-pulse` (which faded the whole badge and
+                      ignored prefers-reduced-motion). Collapses to a static ring under reduced
+                      motion, matching every other motion usage in this app. */}
+                  {isCurrent && !prefersReducedMotion ? (
+                    <motion.span
+                      animate={{ scale: [1, 1.7, 1.7], opacity: [0.55, 0, 0] }}
+                      aria-hidden="true"
+                      className="absolute inset-0 rounded-full bg-nearkart-400"
+                      transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
+                    />
+                  ) : null}
+                  <span className="relative">{isDone ? '✓' : index + 1}</span>
                 </span>
                 {!isLastStep ? (
-                  <span
-                    className={[
-                      'my-1 w-px flex-1',
-                      isDone && index < lastCompletedIndex
-                        ? 'bg-nearkart-400'
-                        : 'bg-ink-200',
-                    ].join(' ')}
-                  />
+                  <span className="relative my-1 w-px flex-1 bg-ink-200 overflow-hidden">
+                    {isDone && index < lastCompletedIndex ? (
+                      prefersReducedMotion ? (
+                        <span className="absolute inset-0 bg-nearkart-400" />
+                      ) : (
+                        <motion.span
+                          animate={{ scaleY: 1 }}
+                          className="absolute inset-0 origin-top bg-nearkart-400"
+                          initial={{ scaleY: 0 }}
+                          key={`${order.status}-${step.status}`}
+                          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                        />
+                      )
+                    ) : null}
+                  </span>
                 ) : null}
               </div>
 

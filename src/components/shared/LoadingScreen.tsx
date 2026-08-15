@@ -1,12 +1,24 @@
+import { motion, useReducedMotion } from 'framer-motion'
+
+import brandMark from '@/assets/nearkart-mark.svg'
+
 interface LoadingScreenProps {
   message?: string
   fullScreen?: boolean
 }
 
+/**
+ * Branded loading state — the NearKart mark breathing gently in place of a generic spinner, so
+ * even a "please wait" moment carries the brand instead of feeling like a template default. Under
+ * `prefers-reduced-motion` the mark renders fully static (no pulse, no ring), matching the same
+ * posture as `PageTransition`/`StaggerGrid`.
+ */
 export function LoadingScreen({
   message = 'Loading your NearKart workspace...',
   fullScreen = false,
 }: LoadingScreenProps) {
+  const prefersReducedMotion = useReducedMotion()
+
   return (
     <div
       className={[
@@ -15,16 +27,31 @@ export function LoadingScreen({
       ].join(' ')}
     >
       <div className="space-y-5 text-center">
-        <div className="relative mx-auto h-14 w-14">
-          <div className="absolute inset-0 animate-spin rounded-full border-[3px] border-nearkart-100 border-t-nearkart-600" />
-          <div
-            className="absolute inset-[5px] animate-spin rounded-full border-[3px] border-transparent border-t-accent-400 [animation-direction:reverse] [animation-duration:1.1s]"
+        <div className="relative mx-auto flex h-16 w-16 items-center justify-center">
+          {prefersReducedMotion ? null : (
+            <motion.span
+              animate={{ opacity: [0.5, 0, 0.5], scale: [1, 1.35, 1] }}
+              aria-hidden="true"
+              className="absolute inset-0 rounded-2xl bg-nearkart-200"
+              transition={{ duration: 1.8, ease: 'easeInOut', repeat: Infinity }}
+            />
+          )}
+          <motion.img
+            alt=""
+            animate={prefersReducedMotion ? undefined : { scale: [1, 1.06, 1] }}
+            aria-hidden="true"
+            className="relative h-16 w-16 rounded-2xl border border-nearkart-100 bg-white p-2.5 shadow-[var(--shadow-card)]"
+            src={brandMark}
+            transition={
+              prefersReducedMotion
+                ? undefined
+                : { duration: 1.8, ease: 'easeInOut', repeat: Infinity }
+            }
           />
-          <span className="absolute inset-0 flex items-center justify-center">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-nearkart-600" />
-          </span>
         </div>
-        <p className="text-sm font-semibold text-ink-600">{message}</p>
+        <p aria-live="polite" className="text-sm font-semibold text-ink-600" role="status">
+          {message}
+        </p>
       </div>
     </div>
   )

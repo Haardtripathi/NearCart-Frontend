@@ -5,6 +5,7 @@ import { searchCatalog } from '@/api/shops'
 import { PageHeader } from '@/components/PageHeader'
 import { TrendingRail } from '@/components/home/TrendingRail'
 import { CrossShopProductCard } from '@/components/shop/CrossShopProductCard'
+import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import { useCustomerCity } from '@/hooks/useCustomerCity'
 import type { PublicSearchResultItem } from '@/types/api'
 
@@ -94,11 +95,13 @@ export function SearchPage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <StaggerGrid className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {items.map((item) => (
-              <CrossShopProductCard key={`${item.id}:${item.variantId}`} product={item} />
+              <StaggerItem key={`${item.id}:${item.variantId}`}>
+                <CrossShopProductCard product={item} />
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGrid>
         )
       ) : null}
 

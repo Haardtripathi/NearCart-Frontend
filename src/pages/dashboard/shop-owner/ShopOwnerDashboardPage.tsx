@@ -8,6 +8,7 @@ import { DashboardCard } from '@/components/dashboard/DashboardCard'
 import { StatCard } from '@/components/dashboard/StatCard'
 import { getButtonClassName } from '@/components/shared/Button'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
+import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import type { ManagedShop, ShopOwnerProfileResponse } from '@/types/shop-owner'
 import { getApiErrorMessage } from '@/utils/api'
 import { getTodayStatusLabel, getTodayStatusTone } from '@/utils/shopAvailability'
@@ -99,23 +100,29 @@ export function ShopOwnerDashboardPage() {
         </div>
       ) : null}
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <StatCard
-          description="Shops already registered under your merchant workspace."
-          label="Total shops"
-          value={profile.stats.shopCount}
-        />
-        <StatCard
-          description="Shops approved and ready for future public rollout."
-          label="Approved"
-          value={profile.stats.approvedShopCount}
-        />
-        <StatCard
-          description="Shops still waiting for platform review."
-          label="Pending"
-          value={profile.stats.pendingShopCount}
-        />
-      </section>
+      <StaggerGrid className="grid gap-4 md:grid-cols-3">
+        <StaggerItem>
+          <StatCard
+            description="Shops already registered under your merchant workspace."
+            label="Total shops"
+            value={profile.stats.shopCount}
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard
+            description="Shops approved and ready for future public rollout."
+            label="Approved"
+            value={profile.stats.approvedShopCount}
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard
+            description="Shops still waiting for platform review."
+            label="Pending"
+            value={profile.stats.pendingShopCount}
+          />
+        </StaggerItem>
+      </StaggerGrid>
 
       <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
         <DashboardCard
@@ -164,37 +171,38 @@ export function ShopOwnerDashboardPage() {
           title="Latest shops"
         >
           {shops.length > 0 ? (
-            <div className="space-y-3">
+            <StaggerGrid className="space-y-3">
               {shops.slice(0, 5).map((shop) => (
-                <Link
-                  key={shop.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-ink-100 bg-white/70 px-4 py-4 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5 hover:border-nearkart-200 hover:shadow-[var(--shadow-card-hover)]"
-                  to={`/dashboard/shop-owner/shops/${shop.id}`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-ink-900">{shop.name}</p>
-                      <p className="text-sm text-ink-500">
-                        {shop.category} • {shop.city}
-                      </p>
+                <StaggerItem key={shop.id}>
+                  <Link
+                    className="flex flex-col gap-3 rounded-2xl border border-ink-100 bg-white/70 px-4 py-4 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5 hover:border-nearkart-200 hover:shadow-[var(--shadow-card-hover)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100"
+                    to={`/dashboard/shop-owner/shops/${shop.id}`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-ink-900">{shop.name}</p>
+                        <p className="text-sm text-ink-500">
+                          {shop.category} • {shop.city}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusPill
+                          label={shop.approvalStatus}
+                          tone={getApprovalTone(shop.approvalStatus)}
+                        />
+                        <StatusPill
+                          label={getTodayStatusLabel(shop.todayStatus)}
+                          tone={getTodayStatusTone(shop.todayStatus)}
+                        />
+                      </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <StatusPill
-                        label={shop.approvalStatus}
-                        tone={getApprovalTone(shop.approvalStatus)}
-                      />
-                      <StatusPill
-                        label={getTodayStatusLabel(shop.todayStatus)}
-                        tone={getTodayStatusTone(shop.todayStatus)}
-                      />
-                    </div>
-                  </div>
-                  <p className="text-sm text-ink-500">
-                    {shop.isActive ? 'Active shop shell' : 'Inactive shop shell'}
-                  </p>
-                </Link>
+                    <p className="text-sm text-ink-500">
+                      {shop.isActive ? 'Active shop shell' : 'Inactive shop shell'}
+                    </p>
+                  </Link>
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerGrid>
           ) : (
             <div className="rounded-2xl bg-ink-50 px-4 py-5 text-sm text-ink-500">
               No shops created yet. Create your first shop to start the merchant approval flow.
@@ -207,23 +215,22 @@ export function ShopOwnerDashboardPage() {
         description="These are the next surfaces already prepared by this foundation, so your team can extend without a major rewrite later."
         title="What comes next"
       >
-        <div className="grid gap-3 md:grid-cols-3">
+        <StaggerGrid className="grid gap-3 md:grid-cols-3">
           {[
             'Inventory and stock modules can attach to each approved shop without replacing the auth layer.',
             'Order operations can plug into the same shop records and approval workflow.',
             'Public storefront exposure can later switch from mock-only shops to approved database-backed shops.',
           ].map((point, index) => (
-            <div
-              key={point}
-              className="rounded-2xl bg-ink-50 px-4 py-4 text-sm leading-7 text-ink-600"
-            >
-              <span className="mb-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-nearkart-600 text-xs font-bold text-white">
-                {index + 1}
-              </span>
-              <p>{point}</p>
-            </div>
+            <StaggerItem key={point}>
+              <div className="rounded-2xl bg-ink-50 px-4 py-4 text-sm leading-7 text-ink-600">
+                <span className="mb-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-nearkart-600 text-xs font-bold text-white">
+                  {index + 1}
+                </span>
+                <p>{point}</p>
+              </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerGrid>
       </DashboardCard>
     </div>
   )

@@ -5,6 +5,7 @@ import { getShops } from '@/api/shops'
 import { CategoryChips } from '@/components/category/CategoryChips'
 import { TrendingRail } from '@/components/home/TrendingRail'
 import { ShopCard } from '@/components/shop/ShopCard'
+import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import { useCustomerCity } from '@/hooks/useCustomerCity'
 import { useDeliveryCoordinates } from '@/hooks/useDeliveryCoordinates'
 import type { PublicShopSummary } from '@/types/api'
@@ -169,11 +170,13 @@ export function HomePage() {
         ) : nearbyShops.length === 0 ? (
           <p className="text-sm text-ink-400">No shops available yet — check back soon.</p>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <StaggerGrid className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {nearbyShops.map((shop) => (
-              <ShopCard key={shop.id} shop={shop} />
+              <StaggerItem key={shop.id}>
+                <ShopCard shop={shop} />
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGrid>
         )}
       </section>
 

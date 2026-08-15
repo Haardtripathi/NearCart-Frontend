@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import brandMark from '@/assets/nearkart-mark.svg'
 import { VerifyEmailBanner } from '@/components/auth/VerifyEmailBanner'
 import { LocationBar } from '@/components/location/LocationBar'
+import { PageTransition } from '@/components/shared/PageTransition'
 import { HeaderSearchBar } from '@/components/search/HeaderSearchBar'
 import { primaryNavigation } from '@/routes/navigation'
 import { useAuthStore } from '@/store/authStore'
@@ -24,6 +26,7 @@ export function MainLayout() {
   const user = useAuthStore((state) => state.user)
   const cartCount = useCartStore((state) => state.getCartCount())
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const prefersReducedMotion = useReducedMotion()
 
   async function handleLogout() {
     setIsLoggingOut(true)
@@ -70,9 +73,14 @@ export function MainLayout() {
                 <span className="inline-flex items-center gap-2">
                   <span>{item.label}</span>
                   {item.to === '/cart' && cartCount > 0 ? (
-                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-nearkart-600 px-1.5 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+                    <motion.span
+                      key={cartCount}
+                      animate={prefersReducedMotion ? undefined : { scale: [1, 1.35, 1] }}
+                      className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-nearkart-600 px-1.5 text-[10px] font-bold text-white shadow-sm ring-2 ring-white"
+                      transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+                    >
                       {cartCount}
-                    </span>
+                    </motion.span>
                   ) : null}
                 </span>
               </NavLink>
@@ -126,7 +134,9 @@ export function MainLayout() {
 
       <main className="mx-auto w-full max-w-7xl px-6 py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-16">
         <VerifyEmailBanner />
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
 
       <footer className="mt-auto border-t border-ink-100 bg-white transition-colors">

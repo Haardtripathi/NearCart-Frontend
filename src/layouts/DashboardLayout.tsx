@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import brandMark from '@/assets/nearkart-mark.svg'
 import { StatusPill } from '@/components/StatusPill'
 import { VerifyEmailBanner } from '@/components/auth/VerifyEmailBanner'
+import { PageTransition } from '@/components/shared/PageTransition'
 import { formatRoleLabel } from '@/utils/auth'
 import { useAuthStore } from '@/store/authStore'
 
@@ -145,7 +146,9 @@ export function DashboardLayout() {
 
           <main>
             <VerifyEmailBanner />
-            <Outlet />
+            <PageTransition>
+              <Outlet />
+            </PageTransition>
           </main>
         </div>
       </div>

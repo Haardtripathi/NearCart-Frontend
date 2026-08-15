@@ -5,6 +5,7 @@ import { getShopCategories, getShops } from '@/api/shops'
 import { CategoryChips } from '@/components/category/CategoryChips'
 import { PageHeader } from '@/components/PageHeader'
 import { ShopCard } from '@/components/shop/ShopCard'
+import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import { useCustomerCity } from '@/hooks/useCustomerCity'
 import { useDeliveryCoordinates } from '@/hooks/useDeliveryCoordinates'
 import type { PublicShopCategorySummary, PublicShopSummary } from '@/types/api'
@@ -189,11 +190,13 @@ export function ShopsPage() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <StaggerGrid className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {shops.map((shop) => (
-              <ShopCard key={shop.id} shop={shop} />
+              <StaggerItem key={shop.id}>
+                <ShopCard shop={shop} />
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGrid>
         )}
       </div>
     </div>

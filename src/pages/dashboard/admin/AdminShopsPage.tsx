@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
+import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import type {
   AdminShopRow,
   InventoryOrganizationOption,
@@ -141,7 +142,7 @@ export function AdminShopsPage() {
           </div>
         ) : null}
 
-        <div className="space-y-4">
+        <StaggerGrid className="space-y-4">
           {shops.map((shop) => {
             const selectedOrganization = inventoryOrganizations.find(
               (organization) => organization.id === shop.inventoryOrganizationId,
@@ -149,10 +150,8 @@ export function AdminShopsPage() {
             const branches = selectedOrganization?.branches ?? []
 
             return (
-              <article
-                className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5"
-                key={shop.id}
-              >
+              <StaggerItem key={shop.id}>
+              <article className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <p className="font-semibold text-ink-900">{shop.name}</p>
@@ -182,7 +181,7 @@ export function AdminShopsPage() {
 
                 <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_1fr_auto]">
                   <select
-                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-nearkart-400"
+                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-nearkart-400 focus:ring-4 focus:ring-nearkart-100"
                     onChange={(event) => {
                       const nextOrganization = inventoryOrganizations.find(
                         (organization) => organization.id === event.target.value,
@@ -216,7 +215,7 @@ export function AdminShopsPage() {
                   </select>
 
                   <select
-                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-nearkart-400"
+                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-nearkart-400 focus:ring-4 focus:ring-nearkart-100"
                     onChange={(event) =>
                       setShops((currentShops) =>
                         currentShops.map((currentShop) =>
@@ -241,7 +240,7 @@ export function AdminShopsPage() {
                   </select>
 
                   <button
-                    className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={savingShopId === shop.id}
                     onClick={() => handleMappingSave(shop)}
                     type="button"
@@ -283,9 +282,10 @@ export function AdminShopsPage() {
                   </span>
                 </div>
               </article>
+              </StaggerItem>
             )
           })}
-        </div>
+        </StaggerGrid>
       </DashboardCard>
     </div>
   )

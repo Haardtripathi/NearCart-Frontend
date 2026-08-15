@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
+import { StaggerTableBody, StaggerTableRow } from '@/components/shared/StaggerTable'
 import type { ManagedShop } from '@/types/shop-owner'
 import { getApiErrorMessage } from '@/utils/api'
 import { getTodayStatusLabel, getTodayStatusTone } from '@/utils/shopAvailability'
@@ -77,7 +78,7 @@ export function ShopOwnerShopsPage() {
       <DashboardCard
         actions={
           <Link
-            className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearkart-700"
+            className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearkart-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100"
             to="/dashboard/shop-owner/shops/new"
           >
             New shop
@@ -105,9 +106,9 @@ export function ShopOwnerShopsPage() {
                   <th className="pb-3 font-medium">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <StaggerTableBody className="divide-y divide-slate-100 text-slate-700">
                 {shops.map((shop) => (
-                  <tr key={shop.id}>
+                  <StaggerTableRow key={shop.id}>
                     <td className="py-4">
                       <p className="font-semibold text-ink-900">{shop.name}</p>
                       <p className="text-sm text-slate-500">{shop.slug}</p>
@@ -150,15 +151,15 @@ export function ShopOwnerShopsPage() {
                     </td>
                     <td className="py-4">
                       <Link
-                        className="font-semibold text-nearkart-700"
+                        className="rounded font-semibold text-nearkart-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100"
                         to={`/dashboard/shop-owner/shops/${shop.id}`}
                       >
                         Manage
                       </Link>
                     </td>
-                  </tr>
+                  </StaggerTableRow>
                 ))}
-              </tbody>
+              </StaggerTableBody>
             </table>
           </div>
         ) : (

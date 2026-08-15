@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 
 import { PageHeader } from '@/components/PageHeader'
 import { CartItemCard } from '@/components/cart/CartItemCard'
+import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import { useCartStore } from '@/store/cartStore'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -76,20 +77,21 @@ export function CartPage() {
               </Link>
             </div>
 
-            <div className="space-y-4">
+            <StaggerGrid className="space-y-4">
               {items.map((item) => (
-                <CartItemCard
-                  key={item.cartItemId}
-                  item={item}
-                  onDecrease={() => decreaseQty(item.cartItemId)}
-                  onIncrease={() => increaseQty(item.cartItemId)}
-                  onQuantityChange={(quantity) =>
-                    updateQty(item.cartItemId, quantity)
-                  }
-                  onRemove={() => removeItem(item.cartItemId)}
-                />
+                <StaggerItem key={item.cartItemId}>
+                  <CartItemCard
+                    item={item}
+                    onDecrease={() => decreaseQty(item.cartItemId)}
+                    onIncrease={() => increaseQty(item.cartItemId)}
+                    onQuantityChange={(quantity) =>
+                      updateQty(item.cartItemId, quantity)
+                    }
+                    onRemove={() => removeItem(item.cartItemId)}
+                  />
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerGrid>
           </div>
 
           <aside className="relative">

@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
+import { StaggerTableBody, StaggerTableRow } from '@/components/shared/StaggerTable'
 import type { OrderPreview } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -83,9 +84,9 @@ export function CustomerOrdersPage() {
                   <th className="pb-3 font-medium">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <StaggerTableBody className="divide-y divide-slate-100 text-slate-700">
                 {orders.map((order) => (
-                  <tr key={order.id}>
+                  <StaggerTableRow key={order.id}>
                     <td className="py-4 font-semibold text-ink-900">
                       {order.orderNumber}
                     </td>
@@ -102,15 +103,15 @@ export function CustomerOrdersPage() {
                     </td>
                     <td className="py-4">
                       <Link
-                        className="font-semibold text-nearkart-700"
+                        className="rounded font-semibold text-nearkart-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100"
                         to={`/orders/${order.id}`}
                       >
                         View details
                       </Link>
                     </td>
-                  </tr>
+                  </StaggerTableRow>
                 ))}
-              </tbody>
+              </StaggerTableBody>
             </table>
           </div>
         ) : (

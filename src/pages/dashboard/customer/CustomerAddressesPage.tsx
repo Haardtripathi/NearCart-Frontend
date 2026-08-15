@@ -12,6 +12,7 @@ import { DashboardCard } from '@/components/dashboard/DashboardCard'
 import { AddressMapPicker } from '@/components/location/AddressMapPicker'
 import type { PickedLocation } from '@/components/location/AddressMapPicker'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
+import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import type { Address, AddressFormValues } from '@/types/customer'
 import { getApiErrorMessage } from '@/utils/api'
 
@@ -403,7 +404,7 @@ export function CustomerAddressesPage() {
 
             <div className="flex flex-wrap gap-3">
               <button
-                className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-nearkart-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSaving}
                 type="submit"
               >
@@ -415,7 +416,7 @@ export function CustomerAddressesPage() {
               </button>
               {editingAddressId ? (
                 <button
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100"
                   onClick={resetForm}
                   type="button"
                 >
@@ -431,54 +432,53 @@ export function CustomerAddressesPage() {
           title="Saved addresses"
         >
           {addresses.length > 0 ? (
-            <div className="space-y-3">
+            <StaggerGrid className="space-y-3">
               {addresses.map((address) => (
-                <article
-                  key={address.id}
-                  className="rounded-[1.35rem] border border-slate-100 bg-slate-50/80 px-4 py-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-ink-900">{address.label}</p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {address.fullName} • {address.phone}
-                      </p>
+                <StaggerItem key={address.id}>
+                  <article className="rounded-[1.35rem] border border-slate-100 bg-slate-50/80 px-4 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-ink-900">{address.label}</p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {address.fullName} • {address.phone}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {address.isDefault ? (
+                          <StatusPill label="Default" tone="success" />
+                        ) : null}
+                        {address.latitude !== null && address.longitude !== null ? (
+                          <StatusPill label="Location pinned" tone="neutral" />
+                        ) : null}
+                        <button
+                          className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100"
+                          onClick={() => startEditing(address)}
+                          type="button"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="rounded-full border border-rose-200 bg-white px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100"
+                          onClick={() => handleDelete(address.id)}
+                          type="button"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {address.isDefault ? (
-                        <StatusPill label="Default" tone="success" />
-                      ) : null}
-                      {address.latitude !== null && address.longitude !== null ? (
-                        <StatusPill label="Location pinned" tone="neutral" />
-                      ) : null}
-                      <button
-                        className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700"
-                        onClick={() => startEditing(address)}
-                        type="button"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="rounded-full border border-rose-200 bg-white px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
-                        onClick={() => handleDelete(address.id)}
-                        type="button"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
-                    {address.line1}
-                    {address.line2 ? `, ${address.line2}` : ''}
-                    <br />
-                    {[address.area, address.city].filter(Boolean).join(', ')}
-                    <br />
-                    {address.pincode}
-                    {address.landmark ? ` • ${address.landmark}` : ''}
-                  </p>
-                </article>
+                    <p className="mt-3 text-sm leading-7 text-slate-600">
+                      {address.line1}
+                      {address.line2 ? `, ${address.line2}` : ''}
+                      <br />
+                      {[address.area, address.city].filter(Boolean).join(', ')}
+                      <br />
+                      {address.pincode}
+                      {address.landmark ? ` • ${address.landmark}` : ''}
+                    </p>
+                  </article>
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerGrid>
           ) : (
             <div className="rounded-[1.35rem] bg-slate-50 px-4 py-5 text-sm text-slate-600">
               No saved addresses yet. Add your first address to speed up future checkout.

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { getCustomerAddresses, getCustomerProfile, validateCoupon } from '@/api/customer'
@@ -170,6 +171,7 @@ function buildCartItemFromValidatedItem(
 
 export function CheckoutPage() {
   const navigate = useNavigate()
+  const prefersReducedMotion = useReducedMotion()
   const user = useAuthStore((state) => state.user)
   const {
     shopId,
@@ -218,6 +220,12 @@ export function CheckoutPage() {
   const hasItems = items.length > 0
   const subtotal = getCartSubtotal()
   const cartCount = getCartCount()
+  // Drives the animated "Total Estimate" number below — recomputed whenever the live cart
+  // validation summary or an applied coupon changes, same inputs the static total already used.
+  const totalEstimate = Math.max(
+    0,
+    (cartSummary?.totalAmount ?? subtotal) - (couponPreview?.discountAmount ?? 0),
+  )
   const cartValidationKey = useMemo(
     () =>
       items
@@ -745,60 +753,96 @@ export function CheckoutPage() {
         description="Enter your delivery details and choose a payment method to complete your purchase."
       />
 
-      {serviceAreaMessage ? (
-        <section className="rounded-[1.75rem] border border-rose-200 bg-rose-50/90 p-6 text-sm text-rose-800">
-          <p className="font-semibold text-rose-900">This shop can&apos;t deliver here.</p>
-          <p className="mt-1">{serviceAreaMessage}</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link
-              className="inline-flex rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
-              to="/dashboard/customer/addresses"
-            >
-              Update delivery address
-            </Link>
-            <Link
-              className="inline-flex rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
-              to="/shops"
-            >
-              Browse other shops
-            </Link>
-          </div>
-        </section>
-      ) : null}
+      {/* Each of these banners mounts/unmounts independently as validation state changes (a new
+          service-area rejection, a shop closing mid-session, a live cart refresh, a submit
+          failure) — AnimatePresence lets each one animate in/out instead of just popping,
+          collapsing to an instant show/hide under prefers-reduced-motion. `initial={false}` skips
+          replaying entrance motion for whichever of these already happen to be visible on the
+          very first render, since the page-level `PageTransition` already covers that mount. */}
+      <AnimatePresence initial={false}>
+        {serviceAreaMessage ? (
+          <motion.section
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            className="overflow-hidden rounded-[1.75rem] border border-rose-200 bg-rose-50/90 p-6 text-sm text-rose-800"
+            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0, y: -8 }}
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0, y: -8 }}
+            key="service-area-message"
+            transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <p className="font-semibold text-rose-900">This shop can&apos;t deliver here.</p>
+            <p className="mt-1">{serviceAreaMessage}</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                className="inline-flex rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+                to="/dashboard/customer/addresses"
+              >
+                Update delivery address
+              </Link>
+              <Link
+                className="inline-flex rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+                to="/shops"
+              >
+                Browse other shops
+              </Link>
+            </div>
+          </motion.section>
+        ) : null}
 
-      {cartSummary && cartSummary.todayStatus !== 'OPEN' ? (
-        <section className="rounded-[1.75rem] border border-amber-200 bg-amber-50/90 p-6 text-sm text-amber-900">
-          <p className="font-semibold">
-            {getTodayStatusLabel(cartSummary.todayStatus)} — this shop can&apos;t take orders right now.
-          </p>
-          <p className="mt-1">
-            {getTodayStatusMessage({
-              todayStatus: cartSummary.todayStatus,
-              todayStatusReason: cartSummary.todayStatusReason,
-            })}
-          </p>
-          <div className="mt-4">
-            <Link
-              className="inline-flex rounded-full border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-50"
-              to="/shops"
-            >
-              Browse other shops
-            </Link>
-          </div>
-        </section>
-      ) : null}
+        {cartSummary && cartSummary.todayStatus !== 'OPEN' ? (
+          <motion.section
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            className="overflow-hidden rounded-[1.75rem] border border-amber-200 bg-amber-50/90 p-6 text-sm text-amber-900"
+            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0, y: -8 }}
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0, y: -8 }}
+            key="shop-not-open-message"
+            transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <p className="font-semibold">
+              {getTodayStatusLabel(cartSummary.todayStatus)} — this shop can&apos;t take orders right now.
+            </p>
+            <p className="mt-1">
+              {getTodayStatusMessage({
+                todayStatus: cartSummary.todayStatus,
+                todayStatusReason: cartSummary.todayStatusReason,
+              })}
+            </p>
+            <div className="mt-4">
+              <Link
+                className="inline-flex rounded-full border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-50"
+                to="/shops"
+              >
+                Browse other shops
+              </Link>
+            </div>
+          </motion.section>
+        ) : null}
 
-      {validationMessage ? (
-        <section className="rounded-2xl border border-sun-100 bg-sun-50/50 p-4 text-sm text-sun-700">
-          {validationMessage}
-        </section>
-      ) : null}
+        {validationMessage ? (
+          <motion.section
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            className="overflow-hidden rounded-2xl border border-sun-100 bg-sun-50/50 p-4 text-sm text-sun-700"
+            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0, y: -8 }}
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0, y: -8 }}
+            key="validation-message"
+            transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {validationMessage}
+          </motion.section>
+        ) : null}
 
-      {submitError ? (
-        <section className="rounded-2xl border border-accent-100 bg-accent-50/60 p-4 text-sm text-accent-700">
-          {submitError}
-        </section>
-      ) : null}
+        {submitError ? (
+          <motion.section
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            className="overflow-hidden rounded-2xl border border-accent-100 bg-accent-50/60 p-4 text-sm text-accent-700"
+            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0, y: -8 }}
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0, y: -8 }}
+            key="submit-error"
+            transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {submitError}
+          </motion.section>
+        ) : null}
+      </AnimatePresence>
 
       <div className="grid gap-12 lg:grid-cols-[1fr_350px]">
         <form
@@ -1012,12 +1056,19 @@ export function CheckoutPage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-ink-400">Delivery Fee</span>
-                    <span className="font-bold text-ink-900">
-                      {cartSummary
-                        ? cartSummary.deliveryFee > 0
-                          ? formatCurrency(cartSummary.deliveryFee)
-                          : 'Free'
-                        : 'Calculating...'}
+                    <span className="inline-flex overflow-hidden font-bold text-ink-900">
+                      <motion.span
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        initial={prefersReducedMotion ? false : { opacity: 0, y: -6, scale: 0.92 }}
+                        key={cartSummary ? cartSummary.deliveryFee : 'delivery-fee-loading'}
+                        transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: [0.16, 1, 0.3, 1] }}
+                      >
+                        {cartSummary
+                          ? cartSummary.deliveryFee > 0
+                            ? formatCurrency(cartSummary.deliveryFee)
+                            : 'Free'
+                          : 'Calculating...'}
+                      </motion.span>
                     </span>
                   </div>
                   {cartSummary && cartSummary.weatherSurchargeFee > 0 ? (
@@ -1025,8 +1076,15 @@ export function CheckoutPage() {
                       <span className="text-ink-400">
                         {formatWeatherSurchargeLabel(cartSummary.weatherCondition)}
                       </span>
-                      <span className="font-bold text-ink-900">
-                        {formatCurrency(cartSummary.weatherSurchargeFee)}
+                      <span className="inline-flex overflow-hidden font-bold text-ink-900">
+                        <motion.span
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          initial={prefersReducedMotion ? false : { opacity: 0, y: -6, scale: 0.92 }}
+                          key={cartSummary.weatherSurchargeFee}
+                          transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                          {formatCurrency(cartSummary.weatherSurchargeFee)}
+                        </motion.span>
                       </span>
                     </div>
                   ) : null}
@@ -1035,8 +1093,15 @@ export function CheckoutPage() {
                       <span className="text-emerald-600">
                         Coupon ({formValues.couponCode})
                       </span>
-                      <span className="font-bold text-emerald-600">
-                        -{formatCurrency(couponPreview.discountAmount)}
+                      <span className="inline-flex overflow-hidden font-bold text-emerald-600">
+                        <motion.span
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          initial={prefersReducedMotion ? false : { opacity: 0, y: -6, scale: 0.92 }}
+                          key={couponPreview.discountAmount}
+                          transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                          -{formatCurrency(couponPreview.discountAmount)}
+                        </motion.span>
                       </span>
                     </div>
                   ) : null}
@@ -1097,13 +1162,15 @@ export function CheckoutPage() {
                 <div className="rounded-2xl bg-ink-900 p-6 text-white shadow-lg">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold">Total Estimate</span>
-                    <span className="text-xl font-bold">
-                      {formatCurrency(
-                        Math.max(
-                          0,
-                          (cartSummary?.totalAmount ?? subtotal) - (couponPreview?.discountAmount ?? 0),
-                        ),
-                      )}
+                    <span className="inline-flex overflow-hidden text-xl font-bold">
+                      <motion.span
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        initial={prefersReducedMotion ? false : { opacity: 0, y: -8, scale: 0.9 }}
+                        key={totalEstimate}
+                        transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      >
+                        {formatCurrency(totalEstimate)}
+                      </motion.span>
                     </span>
                   </div>
                   {!cartSummary && (

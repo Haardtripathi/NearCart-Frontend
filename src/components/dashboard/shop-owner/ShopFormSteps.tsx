@@ -74,7 +74,7 @@ export function ShopFormStepIndicator({
         return (
           <li className="flex flex-1 items-center gap-1.5 sm:gap-2" key={step.key}>
             <button
-              className={`flex w-full items-center gap-2 rounded-full border px-3 py-2 text-left text-xs font-semibold transition sm:text-sm ${
+              className={`flex w-full items-center gap-2 rounded-full border px-3 py-2 text-left text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100 sm:text-sm ${
                 isCurrent
                   ? 'border-nearkart-600 bg-nearkart-600 text-white'
                   : isComplete
@@ -295,11 +295,15 @@ export function ShopPhotoFields({
         )}
 
         <div className="flex-1 space-y-1">
-          <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700 aria-disabled:cursor-not-allowed aria-disabled:opacity-60">
+          {/* `sr-only` (not `hidden`) keeps the native file input in the tab order so it's reachable
+              by keyboard — a plain `display: none` input can never receive focus at all. The
+              `peer-focus-visible:*` classes on the label give it the same brand-colored ring as
+              every other focusable control once it's keyboard-focused. */}
+          <label className="peer-focus-visible:ring-4 peer-focus-visible:ring-nearkart-100 inline-flex cursor-pointer items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-nearkart-200 hover:text-nearkart-700 aria-disabled:cursor-not-allowed aria-disabled:opacity-60">
             <input
               accept="image/*"
               aria-disabled={!shopId || isUploadingLogo}
-              className="hidden"
+              className="peer sr-only"
               disabled={!shopId || isUploadingLogo}
               onChange={onLogoFileChange}
               type="file"

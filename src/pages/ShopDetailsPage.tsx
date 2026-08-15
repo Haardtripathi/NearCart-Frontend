@@ -6,7 +6,9 @@ import { PageHeader } from '@/components/PageHeader'
 import { StarRating } from '@/components/StarRating'
 import { StatusPill } from '@/components/StatusPill'
 import { ProductCard } from '@/components/shop/ProductCard'
+import { ShopImage } from '@/components/shop/ShopImage'
 import { ShopReviewsSection } from '@/components/shop/ShopReviewsSection'
+import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import { useCartStore } from '@/store/cartStore'
 import type { PublicCatalogProduct, PublicCatalogVariant, PublicShopDetail } from '@/types/api'
 import type { CartItem } from '@/types/cart'
@@ -179,6 +181,19 @@ export function ShopDetailsPage() {
 
   return (
     <div className="space-y-12">
+      {shop ? (
+        <div className="relative -mx-6 h-48 overflow-hidden rounded-b-[2.5rem] sm:-mx-8 lg:-mx-10 lg:h-64">
+          <ShopImage
+            category={shop.category}
+            className="h-full w-full blur-sm scale-110"
+            iconClassName="text-6xl opacity-0"
+            logoImageUrl={shop.logoImageUrl}
+            name={shop.name}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink-900/70 via-ink-900/10 to-transparent" />
+        </div>
+      ) : null}
+
       <PageHeader
         eyebrow="Shop Catalog"
         title={shop ? shop.name : 'Catalog'}
@@ -281,15 +296,18 @@ export function ShopDetailsPage() {
             </div>
           ) : null}
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {isLoading
-              ? Array.from({ length: 6 }, (_, index) => (
+          {isLoading ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }, (_, index) => (
                 <div
                   key={`product-skeleton-${index}`}
                   className="h-[420px] animate-pulse rounded-[2rem] bg-ink-50"
                 />
-              ))
-              : products.map((product) => {
+              ))}
+            </div>
+          ) : (
+            <StaggerGrid className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {products.map((product) => {
                 const productCartItems = items.filter(
                   (item) => item.productId === product.id,
                 )
@@ -303,37 +321,39 @@ export function ShopDetailsPage() {
                 )
 
                 return (
-                  <ProductCard
-                    key={`${product.id}:${product.variantId}`}
-                    onAddToCart={() => handleAddToCart(product)}
-                    onAddVariant={(variant) => handleAddVariant(product, variant)}
-                    onDecreaseQty={() =>
-                      defaultCartItem && decreaseQty(defaultCartItem.cartItemId)
-                    }
-                    onDecreaseVariant={(variant) =>
-                      decreaseQty(`${product.id}:${variant.id}`)
-                    }
-                    onIncreaseQty={() =>
-                      defaultCartItem && increaseQty(defaultCartItem.cartItemId)
-                    }
-                    onIncreaseVariant={(variant) =>
-                      increaseQty(`${product.id}:${variant.id}`)
-                    }
-                    onUpdateQty={(quantity) =>
-                      defaultCartItem && updateQty(defaultCartItem.cartItemId, quantity)
-                    }
-                    onUpdateVariantQty={(variant, quantity) =>
-                      updateQty(`${product.id}:${variant.id}`, quantity)
-                    }
-                    orderingDisabled={!isShopOpenToday}
-                    orderingDisabledLabel={shop ? getTodayStatusLabel(shop.todayStatus) : undefined}
-                    product={product}
-                    quantityInCart={defaultCartItem?.quantity ?? 0}
-                    variantQuantities={variantQuantities}
-                  />
+                  <StaggerItem key={`${product.id}:${product.variantId}`}>
+                    <ProductCard
+                      onAddToCart={() => handleAddToCart(product)}
+                      onAddVariant={(variant) => handleAddVariant(product, variant)}
+                      onDecreaseQty={() =>
+                        defaultCartItem && decreaseQty(defaultCartItem.cartItemId)
+                      }
+                      onDecreaseVariant={(variant) =>
+                        decreaseQty(`${product.id}:${variant.id}`)
+                      }
+                      onIncreaseQty={() =>
+                        defaultCartItem && increaseQty(defaultCartItem.cartItemId)
+                      }
+                      onIncreaseVariant={(variant) =>
+                        increaseQty(`${product.id}:${variant.id}`)
+                      }
+                      onUpdateQty={(quantity) =>
+                        defaultCartItem && updateQty(defaultCartItem.cartItemId, quantity)
+                      }
+                      onUpdateVariantQty={(variant, quantity) =>
+                        updateQty(`${product.id}:${variant.id}`, quantity)
+                      }
+                      orderingDisabled={!isShopOpenToday}
+                      orderingDisabledLabel={shop ? getTodayStatusLabel(shop.todayStatus) : undefined}
+                      product={product}
+                      quantityInCart={defaultCartItem?.quantity ?? 0}
+                      variantQuantities={variantQuantities}
+                    />
+                  </StaggerItem>
                 )
               })}
-          </div>
+            </StaggerGrid>
+          )}
 
           {!isLoading && !errorMessage && products.length === 0 ? (
             <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-ink-100 bg-white/50 p-12 text-center">
@@ -421,9 +441,13 @@ export function ShopDetailsPage() {
             {shop && (
               <article className="rounded-3xl border border-ink-100 bg-white p-6 shadow-sm">
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 flex-shrink-0 rounded-2xl bg-nearkart-50 flex items-center justify-center text-xl">
-                    🏢
-                  </div>
+                  <ShopImage
+                    category={shop.category}
+                    className="h-12 w-12 flex-shrink-0 rounded-2xl"
+                    iconClassName="text-xl"
+                    logoImageUrl={shop.logoImageUrl}
+                    name={shop.name}
+                  />
                   <div>
                     <h4 className="font-bold text-ink-900">{shop.name}</h4>
                     <p className="text-xs text-ink-400">{shop.category}</p>
@@ -441,6 +465,15 @@ export function ShopDetailsPage() {
                       tone={getLiveEtaTone(shop.liveEstimatedDeliveryMinutes)}
                     />
                   </div>
+                  {shop.deliveryFee != null ? (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-ink-400">Delivery fare</span>
+                      <span className="font-bold text-ink-700">
+                        ₹{shop.deliveryFee}
+                        {shop.distanceKm != null ? ` · ${shop.distanceKm} km` : ''}
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
               </article>
             )}

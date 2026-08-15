@@ -163,7 +163,7 @@ export function CustomerProfilePage() {
           ) : null}
 
           <button
-            className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition-all duration-150 hover:bg-nearkart-700 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
+            className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-5 py-3 text-sm font-semibold text-white transition-all duration-150 hover:bg-nearkart-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
             disabled={isSaving}
             type="submit"
           >

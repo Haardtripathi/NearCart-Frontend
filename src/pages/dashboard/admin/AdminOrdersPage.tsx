@@ -4,6 +4,7 @@ import { getAdminOrders } from '@/api/admin'
 import { PageHeader } from '@/components/PageHeader'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
+import { StaggerTableBody, StaggerTableRow } from '@/components/shared/StaggerTable'
 import type { AdminOrderRow } from '@/types/admin'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -80,9 +81,9 @@ export function AdminOrdersPage() {
                   <th className="pb-3 font-medium">Total</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <StaggerTableBody className="divide-y divide-slate-100 text-slate-700">
                 {orders.map((order) => (
-                  <tr key={order.id}>
+                  <StaggerTableRow key={order.id}>
                     <td className="py-4">
                       <p className="font-semibold text-ink-900">{order.orderNumber}</p>
                       <p className="text-sm text-slate-500">{order.paymentMethod}</p>
@@ -100,9 +101,9 @@ export function AdminOrdersPage() {
                     <td className="py-4 font-semibold text-nearkart-700">
                       {formatCurrency(order.totalAmount)}
                     </td>
-                  </tr>
+                  </StaggerTableRow>
                 ))}
-              </tbody>
+              </StaggerTableBody>
             </table>
           </div>
         ) : errorMessage ? null : (

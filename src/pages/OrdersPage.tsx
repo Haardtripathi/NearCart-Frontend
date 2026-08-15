@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { getCustomerOrders } from '@/api/customer'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
+import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import type { OrderPreview } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -139,52 +140,51 @@ export function OrdersPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <StaggerGrid className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {orders.map((order) => (
-              <article
-                key={order.id}
-                className="group relative flex flex-col rounded-3xl border border-ink-100 bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-glass"
-              >
-                <div className="flex flex-1 flex-col space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-nearkart-600">
-                      {order.shopName}
-                    </span>
-                    <StatusPill
-                      label={ORDER_STATUS_LABELS[order.status]}
-                      tone={ORDER_STATUS_TONES[order.status]}
-                    />
-                  </div>
+              <StaggerItem key={order.id}>
+                <article className="group relative flex h-full flex-col rounded-3xl border border-ink-100 bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-glass">
+                  <div className="flex flex-1 flex-col space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-nearkart-600">
+                        {order.shopName}
+                      </span>
+                      <StatusPill
+                        label={ORDER_STATUS_LABELS[order.status]}
+                        tone={ORDER_STATUS_TONES[order.status]}
+                      />
+                    </div>
 
-                  <div>
-                    <h3 className="font-display text-xl font-bold text-ink-900">
-                      #{order.orderNumber}
-                    </h3>
-                    <p className="mt-1 text-xs font-medium text-ink-400">
-                      Placed on {formatDateTime(order.placedAt)}
-                    </p>
-                  </div>
-
-                  <div className="mt-auto flex items-center justify-between border-t border-ink-50 pt-4">
-                    <div className="space-y-0.5">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">Total Amount</p>
-                      <p className="text-lg font-bold text-ink-900">
-                        {formatCurrency(order.totalAmount)}
+                    <div>
+                      <h3 className="font-display text-xl font-bold text-ink-900">
+                        #{order.orderNumber}
+                      </h3>
+                      <p className="mt-1 text-xs font-medium text-ink-400">
+                        Placed on {formatDateTime(order.placedAt)}
                       </p>
                     </div>
 
-                    <Link
-                      className="flex h-10 w-10 items-center justify-center rounded-xl border border-ink-100 text-ink-900 transition hover:bg-ink-50"
-                      to={`/orders/${order.id}`}
-                    >
-                      <span className="sr-only">View Details</span>
-                      →
-                    </Link>
+                    <div className="mt-auto flex items-center justify-between border-t border-ink-50 pt-4">
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">Total Amount</p>
+                        <p className="text-lg font-bold text-ink-900">
+                          {formatCurrency(order.totalAmount)}
+                        </p>
+                      </div>
+
+                      <Link
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-ink-100 text-ink-900 transition hover:bg-ink-50"
+                        to={`/orders/${order.id}`}
+                      >
+                        <span className="sr-only">View Details</span>
+                        →
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </article>
+                </article>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGrid>
         )}
       </div>
     </div>

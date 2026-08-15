@@ -1,10 +1,50 @@
 import { useEffect, useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 
 import { getOrderById } from '@/api/orders'
 import type { Order } from '@/types/order'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatWeatherSurchargeLabel } from '@/utils/weatherSurcharge'
+
+// One-shot celebratory burst, small colored squares flung outward from the success icon and
+// fading out — fixed (not random) offsets so the burst looks deliberate rather than jittery.
+// Entirely skipped under `prefers-reduced-motion` (not just sped up) per this app's motion
+// convention, matching every other `useReducedMotion()` gate in the codebase.
+const CONFETTI_PARTICLES: Array<{ x: number; y: number; rotate: number; delay: number; className: string }> = [
+  { x: -58, y: -78, rotate: -35, delay: 0, className: 'bg-nearkart-500' },
+  { x: 52, y: -88, rotate: 24, delay: 0.03, className: 'bg-accent-500' },
+  { x: -92, y: -34, rotate: 60, delay: 0.07, className: 'bg-sun-400' },
+  { x: 90, y: -46, rotate: -50, delay: 0.02, className: 'bg-nearkart-400' },
+  { x: -28, y: -108, rotate: 12, delay: 0.09, className: 'bg-accent-400' },
+  { x: 30, y: -112, rotate: -20, delay: 0.05, className: 'bg-sun-500' },
+  { x: -110, y: -6, rotate: 80, delay: 0.11, className: 'bg-nearkart-600' },
+  { x: 108, y: 2, rotate: -80, delay: 0.06, className: 'bg-accent-600' },
+  { x: -14, y: -128, rotate: 45, delay: 0.13, className: 'bg-sun-300' },
+  { x: 16, y: -132, rotate: -45, delay: 0.1, className: 'bg-nearkart-300' },
+]
+
+function OrderSuccessConfetti() {
+  const prefersReducedMotion = useReducedMotion()
+
+  if (prefersReducedMotion) {
+    return null
+  }
+
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center">
+      {CONFETTI_PARTICLES.map((particle, index) => (
+        <motion.span
+          animate={{ opacity: 0, x: particle.x, y: particle.y, rotate: particle.rotate, scale: 1 }}
+          className={`absolute h-2.5 w-2.5 rounded-sm ${particle.className}`}
+          initial={{ opacity: 1, x: 0, y: 0, rotate: 0, scale: 0.6 }}
+          key={index}
+          transition={{ duration: 0.9, delay: particle.delay, ease: 'easeOut' }}
+        />
+      ))}
+    </div>
+  )
+}
 
 export function OrderSuccessPage() {
   const { orderId } = useParams()
@@ -59,8 +99,9 @@ export function OrderSuccessPage() {
     <div className="flex min-h-[70vh] flex-col items-center justify-center py-12">
       <div className="mx-auto w-full max-w-2xl text-center">
         <div className="mb-10 flex flex-col items-center">
-          <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-[2.5rem] bg-ink-900 text-5xl shadow-glass animate-bounce">
+          <div className="relative mb-8 flex h-24 w-24 items-center justify-center rounded-[2.5rem] bg-ink-900 text-5xl shadow-glass animate-bounce">
             🎉
+            <OrderSuccessConfetti />
           </div>
           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-nearkart-600">
             Success!
