@@ -588,6 +588,12 @@ export function CheckoutPage() {
         longitude: formValues.longitude,
       })
 
+      // Capture what the customer actually had on screen *before* this submit-time validate call
+      // overwrites `cartSummary` below — `cartSummary` here is the value from the render that
+      // this `handleSubmit` closure was created in, i.e. exactly what was visible the moment
+      // "Place My Order" was clicked.
+      const previouslyDisplayedTotal = cartSummary?.totalAmount ?? null
+
       replaceCart({
         shopId: validationResponse.item.shop.id,
         shopName: validationResponse.item.shop.name,
@@ -611,6 +617,35 @@ export function CheckoutPage() {
 
       if (validationResponse.item.appliedItems.length === 0) {
         setSubmitError('Your cart is empty after live validation. Please add items again.')
+        return
+      }
+
+      // Bug found via live testing 2026-08-19: the `changedPriceItems` guard just below only
+      // covers a changed catalog item price/mrp — it says nothing about the delivery fee /
+      // weather surcharge portion of `summary.totalAmount`, which is computed from the
+      // customer's coordinates. The page-load validation effect (`runInitialCartValidation`
+      // above) fires on mount using whatever `formValuesRef.current.latitude/longitude` holds at
+      // that instant — before the async `loadCustomerContext` effect has had a chance to prefill
+      // the saved default address's coordinates — and its effect is keyed off
+      // `cartValidationKey`, which is derived only from cart items, not lat/long. So once that
+      // first validation runs (typically with no coordinates yet, giving a flat/default delivery
+      // fee), it never re-runs when the address's real coordinates load moments later, even
+      // though this submit-time call *does* use them and can return a very different
+      // distance/weather-based fee. Confirmed live: the page displayed "Total Estimate ₹260"
+      // (flat ₹15 delivery fee, validated before the saved address loaded) but the order that
+      // got silently created charged ₹319 (real ₹74 delivery fee) — the customer never saw ₹319
+      // anywhere before the order existed. Guard this the same way `changedPriceItems` already
+      // guards item-price drift: if the freshly validated total differs from what was on screen,
+      // stop here (the refreshed summary is already visible via `setCartSummary` above) and make
+      // the customer review and resubmit instead of silently placing the order at a total they
+      // never agreed to.
+      if (
+        previouslyDisplayedTotal !== null &&
+        previouslyDisplayedTotal !== validationResponse.item.summary.totalAmount
+      ) {
+        setSubmitError(
+          'Your delivery fee or total changed since this page loaded — your order summary has been refreshed below. Please review it and place your order again.',
+        )
         return
       }
 
