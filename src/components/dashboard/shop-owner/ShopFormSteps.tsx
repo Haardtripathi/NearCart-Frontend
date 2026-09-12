@@ -4,43 +4,10 @@ import { AddressMapPicker } from '@/components/location/AddressMapPicker'
 import type { PickedLocation } from '@/components/location/AddressMapPicker'
 import type { ShopFormValues } from '@/types/shop-owner'
 
+import type { ShopFormStepDefinition } from './shopFormStepsData'
+
 export type { PickedLocation }
-
-export interface ShopFormStepDefinition {
-  key: string
-  label: string
-  description: string
-  // Fields validated (and gated on "Next") for this step. Steps with no required fields ([])
-  // simply always let the user advance.
-  fields: (keyof ShopFormValues)[]
-}
-
-export const SHOP_FORM_STEPS: ShopFormStepDefinition[] = [
-  {
-    key: 'basics',
-    label: 'Basics',
-    description: 'What is this shop called, and what does it sell?',
-    fields: ['name', 'category'],
-  },
-  {
-    key: 'location',
-    label: 'Location & contact',
-    description: 'Where customers will find you, and how to reach you.',
-    fields: ['phone', 'addressLine1', 'city', 'pincode'],
-  },
-  {
-    key: 'photo',
-    label: 'Photo',
-    description: 'A photo helps customers recognize your shop at a glance.',
-    fields: [],
-  },
-  {
-    key: 'hours',
-    label: 'Hours & delivery',
-    description: 'When you are open, and how delivery should work.',
-    fields: [],
-  },
-]
+export type { ShopFormStepDefinition } from './shopFormStepsData'
 
 type FieldErrors = Partial<Record<keyof ShopFormValues, string>>
 

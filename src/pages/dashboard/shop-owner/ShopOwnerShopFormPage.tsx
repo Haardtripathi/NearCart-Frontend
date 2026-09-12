@@ -12,7 +12,6 @@ import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
 import {
-  SHOP_FORM_STEPS,
   ShopBasicsFields,
   ShopFormStepIndicator,
   ShopHoursDeliveryFields,
@@ -20,6 +19,7 @@ import {
   ShopPhotoFields,
 } from '@/components/dashboard/shop-owner/ShopFormSteps'
 import type { PickedLocation } from '@/components/dashboard/shop-owner/ShopFormSteps'
+import { SHOP_FORM_STEPS } from '@/components/dashboard/shop-owner/shopFormStepsData'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import type { ManagedShop, ShopFormValues, ShopPayload } from '@/types/shop-owner'
 import { getApiErrorMessage } from '@/utils/api'

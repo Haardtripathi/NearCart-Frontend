@@ -10,7 +10,7 @@ import {
 import { PageHeader } from '@/components/PageHeader'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
 import { StatCard } from '@/components/dashboard/StatCard'
-import { getButtonClassName } from '@/components/shared/Button'
+import { getButtonClassName } from '@/components/shared/buttonStyles'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import type { AdminOrderRow } from '@/types/admin'
 import { getApiErrorMessage } from '@/utils/api'
