@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import {
   createCustomerAddress,
@@ -155,7 +155,13 @@ export function CustomerAddressesPage() {
     }))
   }
 
-  function handleLocationChange(location: PickedLocation) {
+  // Wrapped in useCallback with a stable (never-changing) identity — `AddressMapPicker` is
+  // React.memo'd specifically so the live embedded Google Map doesn't re-render (and thrash
+  // Google's event-listener registrations) on every keystroke into an unrelated field like
+  // "label" or "phone". That memoization only works if this callback's identity stays stable
+  // across renders; a plain inline function here would defeat it. Uses functional state updates
+  // internally, so it doesn't need `formValues`/`fieldErrors` in its closure or deps.
+  const handleLocationChange = useCallback((location: PickedLocation) => {
     setFormValues((currentState) => ({
       ...currentState,
       latitude: location.latitude,
@@ -176,7 +182,7 @@ export function CustomerAddressesPage() {
       city: undefined,
       pincode: undefined,
     }))
-  }
+  }, [])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()

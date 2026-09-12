@@ -42,16 +42,27 @@ export function useCustomerCity() {
   const userId = useAuthStore((state) => state.user?.id)
   const userRole = useAuthStore((state) => state.user?.role)
   const selectedAddress = useAddressStore((state) => state.selectedAddress)
-  const [city, setCity] = useState<string | null>(() => selectedAddress?.city ?? readCachedCity())
+  // Only the *auto-detected* city is state. The manually selected address is not copied into it:
+  // it already lives in the address store, and mirroring it here meant the same fact was stored
+  // twice and had to be re-synced by a setState inside an effect on every change — one render
+  // late, and stale for that render. Deriving the effective city below keeps a manual pick
+  // authoritative the instant the store updates, with no synchronising effect at all.
+  const [autoDetectedCity, setAutoDetectedCity] = useState<string | null>(() => readCachedCity())
   const [isDetecting, setIsDetecting] = useState(false)
   // Read inside async auto-detect callbacks so a manual header-bar pick made *while* a
   // detection request is in flight can't overwrite it once that request resolves later.
   const hasManualSelectionRef = useRef(Boolean(selectedAddress?.city))
-  hasManualSelectionRef.current = Boolean(selectedAddress?.city)
 
   useEffect(() => {
+    // Kept in an effect rather than assigned during render: a render-phase ref mutation is a side
+    // effect in a phase React is allowed to discard, replay or abandon under concurrent
+    // rendering, so the ref could end up reflecting a render that was never committed. Updating
+    // it here — unconditionally, so clearing the selection resets it to false too — keeps it in
+    // step with committed state, which is what the async callbacks below actually need: they
+    // resolve long after commit, so post-commit timing loses nothing.
+    hasManualSelectionRef.current = Boolean(selectedAddress?.city)
+
     if (selectedAddress?.city) {
-      setCity(selectedAddress.city)
       cacheCity(selectedAddress.city)
     }
   }, [selectedAddress])
@@ -75,7 +86,7 @@ export function useCustomerCity() {
           response.items.find((address) => address.isDefault) ?? null
 
         if (defaultAddress?.city && !isCancelled && !hasManualSelectionRef.current) {
-          setCity(defaultAddress.city)
+          setAutoDetectedCity(defaultAddress.city)
           cacheCity(defaultAddress.city)
           return true
         }
@@ -92,14 +103,36 @@ export function useCustomerCity() {
       }
 
       setIsDetecting(true)
+
+      // Same watchdog rationale as `useGeolocation.ts` / `AddressMapPicker.tsx`: on some
+      // browser/OS combinations `getCurrentPosition` can fail to invoke either callback within
+      // its requested `timeout`, which without this would leave "Detecting your location…"
+      // showing in the header forever.
+      let settled = false
+      const watchdog = window.setTimeout(() => {
+        if (settled || isCancelled) {
+          return
+        }
+
+        settled = true
+        setIsDetecting(false)
+      }, 9000)
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          if (settled) {
+            return
+          }
+
+          settled = true
+          window.clearTimeout(watchdog)
+
           reverseGeocode(position.coords.latitude, position.coords.longitude)
             .then((result) => {
               const detectedCity = result?.components.city
 
               if (detectedCity && !isCancelled && !hasManualSelectionRef.current) {
-                setCity(detectedCity)
+                setAutoDetectedCity(detectedCity)
                 cacheCity(detectedCity)
               }
             })
@@ -114,6 +147,13 @@ export function useCustomerCity() {
             })
         },
         () => {
+          if (settled) {
+            return
+          }
+
+          settled = true
+          window.clearTimeout(watchdog)
+
           if (!isCancelled) {
             setIsDetecting(false)
           }
@@ -138,7 +178,16 @@ export function useCustomerCity() {
       // guarantees it never gets left on past this effect's own lifetime.
       setIsDetecting(false)
     }
-  }, [isAuthenticated, userId, userRole])
+    // selectedAddress?.city included deliberately, not just to satisfy the lint rule: without it,
+    // clearing a manual selection (city goes from set back to unset) never re-triggers this
+    // effect, so autoDetectedCity is left however stale it was from whatever ran before the
+    // manual pick (or never set at all, if the manual pick happened before any detection did) —
+    // clearing the selection should fall back to a fresh auto-detect, same as if none had ever
+    // been made.
+  }, [isAuthenticated, userId, userRole, selectedAddress?.city])
+
+  // Manual pick wins over auto-detection, matching the priority order documented above.
+  const city = selectedAddress?.city ?? autoDetectedCity
 
   return { city: city ?? undefined, isDetecting }
 }

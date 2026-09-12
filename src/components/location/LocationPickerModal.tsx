@@ -112,8 +112,34 @@ export function LocationPickerModal({ isOpen, onClose }: LocationPickerModalProp
     }
 
     setIsLocating(true)
+
+    // Root-cause fix for "spinner never resolves": on some browser/OS combinations (confirmed
+    // Chromium-on-Linux behavior with `enableHighAccuracy: true`, where the platform location
+    // provider — e.g. geoclue — can stall) `getCurrentPosition` neither calls its success nor
+    // its error callback within the requested `timeout`, so the browser's own timeout cannot be
+    // relied on. This app-level watchdog guarantees the button always resolves to a visible
+    // error within a bounded time instead of spinning forever, independent of whether the
+    // browser honors its PositionOptions timeout.
+    let settled = false
+    const watchdog = window.setTimeout(() => {
+      if (settled) {
+        return
+      }
+
+      settled = true
+      setIsLocating(false)
+      setErrorMessage('Location detection is taking too long. Search for your address instead.')
+    }, 12000)
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        if (settled) {
+          return
+        }
+
+        settled = true
+        window.clearTimeout(watchdog)
+
         const { latitude, longitude } = position.coords
 
         try {
@@ -140,6 +166,12 @@ export function LocationPickerModal({ isOpen, onClose }: LocationPickerModalProp
         }
       },
       (geoError) => {
+        if (settled) {
+          return
+        }
+
+        settled = true
+        window.clearTimeout(watchdog)
         setIsLocating(false)
         setErrorMessage(
           geoError.code === geoError.PERMISSION_DENIED

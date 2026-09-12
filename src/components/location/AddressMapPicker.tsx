@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api'
 
@@ -29,7 +29,14 @@ interface AddressMapPickerProps {
   onLocationChange: (location: PickedLocation) => void
 }
 
-export function AddressMapPicker({
+// Memoized so the live embedded <GoogleMap> (which react-google-maps/api fully re-diffs and
+// re-registers all event listeners for on every update — see the `mapOptions` comment below)
+// doesn't re-render every time the surrounding address form's state changes on an unrelated
+// field. Effective only when the parent also keeps `onLocationChange`'s identity stable (see
+// `CustomerAddressesPage.tsx`'s `useCallback`-wrapped `handleLocationChange`) — otherwise a new
+// callback identity every render would defeat this memoization the same way the old inline
+// `options` object did.
+export const AddressMapPicker = memo(function AddressMapPicker({
   latitude,
   longitude,
   onLocationChange,
@@ -199,8 +206,33 @@ export function AddressMapPicker({
 
     setIsLocating(true)
 
+    // Root-cause fix for "spinner never resolves": on some browser/OS combinations (confirmed
+    // Chromium-on-Linux behavior with `enableHighAccuracy: true`, where the platform location
+    // provider — e.g. geoclue — can stall) `getCurrentPosition` neither calls its success nor
+    // its error callback within the requested `timeout`, so the browser's own timeout cannot be
+    // relied on. This app-level watchdog guarantees the button always resolves to a visible
+    // error within a bounded time instead of spinning forever, independent of whether the
+    // browser honors its PositionOptions timeout.
+    let settled = false
+    const watchdog = window.setTimeout(() => {
+      if (settled) {
+        return
+      }
+
+      settled = true
+      setIsLocating(false)
+      setErrorMessage('Location detection is taking too long. Search or drag the pin instead.')
+    }, 12000)
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        if (settled) {
+          return
+        }
+
+        settled = true
+        window.clearTimeout(watchdog)
+
         // The device's own GPS reading is the source of truth for "current location" — reverse
         // geocoding is only used to fill in the address text. Using the geocode result's
         // (possibly snapped-to-nearest-known-address) coordinates instead would silently move
@@ -238,6 +270,12 @@ export function AddressMapPicker({
         }
       },
       (geoError) => {
+        if (settled) {
+          return
+        }
+
+        settled = true
+        window.clearTimeout(watchdog)
         setIsLocating(false)
         setErrorMessage(
           geoError.code === geoError.PERMISSION_DENIED
@@ -293,9 +331,33 @@ export function AddressMapPicker({
     [],
   )
 
-  function handleMapClick(event: google.maps.MapMouseEvent) {
-    void handleMarkerDragEnd(event)
-  }
+  const handleMapClick = useCallback(
+    (event: google.maps.MapMouseEvent) => {
+      void handleMarkerDragEnd(event)
+    },
+    [handleMarkerDragEnd],
+  )
+
+  // ROOT-CAUSE FIX for the "add address screen lags a lot" bug: `@react-google-maps/api`'s
+  // <GoogleMap> diffs every prop *by reference* in `componentDidUpdate` and, for `options`
+  // specifically, calls the real `google.maps.Map#setOptions()` whenever the reference changed
+  // (see node_modules/@react-google-maps/api/dist/esm.js — `updaterMap$i.options` /
+  // `componentDidUpdate`). It also unconditionally unregisters + re-registers *every* map event
+  // listener on *every* update, regardless of whether anything actually changed. This component
+  // isn't memoized, so it re-renders on every keystroke into ANY field of the surrounding address
+  // form (label, phone, line1, ...) — not just map-related changes. A fresh `{...}` object literal
+  // passed as `options` on every render meant a real, expensive `setOptions()` call (plus a full
+  // listener unbind/rebind) fired on every single keystroke anywhere in the form, which is what
+  // produced the typing lag/jank. Memoizing it to a stable reference stops all of that from firing
+  // except when the map is actually mounted.
+  const mapOptions = useMemo<google.maps.MapOptions>(
+    () => ({
+      streetViewControl: false,
+      mapTypeControl: false,
+      fullscreenControl: false,
+    }),
+    [],
+  )
 
   return (
     <div className="space-y-3 rounded-[1.35rem] border border-nearkart-100 bg-nearkart-50/40 p-4">
@@ -361,11 +423,7 @@ export function AddressMapPicker({
               center={center}
               mapContainerStyle={mapContainerStyle}
               onClick={handleMapClick}
-              options={{
-                streetViewControl: false,
-                mapTypeControl: false,
-                fullscreenControl: false,
-              }}
+              options={mapOptions}
               zoom={hasPin ? PICKED_ZOOM : DEFAULT_ZOOM}
             >
               {hasPin ? (
@@ -414,4 +472,4 @@ export function AddressMapPicker({
       ) : null}
     </div>
   )
-}
+})

@@ -28,24 +28,46 @@ interface UseGeolocationResult {
  */
 export function useGeolocation(): UseGeolocationResult {
   const [coordinates, setCoordinates] = useState<GeolocationCoordinates | null>(null)
-  const [isLocating, setIsLocating] = useState(false)
-  const [isUnavailable, setIsUnavailable] = useState(false)
+  // Both of these start from what is already knowable at first render rather than being pushed in
+  // by a synchronous setState inside the effect below. Whether the browser exposes geolocation at
+  // all is a static fact about the environment, and the effect starts locating immediately on
+  // mount whenever it is available — so seeding them here produces the same states one render
+  // earlier, and avoids the extra mount-time render pass that setting them in the effect body
+  // caused (flagged by react-hooks/set-state-in-effect).
+  const isSupported = typeof navigator !== 'undefined' && Boolean(navigator.geolocation)
+  const [isLocating, setIsLocating] = useState(isSupported)
+  const [isUnavailable, setIsUnavailable] = useState(!isSupported)
 
   useEffect(() => {
     let isCancelled = false
 
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setIsUnavailable(true)
+    if (!isSupported) {
       return
     }
 
-    setIsLocating(true)
+    // Watchdog for a real browser/OS bug (confirmed Chromium-on-Linux geoclue stalls) where
+    // `getCurrentPosition` can fail to invoke either callback within its requested `timeout`,
+    // hanging indefinitely. Without this, `isLocating` (and any spinner tied to it) would never
+    // resolve. Fires slightly after the native timeout so a normal native timeout always wins.
+    let settled = false
+    const watchdog = window.setTimeout(() => {
+      if (settled || isCancelled) {
+        return
+      }
+
+      settled = true
+      setIsUnavailable(true)
+      setIsLocating(false)
+    }, 9000)
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        if (isCancelled) {
+        if (settled || isCancelled) {
           return
         }
+
+        settled = true
+        window.clearTimeout(watchdog)
 
         setCoordinates({
           latitude: position.coords.latitude,
@@ -56,10 +78,12 @@ export function useGeolocation(): UseGeolocationResult {
       () => {
         // Permission denied, position unavailable, or timed out — all treated the same: no
         // coordinates, page falls back to the unfiltered shop list.
-        if (isCancelled) {
+        if (settled || isCancelled) {
           return
         }
 
+        settled = true
+        window.clearTimeout(watchdog)
         setIsUnavailable(true)
         setIsLocating(false)
       },
@@ -68,8 +92,11 @@ export function useGeolocation(): UseGeolocationResult {
 
     return () => {
       isCancelled = true
+      window.clearTimeout(watchdog)
     }
-  }, [])
+    // `isSupported` is a static fact about the environment, so this still runs exactly once on
+    // mount — it's listed only to satisfy exhaustive-deps honestly rather than suppress it.
+  }, [isSupported])
 
   return { coordinates, isLocating, isUnavailable }
 }
