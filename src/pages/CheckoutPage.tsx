@@ -10,6 +10,7 @@ import { validateCart } from '@/api/shops'
 import { AddressMapPicker } from '@/components/location/AddressMapPicker'
 import type { PickedLocation } from '@/components/location/AddressMapPicker'
 import { PageHeader } from '@/components/PageHeader'
+import { useAddressStore } from '@/store/addressStore'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
 import type { ShopTodayStatus, ValidatedCartItem } from '@/types/api'
@@ -115,6 +116,54 @@ function clearCheckoutDraft(userId: string | undefined): void {
   }
 }
 
+// `Address` (backend `prisma/schema.prisma`) has no country/state columns at all — the address
+// form never asks for them and the checkout payload schema
+// (`backend/src/validation/orders.validation.ts`) doesn't accept them either, so they're
+// presentation-only fields of THIS form. That left a saved address unable to satisfy the two
+// selects it is required to fill, which is what `deriveCountryAndStateForCity` and the
+// `addressId` carve-out in `validateCheckoutForm` below are for: best-effort recover the ISO
+// codes from the address's own city so the selects show where the order is going (and so the
+// City select, disabled until a state is picked, becomes usable at all).
+const DEFAULT_COUNTRY_ISO = 'IN'
+
+// Built once, on first use, and only ever for a customer who actually has a saved address to
+// resolve: `country-state-city` parses its city dataset lazily, and that parse is ~0.5s of
+// synchronous work (the page already pays it the moment anyone opens the City dropdown). A
+// per-lookup scan over every state's city list would pay it again and again.
+let cityToStateIso: Map<string, string> | null = null
+
+function getCityToStateIso(): Map<string, string> {
+  if (!cityToStateIso) {
+    cityToStateIso = new Map()
+
+    for (const city of City.getCitiesOfCountry(DEFAULT_COUNTRY_ISO) ?? []) {
+      const key = city.name.toLowerCase()
+
+      // First writer wins. A handful of city names repeat across states and nothing on the saved
+      // address can disambiguate them — this is a prefill for two selects the customer can still
+      // change, and neither field is persisted or sent anywhere, so a rare wrong-state guess
+      // costs nothing.
+      if (!cityToStateIso.has(key)) {
+        cityToStateIso.set(key, city.stateCode)
+      }
+    }
+  }
+
+  return cityToStateIso
+}
+
+function deriveCountryAndStateForCity(city: string | null | undefined) {
+  const target = city?.trim().toLowerCase()
+
+  if (!target) {
+    return null
+  }
+
+  const stateIso = getCityToStateIso().get(target)
+
+  return stateIso ? { country: DEFAULT_COUNTRY_ISO, state: stateIso } : null
+}
+
 function validateCheckoutForm(values: CheckoutFormValues) {
   const errors: Partial<Record<keyof CheckoutFormValues, string>> = {}
 
@@ -134,12 +183,17 @@ function validateCheckoutForm(values: CheckoutFormValues) {
     errors.deliveryAddressLine1 = 'Address line 1 is required.'
   }
 
-  if (!values.country.trim()) {
-    errors.country = 'Country is required.'
-  }
+  // Only demanded for an ad-hoc address the customer is typing/pinning themselves. A saved
+  // address has no country/state to prefill from (see above), so requiring them here blocked
+  // checkout on two values the customer never entered and cannot get from their saved address.
+  if (!values.addressId.trim()) {
+    if (!values.country.trim()) {
+      errors.country = 'Country is required.'
+    }
 
-  if (!values.state.trim()) {
-    errors.state = 'State is required.'
+    if (!values.state.trim()) {
+      errors.state = 'State is required.'
+    }
   }
 
   if (!values.city.trim()) {
@@ -323,25 +377,60 @@ export function CheckoutPage() {
 
         setLoyaltyBalance(loyaltyResponse.item.balance)
 
+        // Which address this checkout defaults to, most specific first:
+        //  1. the one the header location bar is already set to, when that's a SAVED address —
+        //     the customer picked it, so checkout must not quietly deliver somewhere else;
+        //  2. the account's explicit default (`CustomerProfile.defaultAddress`, then the
+        //     `isDefault` flag on the list itself, which can disagree if one was set without the
+        //     other);
+        //  3. failing any default at all, the first saved address — `GET /customer/addresses`
+        //     orders `isDefault desc, createdAt desc`, so that's the most recently added one.
+        // Read off the store imperatively rather than as a hook value so this loader keeps its
+        // `[user]` dependency and can't re-run (and re-prefill) every time the location bar moves.
+        const barSelection = useAddressStore.getState().selectedAddress
+        const barSavedAddress =
+          barSelection?.source === 'saved' && barSelection.addressId
+            ? addressesResponse.items.find((address) => address.id === barSelection.addressId)
+            : undefined
+
         const defaultAddress =
+          barSavedAddress ||
           profileResponse.item.profile.defaultAddress ||
           addressesResponse.items.find((address) => address.isDefault) ||
+          addressesResponse.items[0] ||
           null
+
+        // A saved address carries no country/state, so recover them from its city — otherwise the
+        // Country/State selects sit blank next to a fully prefilled address and the City select
+        // stays disabled with the real city invisible inside it.
+        const derivedRegion = deriveCountryAndStateForCity(defaultAddress?.city)
 
         setSavedAddresses(addressesResponse.items)
         setFormValues((currentState) => ({
           ...currentState,
-          addressId: defaultAddress?.id || currentState.addressId,
-          customerName: currentState.customerName || profileResponse.item.user.fullName,
+          // `currentState` first, like every other field here: a restored draft (or an address the
+          // customer already picked from the dropdown) is a choice, and this effect re-runs
+          // whenever the `user` object identity changes.
+          addressId: currentState.addressId || defaultAddress?.id || '',
+          // The recipient details saved WITH the address come first — `Address.fullName`/`.phone`
+          // are required, while `User.phone` is optional at registration, so a customer who signed
+          // up without a phone number used to reach this page with an empty, required Phone field.
+          customerName:
+            currentState.customerName ||
+            defaultAddress?.fullName ||
+            profileResponse.item.user.fullName,
           customerPhone:
-            currentState.customerPhone || profileResponse.item.user.phone || '',
+            currentState.customerPhone ||
+            defaultAddress?.phone ||
+            profileResponse.item.user.phone ||
+            '',
           customerEmail: currentState.customerEmail || profileResponse.item.user.email,
           deliveryAddressLine1:
             currentState.deliveryAddressLine1 || defaultAddress?.line1 || '',
           deliveryAddressLine2:
             currentState.deliveryAddressLine2 || defaultAddress?.line2 || '',
-          country: currentState.country || '',
-          state: currentState.state || '',
+          country: currentState.country || derivedRegion?.country || '',
+          state: currentState.state || derivedRegion?.state || '',
           city: currentState.city || defaultAddress?.city || '',
           area: currentState.area || defaultAddress?.area || '',
           pincode: currentState.pincode || defaultAddress?.pincode || '',
@@ -1025,6 +1114,11 @@ export function CheckoutPage() {
                       )
                       updateField('addressId', event.target.value)
                       if (selectedAddress) {
+                        // The city below is overwritten outright, so the country/state that scope
+                        // its dropdown follow the picked address too — leaving a previous state
+                        // selected would render an empty City select next to a real city.
+                        const derivedRegion = deriveCountryAndStateForCity(selectedAddress.city)
+
                         setFormValues((currentState) => ({
                           ...currentState,
                           addressId: selectedAddress.id,
@@ -1032,8 +1126,8 @@ export function CheckoutPage() {
                           customerPhone: currentState.customerPhone || selectedAddress.phone,
                           deliveryAddressLine1: selectedAddress.line1,
                           deliveryAddressLine2: selectedAddress.line2 || '',
-                          country: currentState.country || '',
-                          state: currentState.state || '',
+                          country: derivedRegion?.country || currentState.country || '',
+                          state: derivedRegion?.state || currentState.state || '',
                           city: selectedAddress.city,
                           area: selectedAddress.area || '',
                           pincode: selectedAddress.pincode,

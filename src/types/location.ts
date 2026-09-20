@@ -25,6 +25,12 @@ export interface GeocodeAddressComponents {
   pincode: string | null
   state: string | null
   country: string | null
+  /** ISO short forms ("GJ", "IN"). */
+  stateCode: string | null
+  countryCode: string | null
+  /** Door/street portion only, e.g. "B-12, Akhbarnagar Society" — prefill an "Address line 1"
+   *  field from this rather than `formattedAddress`, which repeats area/city/state/pincode. */
+  streetAddress: string | null
 }
 
 export interface GeocodeResult {

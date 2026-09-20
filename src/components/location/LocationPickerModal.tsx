@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import axios from 'axios'
 
 import { getCustomerAddresses } from '@/api/customer'
-import { geocodeAddress, getAddressPredictions, reverseGeocode } from '@/api/location'
+import { geocodePlaceId, getAddressPredictions, reverseGeocode } from '@/api/location'
 import { useAddressStore, type SelectedAddress } from '@/store/addressStore'
 import { useAuthStore } from '@/store/authStore'
 import type { Address } from '@/types/customer'
@@ -31,6 +31,7 @@ function addressToSelection(address: Address): SelectedAddress {
 
 export function LocationPickerModal({ isOpen, onClose }: LocationPickerModalProps) {
   const setSelectedAddress = useAddressStore((state) => state.setSelectedAddress)
+  const selectedAddress = useAddressStore((state) => state.selectedAddress)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const userRole = useAuthStore((state) => state.user?.role)
 
@@ -205,7 +206,15 @@ export function LocationPickerModal({ isOpen, onClose }: LocationPickerModalProp
       setIsSearching(true)
 
       try {
-        const results = await getAddressPredictions(value, { signal: controller.signal })
+        // Bias around the currently-selected delivery location so an ambiguous locality name
+        // resolves to the one near this customer — see backend maps.service.ts.
+        const results = await getAddressPredictions(value, {
+          signal: controller.signal,
+          origin:
+            selectedAddress?.latitude != null && selectedAddress?.longitude != null
+              ? { latitude: selectedAddress.latitude, longitude: selectedAddress.longitude }
+              : null,
+        })
 
         if (!controller.signal.aborted) {
           setPredictions(results)
@@ -226,7 +235,11 @@ export function LocationPickerModal({ isOpen, onClose }: LocationPickerModalProp
     setErrorMessage(null)
 
     try {
-      const result = await geocodeAddress(prediction.description)
+      // By place id, not by the suggestion's text: re-geocoding the label re-parses a string
+      // Google had already resolved exactly, and for a short or repeated locality name it can
+      // resolve to a different city (reported on-device 2026-09-20 in the mobile app; identical
+      // code path here).
+      const result = await geocodePlaceId(prediction.placeId)
 
       if (!result) {
         setErrorMessage('Could not resolve that address. Try another search or use your current location.')

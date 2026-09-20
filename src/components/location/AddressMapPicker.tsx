@@ -3,7 +3,7 @@ import axios from 'axios'
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api'
 
 import {
-  geocodeAddress,
+  geocodePlaceId,
   getAddressPredictions,
   reverseGeocode,
 } from '@/api/location'
@@ -147,6 +147,8 @@ export const AddressMapPicker = memo(function AddressMapPicker({
         const results = await getAddressPredictions(value, {
           signal: controller.signal,
           sessionToken: getSessionToken(),
+          // Bias around the pin if one is already placed — same rationale as the mobile picker.
+          origin: hasPin ? { latitude: latitude as number, longitude: longitude as number } : null,
         })
 
         if (controller.signal.aborted) {
@@ -181,7 +183,11 @@ export const AddressMapPicker = memo(function AddressMapPicker({
     sessionTokenRef.current = null
 
     try {
-      const result = await geocodeAddress(prediction.description)
+      // By place id, not by the suggestion's text: re-geocoding the label re-parses a string
+      // Google had already resolved exactly, and for a short or repeated locality name it can
+      // resolve to a different city (reported on-device 2026-09-20 in the mobile app; identical
+      // code path here).
+      const result = await geocodePlaceId(prediction.placeId)
 
       if (!result) {
         setErrorMessage('Could not resolve coordinates for that address. Try dragging the pin instead.')

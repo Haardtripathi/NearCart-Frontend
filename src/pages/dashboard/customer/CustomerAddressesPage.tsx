@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
   createCustomerAddress,
@@ -161,20 +161,43 @@ export function CustomerAddressesPage() {
   // "label" or "phone". That memoization only works if this callback's identity stays stable
   // across renders; a plain inline function here would defeat it. Uses functional state updates
   // internally, so it doesn't need `formValues`/`fieldErrors` in its closure or deps.
+  /** Field name -> the exact value the last map pick wrote there, so `handleLocationChange` can
+   *  tell its own prefill apart from something the user typed. */
+  const autoFilledRef = useRef<Record<string, string>>({})
+
   const handleLocationChange = useCallback((location: PickedLocation) => {
+    // A field is ours to (re)write if it's empty, or if the last pin/search put the current
+    // value there — anything typed by hand is left alone. Filling only EMPTY fields (what this
+    // did before) meant moving the pin to a different locality kept the first place's
+    // city/area/pincode: a wrong address that looks correctly filled in.
+    const parts = location.addressComponents
+    const takeover = (
+      key: string,
+      currentValue: string | undefined,
+      nextValue: string | null | undefined,
+    ) => {
+      const existing = currentValue ?? ''
+      if (!nextValue) return existing
+      const isOurs = existing.trim() === '' || autoFilledRef.current[key] === existing
+      if (!isOurs) return existing
+      autoFilledRef.current[key] = nextValue
+      return nextValue
+    }
+
     setFormValues((currentState) => ({
       ...currentState,
       latitude: location.latitude,
       longitude: location.longitude,
-      // Only fill in text fields the user hasn't already typed something into — the pin/search
-      // result is a convenience prefill, not an override of manual edits. The backend's geocode
-      // response only breaks an address down into city/area/pincode (no line1/landmark
-      // equivalent), so line1 falls back to the full formatted address instead.
-      line1: currentState.line1 || location.formattedAddress || currentState.line1,
-      city: currentState.city || location.addressComponents?.city || currentState.city,
-      area: currentState.area || location.addressComponents?.area || currentState.area,
-      pincode:
-        currentState.pincode || location.addressComponents?.pincode || currentState.pincode,
+      // `streetAddress` is the door/street part only — `formattedAddress` repeats the area, city,
+      // state and pincode that each have their own field right below this one.
+      line1: takeover(
+        'line1',
+        currentState.line1,
+        parts?.streetAddress ?? location.formattedAddress?.split(',')[0]?.trim() ?? null,
+      ),
+      city: takeover('city', currentState.city, parts?.city),
+      area: takeover('area', currentState.area, parts?.area),
+      pincode: takeover('pincode', currentState.pincode, parts?.pincode),
     }))
     setFieldErrors((currentState) => ({
       ...currentState,

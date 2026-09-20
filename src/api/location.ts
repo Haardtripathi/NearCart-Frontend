@@ -25,7 +25,12 @@ interface RequestOptions {
 
 export async function getAddressPredictions(
   input: string,
-  options: RequestOptions & { sessionToken?: string } = {},
+  options: RequestOptions & {
+    sessionToken?: string
+    /** Biases and distance-ranks results around the user. Without it the backend does a plain
+     *  India-wide search, which is what made ambiguous locality names resolve to another city. */
+    origin?: { latitude: number; longitude: number } | null
+  } = {},
 ): Promise<AddressPrediction[]> {
   if (!input.trim()) {
     return []
@@ -35,6 +40,9 @@ export async function getAddressPredictions(
     params: {
       input,
       sessionToken: options.sessionToken,
+      ...(options.origin
+        ? { lat: options.origin.latitude, lng: options.origin.longitude }
+        : {}),
     },
     signal: options.signal,
   })
@@ -52,6 +60,26 @@ export async function geocodeAddress(
 
   const { data } = await httpClient.get<GeocodeResponse>('/location/geocode', {
     params: { address },
+    signal: options.signal,
+  })
+
+  return data.result
+}
+
+/** Resolves an autocomplete suggestion by its place id. Always prefer this over passing the
+ *  suggestion's `description` to `geocodeAddress`: re-geocoding the display text asks Google to
+ *  re-parse a string it had already resolved exactly, and for short or repeated names that lands
+ *  on a different place entirely. */
+export async function geocodePlaceId(
+  placeId: string,
+  options: RequestOptions = {},
+): Promise<GeocodeResult | null> {
+  if (!placeId.trim()) {
+    return null
+  }
+
+  const { data } = await httpClient.get<GeocodeResponse>('/location/geocode', {
+    params: { placeId },
     signal: options.signal,
   })
 
