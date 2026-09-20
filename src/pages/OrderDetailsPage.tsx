@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { cancelOrder, getOrderById } from '@/api/orders'
+import { validateCart } from '@/api/shops'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { OrderStatusTimeline } from '@/components/order/OrderStatusTimeline'
 import { OrderReviewForm, SubmittedOrderReview } from '@/components/order/OrderReviewForm'
+import { useCartStore } from '@/store/cartStore'
 import type { Order, OrderReviewSummary } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -24,12 +26,16 @@ const ORDER_POLL_INTERVAL_MS = 18_000
 
 export function OrderDetailsPage() {
   const { orderId = '' } = useParams()
+  const navigate = useNavigate()
+  const { items: cartItems, replaceCart } = useCartStore((state) => state)
   const [order, setOrder] = useState<Order | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
+  const [isReordering, setIsReordering] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [cancelErrorMessage, setCancelErrorMessage] = useState<string | null>(null)
+  const [reorderErrorMessage, setReorderErrorMessage] = useState<string | null>(null)
 
   const loadOrder = useCallback(
     async ({ silent }: { silent: boolean }) => {
@@ -123,6 +129,84 @@ export function OrderDetailsPage() {
     }
   }
 
+  // New feature: "Reorder" — mirrors mobile's OrderDetailScreen.tsx's `performReorder` exactly
+  // (same two-step validate-then-replace flow, same "some items skipped" messaging), which the
+  // web app never had despite the mobile app already shipping it. Re-validates against the
+  // shop's current live stock/pricing (not a blind copy of the old order — items may have
+  // changed price or gone out of stock since) via the same `/public/cart/validate` endpoint
+  // checkout itself uses, so nothing here needs new backend surface.
+  async function performReorder() {
+    if (!order) {
+      return
+    }
+
+    setIsReordering(true)
+    setReorderErrorMessage(null)
+
+    try {
+      const requestItems = order.items.map((item) => ({
+        productId: item.inventoryProductId ?? item.storeProductId,
+        variantId: item.inventoryVariantId,
+        quantity: item.quantity,
+      }))
+
+      const validation = await validateCart({ shopId: order.shopId, items: requestItems })
+      const appliedItems = validation.item.appliedItems
+
+      if (appliedItems.length === 0) {
+        setReorderErrorMessage('None of the items from this order are available right now.')
+        return
+      }
+
+      replaceCart({
+        shopId: validation.item.shop.id,
+        shopName: validation.item.shop.name,
+        items: appliedItems.map((item) => ({
+          cartItemId: `${item.productId}:${item.variantId ?? 'default'}`,
+          productId: item.productId,
+          variantId: item.variantId,
+          shopId: validation.item.shop.id,
+          shopName: validation.item.shop.name,
+          name: item.name ?? 'Unavailable item',
+          description: item.description ?? null,
+          brand: item.brand?.name ?? null,
+          category: item.category?.name ?? null,
+          unitLabel: item.unitLabel ?? null,
+          image: item.image ?? null,
+          price: item.price ?? 0,
+          mrp: item.mrp ?? null,
+          stockQty: item.availableQty,
+          stockStatus: item.stockStatus,
+          quantity: item.quantity,
+        })),
+      })
+
+      navigate('/cart')
+    } catch (error) {
+      setReorderErrorMessage(getApiErrorMessage(error, 'Unable to reorder right now.'))
+    } finally {
+      setIsReordering(false)
+    }
+  }
+
+  function handleReorder() {
+    if (!order) {
+      return
+    }
+
+    if (cartItems.length > 0 && cartItems[0]?.shopId !== order.shopId) {
+      const confirmed = window.confirm(
+        `Your cart already has items from ${cartItems[0]?.shopName ?? 'another shop'}. Replace it with items from this order instead?`,
+      )
+
+      if (!confirmed) {
+        return
+      }
+    }
+
+    void performReorder()
+  }
+
   return (
     <div className="space-y-12">
       <PageHeader
@@ -140,6 +224,12 @@ export function OrderDetailsPage() {
       {cancelErrorMessage ? (
         <section className="rounded-2xl border border-accent-100 bg-accent-50/60 p-4 text-sm text-accent-700">
           {cancelErrorMessage}
+        </section>
+      ) : null}
+
+      {reorderErrorMessage ? (
+        <section className="rounded-2xl border border-accent-100 bg-accent-50/60 p-4 text-sm text-accent-700">
+          {reorderErrorMessage}
         </section>
       ) : null}
 
@@ -177,6 +267,16 @@ export function OrderDetailsPage() {
                         type="button"
                       >
                         {isCancelling ? 'Cancelling…' : 'Cancel order'}
+                      </button>
+                    ) : null}
+                    {order.items.length > 0 ? (
+                      <button
+                        className="rounded-full border border-nearkart-200 bg-white px-3 py-1.5 text-xs font-semibold text-nearkart-700 transition hover:bg-nearkart-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={isReordering}
+                        onClick={handleReorder}
+                        type="button"
+                      >
+                        {isReordering ? 'Adding to cart…' : 'Reorder'}
                       </button>
                     ) : null}
                   </div>
@@ -338,13 +438,31 @@ export function OrderDetailsPage() {
                       </span>
                     </div>
                   ) : null}
-                  {order.discountAmount > 0 ? (
+                  {(() => {
+                    // `order.discountAmount` is a combined coupon+loyalty figure (see
+                    // backend `orders.service.ts`), so the coupon-only portion shown here has
+                    // to subtract out the loyalty-specific amount from `loyaltyRedemption`
+                    // rather than displaying the combined total under the "Coupon" label.
+                    const loyaltyPortion = order.loyaltyRedemption?.discountAmount ?? 0
+                    const couponPortion = Math.max(0, order.discountAmount - loyaltyPortion)
+                    return couponPortion > 0 ? (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-emerald-600">
+                          Coupon {order.couponCode ? `(${order.couponCode})` : ''}
+                        </span>
+                        <span className="font-bold text-emerald-600">
+                          -{formatCurrency(couponPortion)}
+                        </span>
+                      </div>
+                    ) : null
+                  })()}
+                  {order.loyaltyRedemption && order.loyaltyRedemption.discountAmount > 0 ? (
                     <div className="flex justify-between text-xs">
-                      <span className="text-emerald-600">
-                        Coupon {order.couponCode ? `(${order.couponCode})` : ''}
+                      <span className="text-amber-600">
+                        Loyalty points ({order.loyaltyRedemption.pointsRedeemed})
                       </span>
-                      <span className="font-bold text-emerald-600">
-                        -{formatCurrency(order.discountAmount)}
+                      <span className="font-bold text-amber-600">
+                        -{formatCurrency(order.loyaltyRedemption.discountAmount)}
                       </span>
                     </div>
                   ) : null}

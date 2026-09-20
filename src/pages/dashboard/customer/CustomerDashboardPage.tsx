@@ -14,6 +14,7 @@ import type { OrderPreview } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDateTime } from '@/utils/formatDateTime'
+import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from '@/utils/orderStatus'
 
 export function CustomerDashboardPage() {
   const [profile, setProfile] = useState<CustomerProfileResponse['item'] | null>(null)
@@ -175,7 +176,18 @@ export function CustomerDashboardPage() {
                         </p>
                         <p className="text-sm text-ink-500">{order.shopName}</p>
                       </div>
-                      <StatusPill label={order.status.replaceAll('_', ' ')} tone="warning" />
+                      {/* Bug fix (full sweep): this pill was hardcoded to tone="warning" for every
+                          status and used a raw `replaceAll` label instead of the shared status
+                          maps — so a DELIVERED order showed the same amber pill as a
+                          PENDING_CONFIRMATION one, and a CANCELLED/REJECTED order showed amber
+                          instead of red, right on the account landing page. `OrdersPage.tsx`/
+                          `CustomerOrdersPage.tsx`/`OrderDetailsPage.tsx` all already use
+                          `ORDER_STATUS_LABELS`/`ORDER_STATUS_TONES` correctly — this widget just
+                          never got updated to match. */}
+                      <StatusPill
+                        label={ORDER_STATUS_LABELS[order.status]}
+                        tone={ORDER_STATUS_TONES[order.status]}
+                      />
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-ink-500">
                       <span>{formatDateTime(order.placedAt)}</span>

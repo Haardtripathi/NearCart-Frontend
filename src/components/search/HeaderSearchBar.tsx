@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type MouseEvent as ReactMouseEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { getTrendingProducts, searchCatalog } from '@/api/shops'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import type { PublicSearchResultItem } from '@/types/api'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { addRecentSearch, clearRecentSearches, getRecentSearches } from '@/utils/recentSearches'
 
 const MIN_QUERY_LENGTH = 2
 
@@ -22,6 +23,10 @@ export function HeaderSearchBar() {
   const [trendingResults, setTrendingResults] = useState<PublicSearchResultItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [hasLoadedTrending, setHasLoadedTrending] = useState(false)
+  // New feature: "recent searches" quick-recall — read once on open (not reactively) since it
+  // only changes as a result of this component's own submit/clear actions, both of which already
+  // re-read it explicitly right after.
+  const [recentSearches, setRecentSearches] = useState<string[]>([])
 
   const debouncedQuery = useDebouncedValue(query.trim(), 300)
   const isSearchActive = debouncedQuery.length >= MIN_QUERY_LENGTH
@@ -108,6 +113,15 @@ export function HeaderSearchBar() {
     }
   }, [])
 
+  // New feature: refresh the recent-searches list every time the dropdown opens (cheap localStorage
+  // read) rather than only once on mount, so a search made from elsewhere (e.g. SearchPage.tsx)
+  // shows up here the next time this dropdown is reopened.
+  useEffect(() => {
+    if (isOpen) {
+      setRecentSearches(getRecentSearches())
+    }
+  }, [isOpen])
+
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
     const trimmed = query.trim()
@@ -116,8 +130,22 @@ export function HeaderSearchBar() {
       return
     }
 
+    addRecentSearch(trimmed)
     setIsOpen(false)
     navigate(`/search?q=${encodeURIComponent(trimmed)}`)
+  }
+
+  function handleRecentSearchClick(term: string) {
+    addRecentSearch(term)
+    setIsOpen(false)
+    navigate(`/search?q=${encodeURIComponent(term)}`)
+  }
+
+  function handleClearRecentSearches(event: ReactMouseEvent) {
+    event.preventDefault()
+    event.stopPropagation()
+    clearRecentSearches()
+    setRecentSearches([])
   }
 
   function handleResultClick() {
@@ -151,6 +179,38 @@ export function HeaderSearchBar() {
 
       {isOpen ? (
         <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 max-h-[28rem] overflow-y-auto rounded-3xl border border-ink-100 bg-white p-3 shadow-glass-strong">
+          {/* New feature: recent searches — only makes sense before the customer has typed enough
+              to trigger a live search (isSearchActive), otherwise it'd just clutter the results
+              they're already looking at. */}
+          {!isSearchActive && recentSearches.length > 0 ? (
+            <div className="mb-2 border-b border-ink-50 pb-2">
+              <div className="flex items-center justify-between px-2 pb-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink-400">
+                  Recent searches
+                </p>
+                <button
+                  className="text-[10px] font-bold text-ink-400 underline-offset-2 hover:text-nearkart-600 hover:underline"
+                  onClick={handleClearRecentSearches}
+                  type="button"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2 px-2">
+                {recentSearches.map((term) => (
+                  <button
+                    className="rounded-full bg-ink-50 px-3 py-1.5 text-xs font-semibold text-ink-700 transition hover:bg-nearkart-50 hover:text-nearkart-700"
+                    key={term}
+                    onClick={() => handleRecentSearchClick(term)}
+                    type="button"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-nearkart-600">
             {sectionLabel}
           </p>

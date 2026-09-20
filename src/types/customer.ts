@@ -62,6 +62,25 @@ export interface CustomerProfileUpdatePayload {
   phone?: string
 }
 
+// New feature: loyalty-points redemption at checkout. Mirrors mobile's identical
+// `LoyaltySummaryResponse` type (features/customer/customer.api.ts) and the backend's
+// `GET /customer/loyalty` response shape (loyalty.controller.ts).
+export interface LoyaltyLedgerEntryRecord {
+  id: string
+  points: number
+  reason: string
+  orderId: string | null
+  createdAt: string
+}
+
+export interface LoyaltySummaryResponse {
+  item: {
+    balance: number
+    entries: LoyaltyLedgerEntryRecord[]
+    pointsPerRupees: number
+  }
+}
+
 export interface AddressResponse {
   item: Address
   meta: ApiMeta

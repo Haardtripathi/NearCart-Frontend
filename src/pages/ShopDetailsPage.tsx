@@ -88,6 +88,26 @@ export function ShopDetailsPage() {
     getCartSubtotal,
   } = useCartStore((state) => state)
 
+  // Bug found in full sweep: ShopDetailsPage stays mounted (React Router reuses the component,
+  // only `:shopId` changes) when a customer navigates from one shop straight to another WITHOUT
+  // an intervening route change — the most common real path being `HeaderSearchBar.tsx`'s global
+  // search dropdown, which links `to={`/shops/${item.shop.slug}`}` and is rendered in the
+  // persistent layout, reachable from any page including this one. Without this reset, the
+  // previous shop's `filters` (search text, category slug, sort) carried straight over into the
+  // new shop's catalog fetch below — a category slug scoped to Shop A almost never matches
+  // anything in Shop B's own category list, so the customer could land on a brand-new shop and
+  // silently see "No products found" even though the shop has products, with no visible reason
+  // why (the `<select>`'s `value` wouldn't match any of the new shop's `<option>`s either). This
+  // also cleared the stale `shop`/`products`/`categories` so the page shows its normal loading
+  // skeleton for the new shop instead of flashing the previous shop's name/photo/products for a
+  // moment before the new fetch resolves.
+  useEffect(() => {
+    setFilters(initialFilters)
+    setShop(null)
+    setProducts([])
+    setCategories([])
+  }, [shopId])
+
   useEffect(() => {
     let isMounted = true
 
@@ -182,15 +202,22 @@ export function ShopDetailsPage() {
   return (
     <div className="space-y-12">
       {shop ? (
+        // UI polish fix: this hero used to render the shop photo `blur-sm scale-110`'d with the
+        // icon fallback set `opacity-0` — a deliberately-blurred banner that nothing was ever
+        // overlaid on top of (the shop name/title render separately, below, in `PageHeader`), so
+        // it just read as an out-of-focus smear of color with no legible content and, for the
+        // common case of a shop with no photo yet, a completely blank gradient (the invisible
+        // icon). Now shows the real photo crisp (or the same on-brand gradient+icon fallback
+        // `ShopCard.tsx` already uses elsewhere) with just a bottom gradient fade for depth.
         <div className="relative -mx-6 h-48 overflow-hidden rounded-b-[2.5rem] sm:-mx-8 lg:-mx-10 lg:h-64">
           <ShopImage
             category={shop.category}
-            className="h-full w-full blur-sm scale-110"
-            iconClassName="text-6xl opacity-0"
+            className="h-full w-full"
+            iconClassName="text-6xl text-white/90"
             logoImageUrl={shop.logoImageUrl}
             name={shop.name}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink-900/70 via-ink-900/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink-900/60 via-transparent to-transparent" />
         </div>
       ) : null}
 
@@ -229,11 +256,13 @@ export function ShopDetailsPage() {
               : 'border-amber-200 bg-amber-50/90 text-amber-900'
             }`}
         >
-          <p className="font-semibold">
-            {shop?.todayStatus === 'CLOSED'
-              ? "This shop is closed today — you can't place an order right now."
-              : "This shop hasn't confirmed today's hours yet."}
-          </p>
+          {/* UI polish fix: this used to render a hardcoded headline sentence directly above
+              `todayStatusMessage`, and the two said almost the same thing verbatim (both "This
+              shop hasn't confirmed today's hours yet...") — a visibly redundant two-line banner.
+              A short label (`getTodayStatusLabel` — "Opens soon"/"Closed today", the same copy
+              already used on the shop card/checkout badges for this exact state) reads as a real
+              headline instead of restating the sentence below it. */}
+          <p className="font-semibold">{shop ? getTodayStatusLabel(shop.todayStatus) : ''}</p>
           <p className="mt-1">{todayStatusMessage}</p>
         </section>
       ) : null}

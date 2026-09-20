@@ -6,6 +6,7 @@ import type {
   CustomerOrdersResponse,
   CustomerProfileResponse,
   CustomerProfileUpdatePayload,
+  LoyaltySummaryResponse,
 } from '@/types/customer'
 import type { CouponPreviewResponse } from '@/types/order'
 
@@ -76,6 +77,17 @@ export async function validateCoupon(code: string, subtotal: number) {
     code,
     subtotal,
   })
+
+  return data
+}
+
+/** New feature: loyalty-points redemption at checkout — the customer's running points balance,
+ *  used to drive the checkout screen's "Redeem N points for ₹N off" control. The real discount
+ *  is always recomputed server-side inside `createOrder()` (see backend's
+ *  `resolveLoyaltyRedemptionForCheckout`), same "never trust a client-supplied money figure"
+ *  posture as `validateCoupon` above — this is purely for showing a live, accurate preview. */
+export async function getCustomerLoyalty() {
+  const { data } = await httpClient.get<LoyaltySummaryResponse>('/customer/loyalty')
 
   return data
 }

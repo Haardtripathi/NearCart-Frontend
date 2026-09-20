@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import brandMark from '@/assets/nearkart-mark.svg'
 import { VerifyEmailBanner } from '@/components/auth/VerifyEmailBanner'
@@ -22,11 +22,27 @@ const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
 
 export function MainLayout() {
   const navigate = useNavigate()
+  const location = useLocation()
   const logout = useAuthStore((state) => state.logout)
   const user = useAuthStore((state) => state.user)
   const cartCount = useCartStore((state) => state.getCartCount())
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const prefersReducedMotion = useReducedMotion()
+  // UI polish fix: below `lg`, the primary nav ("Home"/"Shops"/"Cart"/"Checkout"/"Orders") had no
+  // `hidden lg:flex` guard at all — it just `flex-wrap`'d in place, right in the header's normal
+  // flow, alongside the logo, search bar, and sign-in/dashboard buttons. Confirmed live at a real
+  // 390px mobile-web viewport: the nav pills wrapped across two ragged lines above the actual
+  // page content, pushing the header to ~200px tall before a customer ever saw anything they came
+  // for — the single worst "poor mobile responsiveness" issue on the highest-traffic surface in
+  // the app (it's on every page). Collapses the same nav + the sign-in/dashboard/logout controls
+  // into a real hamburger-triggered panel below `lg`; desktop's layout/markup is unchanged.
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  // Closes the mobile menu on every navigation — without this, tapping a link inside the panel
+  // would leave it open, overlaying the newly-navigated-to page underneath it.
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [location.pathname])
 
   async function handleLogout() {
     setIsLoggingOut(true)
@@ -65,7 +81,7 @@ export function MainLayout() {
             <HeaderSearchBar />
           </div>
 
-          <nav className="flex flex-1 flex-wrap justify-start gap-1 rounded-2xl border border-ink-100/50 bg-ink-50/30 p-1 lg:w-auto lg:flex-none lg:justify-end">
+          <nav className="hidden flex-1 flex-wrap justify-start gap-1 rounded-2xl border border-ink-100/50 bg-ink-50/30 p-1 lg:flex lg:w-auto lg:flex-none lg:justify-end">
             {primaryNavigation
               .filter((item) => !item.customerOnly || !user || user.role === 'CUSTOMER')
               .map((item) => (
@@ -87,7 +103,7 @@ export function MainLayout() {
             ))}
           </nav>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="hidden items-center gap-3 lg:flex">
             {user ? (
               <>
                 <Link
@@ -125,11 +141,112 @@ export function MainLayout() {
               </>
             )}
           </div>
+
+          {/* Mobile-only: cart shortcut (always one tap away, even with the rest of the nav
+              collapsed) + hamburger toggle for everything else. */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <Link
+              aria-label={`Cart${cartCount > 0 ? `, ${cartCount} item${cartCount === 1 ? '' : 's'}` : ''}`}
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-ink-100 bg-white text-ink-700"
+              to="/cart"
+            >
+              <span aria-hidden="true" className="text-lg">🛒</span>
+              {cartCount > 0 ? (
+                <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-nearkart-600 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                  {cartCount}
+                </span>
+              ) : null}
+            </Link>
+            <button
+              aria-controls="mobile-nav-panel"
+              aria-expanded={isMobileMenuOpen}
+              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-ink-100 bg-white text-ink-700"
+              onClick={() => setIsMobileMenuOpen((open) => !open)}
+              type="button"
+            >
+              <span aria-hidden="true" className="text-lg">{isMobileMenuOpen ? '✕' : '☰'}</span>
+            </button>
+          </div>
         </div>
 
         <div className="border-t border-ink-100/60 px-6 py-2 sm:px-8 lg:hidden lg:px-10">
           <LocationBar compact />
         </div>
+
+        <AnimatePresence>
+          {isMobileMenuOpen ? (
+            <motion.div
+              animate={{ opacity: 1, height: 'auto' }}
+              className="overflow-hidden border-t border-ink-100/60 bg-white lg:hidden"
+              exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+              id="mobile-nav-panel"
+              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+            >
+              <nav className="flex flex-col gap-1 px-6 py-4 sm:px-8">
+                {primaryNavigation
+                  .filter((item) => !item.customerOnly || !user || user.role === 'CUSTOMER')
+                  .map((item) => (
+                    <NavLink
+                      className={({ isActive }) =>
+                        [
+                          'flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+                          isActive ? 'bg-nearkart-600 text-white' : 'text-ink-700 hover:bg-ink-50',
+                        ].join(' ')
+                      }
+                      key={item.to}
+                      to={item.to}
+                    >
+                      <span>{item.label}</span>
+                      {item.to === '/cart' && cartCount > 0 ? (
+                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 text-[10px] font-bold">
+                          {cartCount}
+                        </span>
+                      ) : null}
+                    </NavLink>
+                  ))}
+              </nav>
+
+              <div className="flex flex-col gap-3 border-t border-ink-50 px-6 pb-6 pt-4 sm:px-8">
+                {user ? (
+                  <>
+                    <Link
+                      className="flex items-center justify-between rounded-xl border border-ink-100 bg-white px-4 py-3 text-sm font-medium text-ink-700"
+                      to={user.dashboardPath}
+                    >
+                      <span className="text-ink-400">{formatRoleLabel(user.role)}</span>
+                      <span className="font-semibold text-ink-900">Dashboard</span>
+                    </Link>
+                    <button
+                      className="inline-flex items-center justify-center rounded-xl bg-ink-900 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={isLoggingOut}
+                      onClick={handleLogout}
+                      type="button"
+                    >
+                      {isLoggingOut ? 'Leaving...' : 'Logout'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      className="inline-flex items-center justify-center rounded-xl border border-ink-100 px-4 py-3 text-sm font-semibold text-ink-700"
+                      to="/login"
+                    >
+                      Sign in
+                    </Link>
+                    <Link
+                      className="inline-flex items-center justify-center rounded-xl bg-nearkart-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-nearkart-600/20"
+                      to="/register/customer"
+                    >
+                      Join NearKart
+                    </Link>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </header>
 
       <main className="mx-auto w-full max-w-7xl px-6 py-10 sm:px-8 sm:py-12 lg:px-10 lg:py-16">

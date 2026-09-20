@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { Country, State, City } from 'country-state-city'
 
-import { getCustomerAddresses, getCustomerProfile, validateCoupon } from '@/api/customer'
+import { getCustomerAddresses, getCustomerLoyalty, getCustomerProfile, validateCoupon } from '@/api/customer'
 import { createOrder } from '@/api/orders'
 import { validateCart } from '@/api/shops'
 import { AddressMapPicker } from '@/components/location/AddressMapPicker'
@@ -45,6 +45,7 @@ const initialFormValues: CheckoutFormValues = {
   notes: '',
   paymentMethod: 'COD',
   couponCode: '',
+  useLoyaltyPoints: 0,
 }
 
 // Bug found via real browser back/forward testing: `formValues` is plain `useState`, so it lives
@@ -229,14 +230,30 @@ export function CheckoutPage() {
   const [couponError, setCouponError] = useState<string | null>(null)
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
 
+  // New feature: loyalty-points redemption. `loyaltyBalance` is the customer's real, live
+  // balance (fetched alongside profile/addresses below); `loyaltyInput` is the raw text the
+  // customer is typing (kept separate from `formValues.useLoyaltyPoints`, same "typing box vs.
+  // confirmed-applied value" split the coupon fields above already use) so a stray keystroke
+  // can't silently change what gets submitted until "Apply" is actually pressed.
+  const [loyaltyBalance, setLoyaltyBalance] = useState(0)
+  const [loyaltyInput, setLoyaltyInput] = useState('')
+  const [loyaltyError, setLoyaltyError] = useState<string | null>(null)
+
   const hasItems = items.length > 0
   const subtotal = getCartSubtotal()
   const cartCount = getCartCount()
+  // Client-side mirror of the backend's own per-order redemption ceiling
+  // (`loyalty.service.ts`'s `MAX_REDEMPTION_FRACTION_OF_SUBTOTAL`) — purely for an accurate live
+  // preview; the authoritative cap is always re-applied server-side regardless of what this
+  // computes. 1 point = ₹1 (`POINT_REDEMPTION_VALUE_RUPEES` on the backend).
+  const maxRedeemablePoints = Math.max(0, Math.min(loyaltyBalance, Math.floor(subtotal * 0.5)))
+  const loyaltyDiscountAmount = formValues.useLoyaltyPoints
   // Drives the animated "Total Estimate" number below — recomputed whenever the live cart
-  // validation summary or an applied coupon changes, same inputs the static total already used.
+  // validation summary, an applied coupon, or redeemed loyalty points change, same inputs the
+  // static total already used.
   const totalEstimate = Math.max(
     0,
-    (cartSummary?.totalAmount ?? subtotal) - (couponPreview?.discountAmount ?? 0),
+    (cartSummary?.totalAmount ?? subtotal) - (couponPreview?.discountAmount ?? 0) - loyaltyDiscountAmount,
   )
   const cartValidationKey = useMemo(
     () =>
@@ -290,14 +307,21 @@ export function CheckoutPage() {
       }
 
       try {
-        const [profileResponse, addressesResponse] = await Promise.all([
+        const [profileResponse, addressesResponse, loyaltyResponse] = await Promise.all([
           getCustomerProfile(),
           getCustomerAddresses(),
+          // New feature: loyalty-points redemption — failure here shouldn't block checkout from
+          // loading (it just means the redemption control stays hidden/at 0 balance), so it's
+          // deliberately inside the same try/catch as the other two rather than a separate call
+          // with its own error handling.
+          getCustomerLoyalty(),
         ])
 
         if (!isMounted) {
           return
         }
+
+        setLoyaltyBalance(loyaltyResponse.item.balance)
 
         const defaultAddress =
           profileResponse.item.profile.defaultAddress ||
@@ -468,8 +492,43 @@ export function CheckoutPage() {
       setFormValues((currentState) =>
         currentState.couponCode ? { ...currentState, couponCode: '' } : currentState,
       )
+      // New feature: loyalty-points redemption — same reasoning as the coupon reset just above
+      // (the per-order redemption cap is checked against the subtotal at apply time, so a cart
+      // change can make a previously-applied point count stale).
+      setLoyaltyInput('')
+      setLoyaltyError(null)
+      setFormValues((currentState) =>
+        currentState.useLoyaltyPoints > 0 ? { ...currentState, useLoyaltyPoints: 0 } : currentState,
+      )
     }
   }, [cartValidationKey])
+
+  function handleApplyLoyaltyPoints() {
+    const requested = Math.floor(Number(loyaltyInput))
+
+    if (!Number.isFinite(requested) || requested <= 0) {
+      setLoyaltyError('Enter how many points to redeem.')
+      return
+    }
+
+    if (requested > maxRedeemablePoints) {
+      setLoyaltyError(
+        maxRedeemablePoints > 0
+          ? `You can redeem at most ${maxRedeemablePoints} points on this order.`
+          : 'No points are redeemable on this order right now.',
+      )
+      return
+    }
+
+    setLoyaltyError(null)
+    setFormValues((currentState) => ({ ...currentState, useLoyaltyPoints: requested }))
+  }
+
+  function handleRemoveLoyaltyPoints() {
+    setLoyaltyInput('')
+    setLoyaltyError(null)
+    setFormValues((currentState) => ({ ...currentState, useLoyaltyPoints: 0 }))
+  }
 
   async function handleApplyCoupon() {
     const code = couponInput.trim()
@@ -703,6 +762,7 @@ export function CheckoutPage() {
         notes: formValues.notes,
         paymentMethod: formValues.paymentMethod,
         couponCode: formValues.couponCode,
+        useLoyaltyPoints: formValues.useLoyaltyPoints,
         items: validationResponse.item.appliedItems.map((item) => ({
           productId: item.productId,
           variantId: item.variantId,
@@ -1213,6 +1273,23 @@ export function CheckoutPage() {
                       </span>
                     </div>
                   ) : null}
+                  {loyaltyDiscountAmount > 0 ? (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-amber-600">
+                        Loyalty points ({formValues.useLoyaltyPoints})
+                      </span>
+                      <span className="inline-flex overflow-hidden font-bold text-amber-600">
+                        <motion.span
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          initial={prefersReducedMotion ? false : { opacity: 0, y: -6, scale: 0.92 }}
+                          key={loyaltyDiscountAmount}
+                          transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                          -{formatCurrency(loyaltyDiscountAmount)}
+                        </motion.span>
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -1266,6 +1343,69 @@ export function CheckoutPage() {
                     <p className="text-xs font-medium text-rose-500">{couponError}</p>
                   ) : null}
                 </div>
+
+                {loyaltyBalance > 0 ? (
+                  <div className="space-y-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-ink-400">
+                      Loyalty points
+                    </span>
+                    {formValues.useLoyaltyPoints > 0 ? (
+                      <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                        <div>
+                          <p className="text-sm font-bold text-amber-700">
+                            {formValues.useLoyaltyPoints} points applied
+                          </p>
+                          <p className="text-xs text-amber-600">
+                            -{formatCurrency(loyaltyDiscountAmount)} off this order
+                          </p>
+                        </div>
+                        <button
+                          className="text-xs font-bold text-amber-700 underline underline-offset-2 hover:text-amber-800"
+                          onClick={handleRemoveLoyaltyPoints}
+                          type="button"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          className="w-full rounded-xl border border-ink-100 bg-ink-50/30 px-4 py-2.5 text-sm font-medium text-ink-900 outline-none transition focus:border-nearkart-200 focus:bg-white focus:ring-4 focus:ring-nearkart-50"
+                          inputMode="numeric"
+                          onChange={(event) => {
+                            setLoyaltyInput(event.target.value.replace(/[^0-9]/g, ''))
+                            setLoyaltyError(null)
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                              event.preventDefault()
+                              handleApplyLoyaltyPoints()
+                            }
+                          }}
+                          placeholder="Points to redeem"
+                          value={loyaltyInput}
+                        />
+                        <button
+                          className="shrink-0 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-xs font-bold text-ink-700 transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={!loyaltyInput.trim()}
+                          onClick={handleApplyLoyaltyPoints}
+                          type="button"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    )}
+                    {loyaltyError ? (
+                      <p className="text-xs font-medium text-rose-500">{loyaltyError}</p>
+                    ) : null}
+                    {!loyaltyError && formValues.useLoyaltyPoints === 0 ? (
+                      <p className="text-xs font-medium text-ink-400">
+                        You have {loyaltyBalance} points available (up to {maxRedeemablePoints} can
+                        be used on this order).
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <div className="rounded-2xl bg-ink-900 p-6 text-white shadow-lg">
                   <div className="flex items-center justify-between">

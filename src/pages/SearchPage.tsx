@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { searchCatalog } from '@/api/shops'
 import { PageHeader } from '@/components/PageHeader'
@@ -8,10 +8,12 @@ import { CrossShopProductCard } from '@/components/shop/CrossShopProductCard'
 import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import { useCustomerCity } from '@/hooks/useCustomerCity'
 import type { PublicSearchResultItem } from '@/types/api'
+import { addRecentSearch, clearRecentSearches, getRecentSearches } from '@/utils/recentSearches'
 
 const MIN_QUERY_LENGTH = 2
 
 export function SearchPage() {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const query = (searchParams.get('q') ?? '').trim()
   const isValidQuery = query.length >= MIN_QUERY_LENGTH
@@ -20,13 +22,20 @@ export function SearchPage() {
   const [items, setItems] = useState<PublicSearchResultItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  // New feature: "recent searches" — re-read fresh on every render where it's actually shown
+  // (the empty, no-query state) rather than only on mount, so a search recorded elsewhere (the
+  // header search bar) or a "Clear" here shows up immediately without needing a manual refresh.
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => getRecentSearches())
 
   useEffect(() => {
     if (!isValidQuery) {
+      setRecentSearches(getRecentSearches())
       // Stale items are harmless here — the results grid below only renders while
       // `isValidQuery` is true, so there is nothing to synchronously reset.
       return
     }
+
+    addRecentSearch(query)
 
     let isMounted = true
 
@@ -58,6 +67,15 @@ export function SearchPage() {
     }
   }, [query, isValidQuery, city])
 
+  function handleRecentSearchClick(term: string) {
+    navigate(`/search?q=${encodeURIComponent(term)}`)
+  }
+
+  function handleClearRecentSearches() {
+    clearRecentSearches()
+    setRecentSearches([])
+  }
+
   return (
     <div className="space-y-12">
       <PageHeader
@@ -73,6 +91,35 @@ export function SearchPage() {
       {errorMessage ? (
         <section className="rounded-2xl border border-accent-100 bg-accent-50/60 p-4 text-sm text-accent-700">
           {errorMessage}
+        </section>
+      ) : null}
+
+      {!isValidQuery && recentSearches.length > 0 ? (
+        <section className="rounded-[2rem] border border-ink-100 bg-white/70 p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink-400">
+              Recent searches
+            </p>
+            <button
+              className="text-xs font-bold text-ink-400 underline-offset-2 hover:text-nearkart-600 hover:underline"
+              onClick={handleClearRecentSearches}
+              type="button"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {recentSearches.map((term) => (
+              <button
+                className="rounded-full bg-ink-50 px-4 py-2 text-sm font-semibold text-ink-700 transition hover:bg-nearkart-50 hover:text-nearkart-700"
+                key={term}
+                onClick={() => handleRecentSearchClick(term)}
+                type="button"
+              >
+                {term}
+              </button>
+            ))}
+          </div>
         </section>
       ) : null}
 

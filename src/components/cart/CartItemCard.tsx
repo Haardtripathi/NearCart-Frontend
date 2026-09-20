@@ -1,4 +1,5 @@
 import { QuantityControl } from '@/components/cart/QuantityControl'
+import { ProductImage } from '@/components/shop/ProductImage'
 import type { CartItem } from '@/types/cart'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -22,17 +23,13 @@ export function CartItemCard({
   return (
     <article className="flex flex-col gap-4 rounded-[1.5rem] border border-ink-100 bg-white p-4 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-card-hover)] sm:flex-row sm:items-center sm:p-5">
       <div className="h-24 w-24 shrink-0 overflow-hidden rounded-[1.25rem] bg-nearkart-50">
-        {item.image ? (
-          <img
-            alt={item.name}
-            className="h-full w-full object-cover"
-            src={item.image}
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-[0.24em] text-ink-400">
-            No image
-          </div>
-        )}
+        <ProductImage
+          category={item.category}
+          className="h-full w-full"
+          iconClassName="text-2xl"
+          image={item.image}
+          name={item.name}
+        />
       </div>
 
       <div className="min-w-0 flex-1 space-y-3">

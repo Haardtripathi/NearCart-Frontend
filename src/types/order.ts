@@ -33,6 +33,11 @@ export interface CheckoutFormValues {
   /** Optional promo code, resolved/re-validated authoritatively server-side inside
    *  `createOrder()` — never trust the client-previewed discount amount for the real charge. */
   couponCode: string
+  /** New feature: loyalty-points redemption. How many points the customer asked to redeem — a
+   *  request, not a guarantee; the backend clamps this to whatever's actually redeemable (real
+   *  balance + per-order cap) and returns the authoritative amount via `loyaltyRedemption` on the
+   *  created order. 0 (the default) means "redeem none," unaffected. */
+  useLoyaltyPoints: number
 }
 
 export interface CreateOrderPayload extends CheckoutFormValues {
@@ -128,6 +133,11 @@ export interface Order {
   discountAmount: number
   /** Set once the order reaches DELIVERED and loyalty points are credited; null until then. */
   loyaltyPointsEarned: number | null
+  /** New feature: loyalty-points redemption — null when none were redeemed against this order,
+   *  otherwise how many points (and their rupee value, already folded into `discountAmount`
+   *  above) the customer spent at checkout. Computed server-side from the `LoyaltyLedgerEntry`
+   *  table, not a stored column — see backend's `getLoyaltyRedemptionForOrder`. */
+  loyaltyRedemption: { pointsRedeemed: number; discountAmount: number } | null
   /** Populated once a driver is assigned (typically at/after READY_FOR_PICKUP) — mirrors
    *  `mapOrder()` in the backend's `utils/serializers.ts`. All null together until assignment. */
   driverName: string | null
