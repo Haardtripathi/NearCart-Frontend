@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { searchCatalog } from '@/api/shops'
 import { PageHeader } from '@/components/PageHeader'
@@ -7,10 +7,19 @@ import { TrendingRail } from '@/components/home/TrendingRail'
 import { CrossShopProductCard } from '@/components/shop/CrossShopProductCard'
 import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import { useCustomerCity } from '@/hooks/useCustomerCity'
-import type { PublicSearchResultItem } from '@/types/api'
+import { useDeliveryCoordinates } from '@/hooks/useDeliveryCoordinates'
+import type { PublicSearchResponse, PublicSearchResultItem } from '@/types/api'
 import { addRecentSearch, clearRecentSearches, getRecentSearches } from '@/utils/recentSearches'
 
 const MIN_QUERY_LENGTH = 2
+const SEARCH_RESULT_LIMIT = 36
+
+interface ShopWithMoreMatches {
+  shopId: string
+  shopPath: string
+  shopName: string
+  hiddenCount: number
+}
 
 export function SearchPage() {
   const navigate = useNavigate()
@@ -18,8 +27,13 @@ export function SearchPage() {
   const query = (searchParams.get('q') ?? '').trim()
   const isValidQuery = query.length >= MIN_QUERY_LENGTH
   const { city } = useCustomerCity()
+  // Search only shops that deliver to the customer's location — same rule as the shop list.
+  const { coordinates } = useDeliveryCoordinates()
+  const latitude = coordinates?.latitude
+  const longitude = coordinates?.longitude
 
   const [items, setItems] = useState<PublicSearchResultItem[]>([])
+  const [meta, setMeta] = useState<PublicSearchResponse['meta'] | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   // New feature: "recent searches" — re-read fresh on every render where it's actually shown
@@ -43,10 +57,16 @@ export function SearchPage() {
       setIsLoading(true)
 
       try {
-        const response = await searchCatalog(query, { city, limit: 36 })
+        const response = await searchCatalog(query, {
+          city,
+          limit: SEARCH_RESULT_LIMIT,
+          lat: latitude,
+          lng: longitude,
+        })
 
         if (isMounted) {
           setItems(response.items)
+          setMeta(response.meta)
           setErrorMessage(null)
         }
       } catch {
@@ -65,7 +85,41 @@ export function SearchPage() {
     return () => {
       isMounted = false
     }
-  }, [query, isValidQuery, city])
+  }, [query, isValidQuery, city, latitude, longitude])
+
+  // The backend shows at most a few matches per shop, so a shop can match far more than it
+  // contributes here. `meta.perShopTotals` says how many each shop matched in total; the rest are
+  // one click away in that shop's own (paged) catalog search.
+  const shopsWithMoreMatches = useMemo<ShopWithMoreMatches[]>(() => {
+    const perShopTotals = meta?.perShopTotals
+
+    if (!perShopTotals) {
+      return []
+    }
+
+    const shownByShop = new Map<string, { item: PublicSearchResultItem; count: number }>()
+    for (const item of items) {
+      const entry = shownByShop.get(item.shop.id)
+      shownByShop.set(item.shop.id, { item: entry?.item ?? item, count: (entry?.count ?? 0) + 1 })
+    }
+
+    return [...shownByShop.entries()]
+      .map(([shopId, { item, count }]) => ({
+        shopId,
+        shopPath: `/shops/${item.shop.slug || shopId}?search=${encodeURIComponent(query)}`,
+        shopName: item.shop.name,
+        hiddenCount: (perShopTotals[shopId] ?? 0) - count,
+      }))
+      .filter((shop) => shop.hiddenCount > 0)
+  }, [items, meta, query])
+
+  // A full page means the backend stopped at the limit, not that these are all the matches.
+  const resultCountLabel =
+    items.length >= (meta?.limit ?? SEARCH_RESULT_LIMIT)
+      ? `Top ${items.length} results`
+      : `${items.length} result${items.length === 1 ? '' : 's'}`
+  const unsearchedShopCount =
+    meta?.shopsTotal != null ? Math.max(meta.shopsTotal - meta.shopsSearched, 0) : 0
 
   function handleRecentSearchClick(term: string) {
     navigate(`/search?q=${encodeURIComponent(term)}`)
@@ -142,13 +196,34 @@ export function SearchPage() {
             </p>
           </div>
         ) : (
-          <StaggerGrid className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {items.map((item) => (
-              <StaggerItem key={`${item.id}:${item.variantId}`}>
-                <CrossShopProductCard product={item} />
-              </StaggerItem>
-            ))}
-          </StaggerGrid>
+          <div className="space-y-6">
+            <p className="text-xs font-bold uppercase tracking-wider text-ink-400">
+              {resultCountLabel}
+              {unsearchedShopCount > 0
+                ? ` · from ${meta?.shopsSearched} of ${meta?.shopsTotal} shops`
+                : null}
+            </p>
+            <StaggerGrid className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {items.map((item) => (
+                <StaggerItem key={`${item.id}:${item.variantId}`}>
+                  <CrossShopProductCard product={item} />
+                </StaggerItem>
+              ))}
+            </StaggerGrid>
+            {shopsWithMoreMatches.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {shopsWithMoreMatches.map((shop) => (
+                  <Link
+                    className="rounded-full bg-nearkart-50 px-4 py-2 text-sm font-semibold text-nearkart-700 transition hover:bg-nearkart-100"
+                    key={shop.shopId}
+                    to={shop.shopPath}
+                  >
+                    +{shop.hiddenCount} more at {shop.shopName} →
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+          </div>
         )
       ) : null}
 

@@ -5,9 +5,11 @@ import { getShopCategories, getShops } from '@/api/shops'
 import { CategoryChips } from '@/components/category/CategoryChips'
 import { PageHeader } from '@/components/PageHeader'
 import { ShopCard } from '@/components/shop/ShopCard'
+import { LoadMoreButton } from '@/components/shared/LoadMoreButton'
 import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import { useCustomerCity } from '@/hooks/useCustomerCity'
 import { useDeliveryCoordinates } from '@/hooks/useDeliveryCoordinates'
+import { useLoadMore } from '@/hooks/useLoadMore'
 import type { PublicShopCategorySummary, PublicShopSummary } from '@/types/api'
 
 export function ShopsPage() {
@@ -24,6 +26,23 @@ export function ShopsPage() {
   const [categories, setCategories] = useState<PublicShopCategorySummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  // The directory is paged server-side (50 per page) — this page used to stop silently at the
+  // first page. `meta.matched` is the real number of shops for the current filters.
+  const moreShops = useLoadMore<PublicShopSummary>({
+    fetchPage: (page) =>
+      getShops({
+        search: search || undefined,
+        category: category || undefined,
+        city,
+        lat: coordinates?.latitude,
+        lng: coordinates?.longitude,
+        page,
+      }),
+    setItems: setShops,
+    countField: 'matched',
+    errorMessage: 'Unable to load more shops right now.',
+  })
+  const { resetFromFirstPage } = moreShops
 
   useEffect(() => {
     let isMounted = true
@@ -44,6 +63,7 @@ export function ShopsPage() {
         }
 
         setShops(response.items)
+        resetFromFirstPage(response)
         setErrorMessage(null)
       } catch {
         if (!isMounted) {
@@ -63,14 +83,19 @@ export function ShopsPage() {
     return () => {
       isMounted = false
     }
-  }, [search, category, city, coordinates])
+  }, [search, category, city, coordinates, resetFromFirstPage])
 
   useEffect(() => {
     let isMounted = true
 
     async function loadCategories() {
       try {
-        const response = await getShopCategories()
+        // Same delivery location as the shop list, so the dropdown only offers categories that
+        // actually have a shop that delivers here.
+        const response = await getShopCategories({
+          lat: coordinates?.latitude,
+          lng: coordinates?.longitude,
+        })
 
         if (isMounted) {
           setCategories(response.items)
@@ -87,7 +112,7 @@ export function ShopsPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [coordinates])
 
   function updateParam(key: 'search' | 'category', value: string) {
     setSearchParams((currentParams) => {
@@ -198,6 +223,19 @@ export function ShopsPage() {
             ))}
           </StaggerGrid>
         )}
+
+        {!isLoading && !errorMessage && moreShops.hasMore ? (
+          <div className="mt-8">
+            <LoadMoreButton
+              errorMessage={moreShops.loadMoreError}
+              isLoading={moreShops.isLoadingMore}
+              label="Load more shops"
+              onClick={() => void moreShops.loadMore()}
+              shownCount={shops.length}
+              totalCount={moreShops.totalCount}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import type { ApiMeta } from '@/types/api'
+import type { ApiMeta, PagedListMeta } from '@/types/api'
 import type { AuthUser } from '@/types/auth'
 import type { OrderPreview } from '@/types/order'
 
@@ -95,7 +95,9 @@ export interface AddressListResponse {
 
 export interface CustomerOrdersResponse {
   items: OrderPreview[]
-  meta: ApiMeta & {
+  meta: ApiMeta & PagedListMeta & {
     total: number
+    // The customer's whole order history size; `total` is only this page.
+    matched?: number
   }
 }

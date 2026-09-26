@@ -4,8 +4,10 @@ import { getPendingApprovals, updateShopApproval } from '@/api/admin'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
+import { LoadMoreButton } from '@/components/shared/LoadMoreButton'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
+import { useLoadMore } from '@/hooks/useLoadMore'
 import type { AdminApprovalItem } from '@/types/admin'
 import { getApiErrorMessage } from '@/utils/api'
 
@@ -16,10 +18,21 @@ export function AdminApprovalsPage() {
   const [actionLoadingByShop, setActionLoadingByShop] = useState<
     Record<string, boolean>
   >({})
+  // Paged server-side (50 per page) — the queue used to stop silently at the first page.
+  const moreApprovals = useLoadMore<AdminApprovalItem>({
+    fetchPage: (page) => getPendingApprovals({ page }),
+    setItems: setApprovals,
+    errorMessage: 'Unable to load more pending approvals right now.',
+    getKey: (approval) => approval.shop.id,
+  })
+  const { resetFromFirstPage } = moreApprovals
 
+  // Back to page 1 after a decision: the decided shop leaves the queue, which shifts every later
+  // page up by one, so keeping the already-loaded pages would skip a shop on the next "Load more".
   async function loadApprovals() {
     const response = await getPendingApprovals()
     setApprovals(response.items)
+    resetFromFirstPage(response)
   }
 
   useEffect(() => {
@@ -34,6 +47,7 @@ export function AdminApprovalsPage() {
         }
 
         setApprovals(response.items)
+        resetFromFirstPage(response)
       } catch (error) {
         if (!isMounted) {
           return
@@ -54,7 +68,7 @@ export function AdminApprovalsPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [resetFromFirstPage])
 
   async function handleDecision(
     shopId: string,
@@ -101,69 +115,81 @@ export function AdminApprovalsPage() {
         ) : null}
 
         {approvals.length > 0 ? (
-          <StaggerGrid className="space-y-4">
-            {approvals.map((approval) => (
-              <StaggerItem key={approval.shop.id}>
-                <article className="rounded-[1.5rem] border border-slate-100 bg-slate-50/80 px-5 py-5">
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="space-y-3">
-                      <div>
-                        <p className="font-display text-2xl text-ink-900">
-                          {approval.shop.name}
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          {approval.shop.category} •{' '}
-                          {[approval.shop.area, approval.shop.city]
-                            .filter(Boolean)
-                            .join(', ')}
-                        </p>
+          <>
+            <StaggerGrid className="space-y-4">
+              {approvals.map((approval) => (
+                <StaggerItem key={approval.shop.id}>
+                  <article className="rounded-[1.5rem] border border-slate-100 bg-slate-50/80 px-5 py-5">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="space-y-3">
+                        <div>
+                          <p className="font-display text-2xl text-ink-900">
+                            {approval.shop.name}
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            {approval.shop.category} •{' '}
+                            {[approval.shop.area, approval.shop.city]
+                              .filter(Boolean)
+                              .join(', ')}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <StatusPill label="PENDING" tone="warning" />
+                          <StatusPill
+                            label={approval.shop.isActive ? 'ACTIVE' : 'INACTIVE'}
+                            tone={approval.shop.isActive ? 'success' : 'neutral'}
+                          />
+                        </div>
+                        <div className="text-sm leading-7 text-slate-600">
+                          <p>
+                            <span className="font-semibold text-ink-900">Owner:</span>{' '}
+                            {approval.owner.user.fullName}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-ink-900">Business:</span>{' '}
+                            {approval.owner.profile.businessName}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-ink-900">Email:</span>{' '}
+                            {approval.owner.user.email}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusPill label="PENDING" tone="warning" />
-                        <StatusPill
-                          label={approval.shop.isActive ? 'ACTIVE' : 'INACTIVE'}
-                          tone={approval.shop.isActive ? 'success' : 'neutral'}
-                        />
-                      </div>
-                      <div className="text-sm leading-7 text-slate-600">
-                        <p>
-                          <span className="font-semibold text-ink-900">Owner:</span>{' '}
-                          {approval.owner.user.fullName}
-                        </p>
-                        <p>
-                          <span className="font-semibold text-ink-900">Business:</span>{' '}
-                          {approval.owner.profile.businessName}
-                        </p>
-                        <p>
-                          <span className="font-semibold text-ink-900">Email:</span>{' '}
-                          {approval.owner.user.email}
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearkart-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100 disabled:cursor-not-allowed disabled:opacity-60"
-                        disabled={actionLoadingByShop[approval.shop.id]}
-                        onClick={() => handleDecision(approval.shop.id, 'APPROVED')}
-                        type="button"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
-                        disabled={actionLoadingByShop[approval.shop.id]}
-                        onClick={() => handleDecision(approval.shop.id, 'REJECTED')}
-                        type="button"
-                      >
-                        Reject
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          className="inline-flex items-center justify-center rounded-full bg-nearkart-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-nearkart-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nearkart-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={actionLoadingByShop[approval.shop.id]}
+                          onClick={() => handleDecision(approval.shop.id, 'APPROVED')}
+                          type="button"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={actionLoadingByShop[approval.shop.id]}
+                          onClick={() => handleDecision(approval.shop.id, 'REJECTED')}
+                          type="button"
+                        >
+                          Reject
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              </StaggerItem>
-            ))}
-          </StaggerGrid>
+                  </article>
+                </StaggerItem>
+              ))}
+            </StaggerGrid>
+            {moreApprovals.hasMore ? (
+              <LoadMoreButton
+                errorMessage={moreApprovals.loadMoreError}
+                isLoading={moreApprovals.isLoadingMore}
+                label="Load more approvals"
+                onClick={() => void moreApprovals.loadMore()}
+                shownCount={approvals.length}
+                totalCount={moreApprovals.totalCount}
+              />
+            ) : null}
+          </>
         ) : (
           <div className="rounded-[1.35rem] bg-slate-50 px-4 py-5 text-sm text-slate-600">
             No pending approvals right now. New merchant shops will appear here for review.

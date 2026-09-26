@@ -8,15 +8,23 @@ import type {
 } from '@/types/admin'
 import type { ShopResponse, ShopApprovalStatus } from '@/types/shop-owner'
 
-export async function getAdminUsers() {
-  const { data } = await httpClient.get<AdminUsersResponse>('/admin/users')
+// Every admin list is paged server-side (50 per page by default, 200 max) — follow
+// `meta.hasMore` to reach the rest.
+export interface AdminListQuery {
+  page?: number
+  limit?: number
+}
+
+export async function getAdminUsers(query: AdminListQuery = {}) {
+  const { data } = await httpClient.get<AdminUsersResponse>('/admin/users', { params: query })
 
   return data
 }
 
-export async function getPendingApprovals() {
+export async function getPendingApprovals(query: AdminListQuery = {}) {
   const { data } = await httpClient.get<AdminApprovalsResponse>(
     '/admin/shop-owners/pending',
+    { params: query },
   )
 
   return data
@@ -34,8 +42,8 @@ export async function updateShopApproval(
   return data
 }
 
-export async function getAdminShops() {
-  const { data } = await httpClient.get<AdminShopsResponse>('/admin/shops')
+export async function getAdminShops(query: AdminListQuery = {}) {
+  const { data } = await httpClient.get<AdminShopsResponse>('/admin/shops', { params: query })
 
   return data
 }
@@ -68,8 +76,8 @@ export async function updateShopStorefront(
   return data
 }
 
-export async function getAdminOrders() {
-  const { data } = await httpClient.get<AdminOrdersResponse>('/admin/orders')
+export async function getAdminOrders(query: AdminListQuery = {}) {
+  const { data } = await httpClient.get<AdminOrdersResponse>('/admin/orders', { params: query })
 
   return data
 }

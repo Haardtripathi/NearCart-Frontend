@@ -8,8 +8,10 @@ import {
 import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
+import { LoadMoreButton } from '@/components/shared/LoadMoreButton'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
+import { useLoadMore } from '@/hooks/useLoadMore'
 import type {
   AdminShopRow,
   InventoryOrganizationOption,
@@ -37,6 +39,13 @@ export function AdminShopsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [savingShopId, setSavingShopId] = useState<string | null>(null)
+  // Paged server-side (50 per page) — the registry used to stop silently at the first page.
+  const moreShops = useLoadMore<AdminShopRow>({
+    fetchPage: (page) => getAdminShops({ page }),
+    setItems: setShops,
+    errorMessage: 'Unable to load more shops right now.',
+  })
+  const { resetFromFirstPage } = moreShops
 
   useEffect(() => {
     let isMounted = true
@@ -53,6 +62,7 @@ export function AdminShopsPage() {
         }
 
         setShops(shopsResponse.items)
+        resetFromFirstPage(shopsResponse)
         setInventoryOrganizations(inventoryResponse.items)
       } catch (error) {
         if (!isMounted) {
@@ -74,7 +84,7 @@ export function AdminShopsPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [resetFromFirstPage])
 
   async function handleMappingSave(shop: AdminShopRow) {
     if (!shop.inventoryOrganizationId || !shop.inventoryBranchId) {
@@ -286,6 +296,17 @@ export function AdminShopsPage() {
             )
           })}
         </StaggerGrid>
+
+        {moreShops.hasMore ? (
+          <LoadMoreButton
+            errorMessage={moreShops.loadMoreError}
+            isLoading={moreShops.isLoadingMore}
+            label="Load more shops"
+            onClick={() => void moreShops.loadMore()}
+            shownCount={shops.length}
+            totalCount={moreShops.totalCount}
+          />
+        ) : null}
       </DashboardCard>
     </div>
   )

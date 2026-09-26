@@ -2,6 +2,15 @@ export interface ApiMeta {
   timestamp: string
 }
 
+// Paged list endpoints (shops directory, customer orders, admin lists) add these to `meta`.
+// Optional so a response from an older backend still type-checks; treat a missing `hasMore` as
+// "no more pages".
+export interface PagedListMeta {
+  page?: number
+  limit?: number
+  hasMore?: boolean
+}
+
 export interface HealthResponse {
   status: string
   appName: string
@@ -160,9 +169,11 @@ export interface PublicCatalogFilters {
 
 export interface PublicShopListResponse {
   items: PublicShopSummary[]
-  meta: ApiMeta & {
+  meta: ApiMeta & PagedListMeta & {
     source: string
     total: number
+    // Every shop matching the query; `total` is only this page.
+    matched?: number
   }
 }
 
@@ -287,6 +298,12 @@ export interface PublicSearchResponse {
   items: PublicSearchResultItem[]
   meta: ApiMeta & {
     query: string
+    limit?: number
+    // Shop id -> how many items that shop matched in total. Each shop contributes at most a few
+    // items to `items`, so a shop with more matches than shown can link to its own search.
+    perShopTotals?: Record<string, number>
+    // Shops eligible for this search; `shopsSearched` is how many were actually fanned out to.
+    shopsTotal?: number
     shopsSearched: number
     shopsSucceeded: number
     shopsFailed: number
@@ -298,6 +315,7 @@ export interface PublicSearchResponse {
 export interface PublicTrendingResponse {
   items: PublicSearchResultItem[]
   meta: ApiMeta & {
+    shopsTotal?: number
     shopsQueried: number
     shopsSucceeded: number
     shopsFailed: number

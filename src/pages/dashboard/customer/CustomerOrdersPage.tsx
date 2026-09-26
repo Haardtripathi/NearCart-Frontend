@@ -5,31 +5,44 @@ import { getCustomerOrders } from '@/api/customer'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
+import { LoadMoreButton } from '@/components/shared/LoadMoreButton'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { StaggerTableBody, StaggerTableRow } from '@/components/shared/StaggerTable'
+import { useLoadMore } from '@/hooks/useLoadMore'
 import type { OrderPreview } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDateTime } from '@/utils/formatDateTime'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from '@/utils/orderStatus'
 
+// Server-paged — this table used to stop silently at the first 25 orders.
+const ORDERS_PAGE_SIZE = 25
+
 export function CustomerOrdersPage() {
   const [orders, setOrders] = useState<OrderPreview[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const olderOrders = useLoadMore<OrderPreview>({
+    fetchPage: (page) => getCustomerOrders({ page, limit: ORDERS_PAGE_SIZE }),
+    setItems: setOrders,
+    countField: 'matched',
+    errorMessage: 'Unable to load older orders right now.',
+  })
+  const { resetFromFirstPage } = olderOrders
 
   useEffect(() => {
     let isMounted = true
 
     async function loadOrders() {
       try {
-        const response = await getCustomerOrders()
+        const response = await getCustomerOrders({ page: 1, limit: ORDERS_PAGE_SIZE })
 
         if (!isMounted) {
           return
         }
 
         setOrders(response.items)
+        resetFromFirstPage(response)
       } catch (error) {
         if (!isMounted) {
           return
@@ -50,7 +63,7 @@ export function CustomerOrdersPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [resetFromFirstPage])
 
   if (isLoading) {
     return <LoadingScreen message="Loading your customer orders..." />
@@ -113,6 +126,16 @@ export function CustomerOrdersPage() {
                 ))}
               </StaggerTableBody>
             </table>
+            {olderOrders.hasMore ? (
+              <LoadMoreButton
+                errorMessage={olderOrders.loadMoreError}
+                isLoading={olderOrders.isLoadingMore}
+                label="Load older orders"
+                onClick={() => void olderOrders.loadMore()}
+                shownCount={orders.length}
+                totalCount={olderOrders.totalCount}
+              />
+            ) : null}
           </div>
         ) : (
           <div className="rounded-[1.35rem] bg-slate-50 px-4 py-5 text-sm text-slate-600">

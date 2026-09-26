@@ -1,4 +1,4 @@
-import type { ApiMeta } from '@/types/api'
+import type { ApiMeta, PagedListMeta } from '@/types/api'
 import type { AuthUser } from '@/types/auth'
 import type { OrderPreview } from '@/types/order'
 import type { ManagedShop, ShopOwnerProfileRecord } from '@/types/shop-owner'
@@ -12,7 +12,7 @@ export interface AdminUserRow extends AuthUser {
 
 export interface AdminUsersResponse {
   items: AdminUserRow[]
-  meta: ApiMeta & {
+  meta: ApiMeta & PagedListMeta & {
     total: number
   }
 }
@@ -27,7 +27,7 @@ export interface AdminApprovalItem {
 
 export interface AdminApprovalsResponse {
   items: AdminApprovalItem[]
-  meta: ApiMeta & {
+  meta: ApiMeta & PagedListMeta & {
     total: number
   }
 }
@@ -42,7 +42,7 @@ export interface AdminShopRow extends ManagedShop {
 
 export interface AdminShopsResponse {
   items: AdminShopRow[]
-  meta: ApiMeta & {
+  meta: ApiMeta & PagedListMeta & {
     total: number
     pendingCount: number
   }
@@ -81,7 +81,7 @@ export interface AdminOrderRow extends OrderPreview {
 
 export interface AdminOrdersResponse {
   items: AdminOrderRow[]
-  meta: ApiMeta & {
+  meta: ApiMeta & PagedListMeta & {
     total: number
   }
 }

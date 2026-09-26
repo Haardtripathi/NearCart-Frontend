@@ -5,13 +5,16 @@ import { getOrderById } from '@/api/orders'
 import { getCustomerOrders } from '@/api/customer'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
+import { LoadMoreButton } from '@/components/shared/LoadMoreButton'
 import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
+import { useLoadMore } from '@/hooks/useLoadMore'
 import { useAuthStore } from '@/store/authStore'
 import type { OrderPreview } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDateTime } from '@/utils/formatDateTime'
 import { getGuestOrderIds } from '@/utils/guestOrders'
+import { appendUniqueById } from '@/utils/pagedList'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from '@/utils/orderStatus'
 
 // Mirrors the backend's `TERMINAL_ORDER_STATUSES` (`orders.service.ts`) and the same set used in
@@ -27,6 +30,10 @@ const TERMINAL_ORDER_STATUSES = new Set<OrderPreview['status']>([
 // reasoning (no websocket/SSE server exists yet; this closes most of the "is this stale?" gap
 // cheaply for a visitor with their order list open).
 const ORDER_LIST_POLL_INTERVAL_MS = 18_000
+
+// Signed-in history is paged server-side — this page used to show only the first page (25) with
+// no way to reach older orders.
+const ORDERS_PAGE_SIZE = 25
 
 async function getGuestOrders(): Promise<OrderPreview[]> {
   const guestOrderIds = getGuestOrderIds()
@@ -66,6 +73,13 @@ export function OrdersPage() {
   const [orders, setOrders] = useState<OrderPreview[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const olderOrders = useLoadMore<OrderPreview>({
+    fetchPage: (page) => getCustomerOrders({ page, limit: ORDERS_PAGE_SIZE }),
+    setItems: setOrders,
+    countField: 'matched',
+    errorMessage: 'Unable to load older orders right now.',
+  })
+  const { resetFromFirstPage } = olderOrders
   const isMountedRef = useRef(true)
   // Read fresh inside the interval callback below without making the interval-setup effect
   // depend on (and re-run for) every `orders` update — same "ref, not a dependency" pattern used
@@ -88,14 +102,32 @@ export function OrdersPage() {
       }
 
       try {
-        const nextOrders =
-          user?.role === 'CUSTOMER' ? (await getCustomerOrders()).items : await getGuestOrders()
+        if (user?.role !== 'CUSTOMER') {
+          const guestOrders = await getGuestOrders()
+
+          if (!isMountedRef.current) {
+            return
+          }
+
+          setOrders(guestOrders)
+          setErrorMessage(null)
+          return
+        }
+
+        const response = await getCustomerOrders({ page: 1, limit: ORDERS_PAGE_SIZE })
 
         if (!isMountedRef.current) {
           return
         }
 
-        setOrders(nextOrders)
+        if (silent) {
+          // A poll only refreshes the newest page — keep any older pages the customer already
+          // pulled in with "Load older orders" below it instead of collapsing back to page 1.
+          setOrders((currentOrders) => appendUniqueById(response.items, currentOrders))
+        } else {
+          setOrders(response.items)
+          resetFromFirstPage(response)
+        }
         setErrorMessage(null)
       } catch (error) {
         if (!isMountedRef.current) {
@@ -140,7 +172,7 @@ export function OrdersPage() {
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [user])
+  }, [user, resetFromFirstPage])
 
   return (
     <div className="space-y-12">
@@ -235,6 +267,19 @@ export function OrdersPage() {
             ))}
           </StaggerGrid>
         )}
+
+        {!isLoading && !errorMessage && user?.role === 'CUSTOMER' && olderOrders.hasMore ? (
+          <div className="mt-8">
+            <LoadMoreButton
+              errorMessage={olderOrders.loadMoreError}
+              isLoading={olderOrders.isLoadingMore}
+              label="Load older orders"
+              onClick={() => void olderOrders.loadMore()}
+              shownCount={orders.length}
+              totalCount={olderOrders.totalCount}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   )

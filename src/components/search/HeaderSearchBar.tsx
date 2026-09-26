@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { getTrendingProducts, searchCatalog } from '@/api/shops'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { useDeliveryCoordinates } from '@/hooks/useDeliveryCoordinates'
 import type { PublicSearchResultItem } from '@/types/api'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { addRecentSearch, clearRecentSearches, getRecentSearches } from '@/utils/recentSearches'
@@ -22,7 +23,8 @@ export function HeaderSearchBar() {
   const [searchResults, setSearchResults] = useState<PublicSearchResultItem[]>([])
   const [trendingResults, setTrendingResults] = useState<PublicSearchResultItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [hasLoadedTrending, setHasLoadedTrending] = useState(false)
+  // Which delivery location the trending list was loaded for — a changed location reloads it.
+  const [loadedTrendingKey, setLoadedTrendingKey] = useState<string | null>(null)
   // New feature: "recent searches" quick-recall — read once on open (not reactively) since it
   // only changes as a result of this component's own submit/clear actions, both of which already
   // re-read it explicitly right after.
@@ -30,6 +32,12 @@ export function HeaderSearchBar() {
 
   const debouncedQuery = useDebouncedValue(query.trim(), 300)
   const isSearchActive = debouncedQuery.length >= MIN_QUERY_LENGTH
+  // Suggestions only from shops that deliver to the customer's location (same rule as the shop
+  // list); without it the dropdown offered products from shops that can't deliver here.
+  const { coordinates } = useDeliveryCoordinates()
+  const latitude = coordinates?.latitude
+  const longitude = coordinates?.longitude
+  const coordinatesKey = latitude != null && longitude != null ? `${latitude},${longitude}` : ''
 
   useEffect(() => {
     if (!isSearchActive) {
@@ -44,7 +52,11 @@ export function HeaderSearchBar() {
       setIsLoading(true)
 
       try {
-        const response = await searchCatalog(debouncedQuery, { limit: 6 })
+        const response = await searchCatalog(debouncedQuery, {
+          limit: 6,
+          lat: latitude,
+          lng: longitude,
+        })
 
         if (isMounted) {
           setSearchResults(response.items)
@@ -65,10 +77,10 @@ export function HeaderSearchBar() {
     return () => {
       isMounted = false
     }
-  }, [debouncedQuery, isSearchActive])
+  }, [debouncedQuery, isSearchActive, latitude, longitude])
 
   useEffect(() => {
-    if (!isOpen || isSearchActive || hasLoadedTrending) {
+    if (!isOpen || isSearchActive || loadedTrendingKey === coordinatesKey) {
       return
     }
 
@@ -76,7 +88,7 @@ export function HeaderSearchBar() {
 
     async function loadTrending() {
       try {
-        const response = await getTrendingProducts({ limit: 6 })
+        const response = await getTrendingProducts({ limit: 6, lat: latitude, lng: longitude })
 
         if (isMounted) {
           setTrendingResults(response.items)
@@ -87,7 +99,7 @@ export function HeaderSearchBar() {
         }
       } finally {
         if (isMounted) {
-          setHasLoadedTrending(true)
+          setLoadedTrendingKey(coordinatesKey)
         }
       }
     }
@@ -97,7 +109,7 @@ export function HeaderSearchBar() {
     return () => {
       isMounted = false
     }
-  }, [isOpen, isSearchActive, hasLoadedTrending])
+  }, [isOpen, isSearchActive, loadedTrendingKey, coordinatesKey, latitude, longitude])
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getShopCatalog } from '@/api/shops'
 import { PageHeader } from '@/components/PageHeader'
@@ -8,12 +8,14 @@ import { StatusPill } from '@/components/StatusPill'
 import { ProductCard } from '@/components/shop/ProductCard'
 import { ShopImage } from '@/components/shop/ShopImage'
 import { ShopReviewsSection } from '@/components/shop/ShopReviewsSection'
+import { LoadMoreButton } from '@/components/shared/LoadMoreButton'
 import { StaggerGrid, StaggerItem } from '@/components/shared/StaggerGrid'
 import { useCartStore } from '@/store/cartStore'
 import type { PublicCatalogProduct, PublicCatalogVariant, PublicShopDetail } from '@/types/api'
 import type { CartItem } from '@/types/cart'
 import { formatLiveEta, getLiveEtaTone } from '@/utils/deliveryEta'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { appendUniqueBy } from '@/utils/pagedList'
 import { getTodayStatusLabel, getTodayStatusMessage } from '@/utils/shopAvailability'
 
 type CatalogSort =
@@ -37,6 +39,14 @@ const initialFilters: CatalogFiltersState = {
   brand: '',
   inStockOnly: false,
   sort: 'featured',
+}
+
+// The catalog is paged by the inventory bridge; this page used to fetch page 1 (24 products) and
+// never offer the rest.
+const CATALOG_PAGE_SIZE = 24
+
+function getProductKey(product: PublicCatalogProduct) {
+  return `${product.id}:${product.variantId}`
 }
 
 function createCartItem(
@@ -68,14 +78,29 @@ function createCartItem(
 
 export function ShopDetailsPage() {
   const { shopId = '' } = useParams()
+  // `?search=` prefills the in-shop search — cross-shop search links here with "+N more at
+  // <shop>" when a shop matched more products than the search page could show.
+  const [searchParams] = useSearchParams()
+  const urlSearch = searchParams.get('search') ?? ''
   const [shop, setShop] = useState<PublicShopDetail | null>(null)
   const [products, setProducts] = useState<PublicCatalogProduct[]>([])
   const [categories, setCategories] = useState<
     Array<{ id: string; slug: string; name: string }>
   >([])
-  const [filters, setFilters] = useState<CatalogFiltersState>(initialFilters)
+  const [filters, setFilters] = useState<CatalogFiltersState>(() => ({
+    ...initialFilters,
+    search: urlSearch,
+  }))
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [catalogPage, setCatalogPage] = useState(1)
+  const [catalogTotalPages, setCatalogTotalPages] = useState(1)
+  const [catalogTotalItems, setCatalogTotalItems] = useState<number | null>(null)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null)
+  // Bumped on every fresh (page-1) load, so a "Load more" still in flight from the previous
+  // filters/shop can't append its products to the new list.
+  const catalogGenerationRef = useRef(0)
   const {
     shopId: cartShopId,
     shopName: cartShopName,
@@ -102,17 +127,30 @@ export function ShopDetailsPage() {
   // skeleton for the new shop instead of flashing the previous shop's name/photo/products for a
   // moment before the new fetch resolves.
   useEffect(() => {
-    setFilters(initialFilters)
+    // Keep the current object when nothing changes (e.g. on first mount), so this doesn't fire a
+    // second, identical catalog fetch.
+    setFilters((currentFilters) =>
+      currentFilters.search === urlSearch &&
+      currentFilters.category === initialFilters.category &&
+      currentFilters.brand === initialFilters.brand &&
+      currentFilters.inStockOnly === initialFilters.inStockOnly &&
+      currentFilters.sort === initialFilters.sort
+        ? currentFilters
+        : { ...initialFilters, search: urlSearch },
+    )
     setShop(null)
     setProducts([])
     setCategories([])
-  }, [shopId])
+  }, [shopId, urlSearch])
 
   useEffect(() => {
     let isMounted = true
+    catalogGenerationRef.current += 1
 
     async function loadCatalog() {
       setIsLoading(true)
+      setIsLoadingMore(false)
+      setLoadMoreError(null)
 
       try {
         const response = await getShopCatalog(shopId, {
@@ -121,7 +159,7 @@ export function ShopDetailsPage() {
           inStockOnly: filters.inStockOnly || undefined,
           sort: filters.sort,
           page: 1,
-          limit: 24,
+          limit: CATALOG_PAGE_SIZE,
         })
 
         if (!isMounted) {
@@ -130,6 +168,9 @@ export function ShopDetailsPage() {
 
         setShop(response.item)
         setProducts(response.items)
+        setCatalogPage(1)
+        setCatalogTotalPages(response.pagination?.totalPages ?? 1)
+        setCatalogTotalItems(response.pagination?.totalItems ?? null)
         setCategories(response.filters.categories)
         setErrorMessage(null)
       } catch {
@@ -151,6 +192,43 @@ export function ShopDetailsPage() {
       isMounted = false
     }
   }, [filters, shopId])
+
+  async function handleLoadMoreProducts() {
+    const generation = catalogGenerationRef.current
+    const nextPage = catalogPage + 1
+    setIsLoadingMore(true)
+    setLoadMoreError(null)
+
+    try {
+      const response = await getShopCatalog(shopId, {
+        search: filters.search || undefined,
+        category: filters.category || undefined,
+        inStockOnly: filters.inStockOnly || undefined,
+        sort: filters.sort,
+        page: nextPage,
+        limit: CATALOG_PAGE_SIZE,
+      })
+
+      if (generation !== catalogGenerationRef.current) {
+        return
+      }
+
+      setProducts((currentProducts) =>
+        appendUniqueBy(currentProducts, response.items, getProductKey),
+      )
+      setCatalogPage(nextPage)
+      setCatalogTotalPages(response.pagination?.totalPages ?? nextPage)
+      setCatalogTotalItems(response.pagination?.totalItems ?? null)
+    } catch {
+      if (generation === catalogGenerationRef.current) {
+        setLoadMoreError('Unable to load more products right now.')
+      }
+    } finally {
+      if (generation === catalogGenerationRef.current) {
+        setIsLoadingMore(false)
+      }
+    }
+  }
 
   function updateFilter<Key extends keyof CatalogFiltersState>(
     key: Key,
@@ -350,7 +428,7 @@ export function ShopDetailsPage() {
                 )
 
                 return (
-                  <StaggerItem key={`${product.id}:${product.variantId}`}>
+                  <StaggerItem key={getProductKey(product)}>
                     <ProductCard
                       onAddToCart={() => handleAddToCart(product)}
                       onAddVariant={(variant) => handleAddVariant(product, variant)}
@@ -383,6 +461,23 @@ export function ShopDetailsPage() {
               })}
             </StaggerGrid>
           )}
+
+          {!isLoading && !errorMessage && products.length > 0 && catalogTotalItems != null ? (
+            catalogPage < catalogTotalPages ? (
+              <LoadMoreButton
+                errorMessage={loadMoreError}
+                isLoading={isLoadingMore}
+                label="Load more products"
+                onClick={() => void handleLoadMoreProducts()}
+                shownCount={products.length}
+                totalCount={catalogTotalItems}
+              />
+            ) : (
+              <p className="text-center text-xs font-bold uppercase tracking-wider text-ink-400">
+                Showing {products.length} of {catalogTotalItems}
+              </p>
+            )
+          ) : null}
 
           {!isLoading && !errorMessage && products.length === 0 ? (
             <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-ink-100 bg-white/50 p-12 text-center">

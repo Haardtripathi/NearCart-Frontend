@@ -4,8 +4,10 @@ import { getAdminUsers } from '@/api/admin'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
+import { LoadMoreButton } from '@/components/shared/LoadMoreButton'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { StaggerTableBody, StaggerTableRow } from '@/components/shared/StaggerTable'
+import { useLoadMore } from '@/hooks/useLoadMore'
 import type { AdminUserRow } from '@/types/admin'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatDateTime } from '@/utils/formatDateTime'
@@ -14,6 +16,13 @@ export function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUserRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  // Paged server-side (50 per page) — this table used to stop silently at the first page.
+  const moreUsers = useLoadMore<AdminUserRow>({
+    fetchPage: (page) => getAdminUsers({ page }),
+    setItems: setUsers,
+    errorMessage: 'Unable to load more users right now.',
+  })
+  const { resetFromFirstPage } = moreUsers
 
   useEffect(() => {
     let isMounted = true
@@ -27,6 +36,7 @@ export function AdminUsersPage() {
         }
 
         setUsers(response.items)
+        resetFromFirstPage(response)
       } catch (error) {
         if (!isMounted) {
           return
@@ -47,7 +57,7 @@ export function AdminUsersPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [resetFromFirstPage])
 
   if (isLoading) {
     return <LoadingScreen message="Loading platform users..." />
@@ -112,6 +122,16 @@ export function AdminUsersPage() {
                 ))}
               </StaggerTableBody>
             </table>
+            {moreUsers.hasMore ? (
+              <LoadMoreButton
+                errorMessage={moreUsers.loadMoreError}
+                isLoading={moreUsers.isLoadingMore}
+                label="Load more users"
+                onClick={() => void moreUsers.loadMore()}
+                shownCount={users.length}
+                totalCount={moreUsers.totalCount}
+              />
+            ) : null}
           </div>
         ) : errorMessage ? null : (
           <div className="rounded-[1.35rem] bg-slate-50 px-4 py-5 text-sm text-slate-600">

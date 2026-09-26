@@ -29,7 +29,7 @@ export function CustomerDashboardPage() {
       try {
         const [profileResponse, ordersResponse] = await Promise.all([
           getCustomerProfile(),
-          getCustomerOrders(),
+          getCustomerOrders({ limit: 5 }),
         ])
 
         if (!isMounted) {

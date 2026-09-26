@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react'
 import { getAdminOrders } from '@/api/admin'
 import { PageHeader } from '@/components/PageHeader'
 import { DashboardCard } from '@/components/dashboard/DashboardCard'
+import { LoadMoreButton } from '@/components/shared/LoadMoreButton'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { StaggerTableBody, StaggerTableRow } from '@/components/shared/StaggerTable'
+import { useLoadMore } from '@/hooks/useLoadMore'
 import type { AdminOrderRow } from '@/types/admin'
 import { getApiErrorMessage } from '@/utils/api'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -14,6 +16,13 @@ export function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrderRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  // Paged server-side (50 per page) — this table used to stop silently at the first page.
+  const moreOrders = useLoadMore<AdminOrderRow>({
+    fetchPage: (page) => getAdminOrders({ page }),
+    setItems: setOrders,
+    errorMessage: 'Unable to load more orders right now.',
+  })
+  const { resetFromFirstPage } = moreOrders
 
   useEffect(() => {
     let isMounted = true
@@ -27,6 +36,7 @@ export function AdminOrdersPage() {
         }
 
         setOrders(response.items)
+        resetFromFirstPage(response)
       } catch (error) {
         if (!isMounted) {
           return
@@ -47,7 +57,7 @@ export function AdminOrdersPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [resetFromFirstPage])
 
   if (isLoading) {
     return <LoadingScreen message="Loading platform orders..." />
@@ -105,6 +115,16 @@ export function AdminOrdersPage() {
                 ))}
               </StaggerTableBody>
             </table>
+            {moreOrders.hasMore ? (
+              <LoadMoreButton
+                errorMessage={moreOrders.loadMoreError}
+                isLoading={moreOrders.isLoadingMore}
+                label="Load more orders"
+                onClick={() => void moreOrders.loadMore()}
+                shownCount={orders.length}
+                totalCount={moreOrders.totalCount}
+              />
+            ) : null}
           </div>
         ) : errorMessage ? null : (
           <div className="rounded-[1.35rem] bg-slate-50 px-4 py-5 text-sm text-slate-600">

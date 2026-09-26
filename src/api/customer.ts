@@ -60,8 +60,11 @@ export async function deleteCustomerAddress(addressId: string) {
   return data
 }
 
-export async function getCustomerOrders() {
-  const { data } = await httpClient.get<CustomerOrdersResponse>('/customer/orders')
+// Paged — the backend returns 25 per page by default; follow `meta.hasMore` for the rest.
+export async function getCustomerOrders(query: { page?: number; limit?: number } = {}) {
+  const { data } = await httpClient.get<CustomerOrdersResponse>('/customer/orders', {
+    params: query,
+  })
 
   return data
 }

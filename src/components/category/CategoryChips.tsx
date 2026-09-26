@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { getShopCategories } from '@/api/shops'
+import { useDeliveryCoordinates } from '@/hooks/useDeliveryCoordinates'
 import type { PublicShopCategorySummary } from '@/types/api'
 import { getCategoryIcon } from '@/utils/categoryIcons'
 
@@ -20,13 +21,18 @@ export function CategoryChips({ activeCategory, onSelect, className = '' }: Cate
   const navigate = useNavigate()
   const [categories, setCategories] = useState<PublicShopCategorySummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  // Only shop types that have a shop delivering to the customer, so a chip never leads to an
+  // empty "No shops found" list.
+  const { coordinates } = useDeliveryCoordinates()
+  const latitude = coordinates?.latitude
+  const longitude = coordinates?.longitude
 
   useEffect(() => {
     let isMounted = true
 
     async function loadCategories() {
       try {
-        const response = await getShopCategories()
+        const response = await getShopCategories({ lat: latitude, lng: longitude })
 
         if (isMounted) {
           setCategories(response.items)
@@ -47,7 +53,7 @@ export function CategoryChips({ activeCategory, onSelect, className = '' }: Cate
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [latitude, longitude])
 
   function handleSelect(category: string) {
     if (onSelect) {

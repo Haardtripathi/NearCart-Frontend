@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { getTrendingProducts } from '@/api/shops'
 import { CrossShopProductCard } from '@/components/shop/CrossShopProductCard'
+import { useDeliveryCoordinates } from '@/hooks/useDeliveryCoordinates'
 import type { PublicSearchResultItem } from '@/types/api'
 
 interface TrendingRailProps {
@@ -25,6 +26,10 @@ export function TrendingRail({
   const [items, setItems] = useState<PublicSearchResultItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
+  // Only products from shops that deliver to the customer — same rule as "Shops near you".
+  const { coordinates } = useDeliveryCoordinates()
+  const latitude = coordinates?.latitude
+  const longitude = coordinates?.longitude
 
   useEffect(() => {
     let isMounted = true
@@ -33,7 +38,13 @@ export function TrendingRail({
       setIsLoading(true)
 
       try {
-        const response = await getTrendingProducts({ category, city, limit })
+        const response = await getTrendingProducts({
+          category,
+          city,
+          limit,
+          lat: latitude,
+          lng: longitude,
+        })
 
         if (isMounted) {
           setItems(response.items)
@@ -55,7 +66,7 @@ export function TrendingRail({
     return () => {
       isMounted = false
     }
-  }, [category, city, limit])
+  }, [category, city, limit, latitude, longitude])
 
   if (!isLoading && !hasError && items.length === 0) {
     return null

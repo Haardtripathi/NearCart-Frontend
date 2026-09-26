@@ -30,13 +30,19 @@ export interface ShopGeoQuery {
   search?: string
   category?: string
   city?: string
+  page?: number
+  limit?: number
 }
 
+// `lat`/`lng` scope search/trending/categories to shops that can deliver to the customer — the
+// same service-radius rule as `GET /public/shops`. Omit when the delivery location is unknown.
 export interface CrossShopQuery {
   category?: string
   city?: string
   limit?: number
   lang?: string
+  lat?: number
+  lng?: number
 }
 
 export async function getShops(query: ShopGeoQuery = {}) {
@@ -99,9 +105,10 @@ export async function getShopReviews(
   return data
 }
 
-export async function getShopCategories() {
+export async function getShopCategories(query: { lat?: number; lng?: number } = {}) {
   const { data } = await httpClient.get<PublicShopCategoriesResponse>(
     '/public/categories',
+    { params: query },
   )
 
   return data
