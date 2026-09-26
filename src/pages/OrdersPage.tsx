@@ -79,7 +79,7 @@ export function OrdersPage() {
     countField: 'matched',
     errorMessage: 'Unable to load older orders right now.',
   })
-  const { resetFromFirstPage } = olderOrders
+  const { resetFromFirstPage, refreshMetaFromFirstPage } = olderOrders
   const isMountedRef = useRef(true)
   // Read fresh inside the interval callback below without making the interval-setup effect
   // depend on (and re-run for) every `orders` update — same "ref, not a dependency" pattern used
@@ -124,6 +124,8 @@ export function OrdersPage() {
           // A poll only refreshes the newest page — keep any older pages the customer already
           // pulled in with "Load older orders" below it instead of collapsing back to page 1.
           setOrders((currentOrders) => appendUniqueById(response.items, currentOrders))
+          // Keeps "Showing X of N" (and whether page 2 exists) current as new orders arrive.
+          refreshMetaFromFirstPage(response)
         } else {
           setOrders(response.items)
           resetFromFirstPage(response)
@@ -172,7 +174,7 @@ export function OrdersPage() {
     return () => {
       window.clearInterval(intervalId)
     }
-  }, [user, resetFromFirstPage])
+  }, [user, resetFromFirstPage, refreshMetaFromFirstPage])
 
   return (
     <div className="space-y-12">

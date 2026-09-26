@@ -28,7 +28,7 @@ export function SearchPage() {
   const isValidQuery = query.length >= MIN_QUERY_LENGTH
   const { city } = useCustomerCity()
   // Search only shops that deliver to the customer's location — same rule as the shop list.
-  const { coordinates } = useDeliveryCoordinates()
+  const { coordinates, isLocating } = useDeliveryCoordinates()
   const latitude = coordinates?.latitude
   const longitude = coordinates?.longitude
 
@@ -46,6 +46,12 @@ export function SearchPage() {
       setRecentSearches(getRecentSearches())
       // Stale items are harmless here — the results grid below only renders while
       // `isValidQuery` is true, so there is nothing to synchronously reset.
+      return
+    }
+
+    // Wait for the device location to settle, so a GPS-only customer gets one scoped request
+    // instead of an unscoped one followed by a scoped one seconds later.
+    if (isLocating) {
       return
     }
 
@@ -85,7 +91,7 @@ export function SearchPage() {
     return () => {
       isMounted = false
     }
-  }, [query, isValidQuery, city, latitude, longitude])
+  }, [query, isValidQuery, city, isLocating, latitude, longitude])
 
   // The backend shows at most a few matches per shop, so a shop can match far more than it
   // contributes here. `meta.perShopTotals` says how many each shop matched in total; the rest are
@@ -106,7 +112,7 @@ export function SearchPage() {
     return [...shownByShop.entries()]
       .map(([shopId, { item, count }]) => ({
         shopId,
-        shopPath: `/shops/${item.shop.slug || shopId}?search=${encodeURIComponent(query)}`,
+        shopPath: `/shops/${item.shop.slug || shopId}?search=${encodeURIComponent(query)}&inStock=1`,
         shopName: item.shop.name,
         hiddenCount: (perShopTotals[shopId] ?? 0) - count,
       }))
@@ -178,7 +184,7 @@ export function SearchPage() {
       ) : null}
 
       {isValidQuery ? (
-        isLoading ? (
+        isLoading || isLocating ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 8 }, (_, index) => (
               <div

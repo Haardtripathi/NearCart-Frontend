@@ -5,6 +5,18 @@ import { useAddressStore } from '@/store/addressStore'
 
 interface UseDeliveryCoordinatesResult {
   coordinates: GeolocationCoordinates | null
+  /**
+   * True while a device-location lookup is still in flight (up to ~9 s) and no chosen address
+   * has coordinates. Location-scoped fetches should wait for it to settle, otherwise they fire
+   * once unscoped and again scoped a few seconds later.
+   */
+  isLocating: boolean
+}
+
+interface UseDeliveryCoordinatesOptions {
+  // False defers asking the browser for the device location (and its permission prompt) until
+  // the caller actually needs it — e.g. the header search bar, mounted on every page.
+  enableDeviceLocation?: boolean
 }
 
 /**
@@ -22,10 +34,16 @@ interface UseDeliveryCoordinatesResult {
  * physically elsewhere, e.g. picking a "Work" address in another city while still at home) silently
  * filtered out every shop in the newly-selected area — city matched, distance didn't, shops vanish.
  */
-export function useDeliveryCoordinates(): UseDeliveryCoordinatesResult {
+export function useDeliveryCoordinates({
+  enableDeviceLocation = true,
+}: UseDeliveryCoordinatesOptions = {}): UseDeliveryCoordinatesResult {
   const selectedLatitude = useAddressStore((state) => state.selectedAddress?.latitude ?? null)
   const selectedLongitude = useAddressStore((state) => state.selectedAddress?.longitude ?? null)
-  const { coordinates: deviceCoordinates } = useGeolocation()
+  const hasSelectedCoordinates = selectedLatitude != null && selectedLongitude != null
+  // A chosen address with coordinates always wins, so don't ask the browser at all then.
+  const { coordinates: deviceCoordinates, isLocating: isLocatingDevice } = useGeolocation(
+    enableDeviceLocation && !hasSelectedCoordinates,
+  )
 
   // Memoized on the primitive lat/lng values (not object identity) — callers commonly put
   // `coordinates` straight into a data-fetching effect's dependency array (see ShopsPage,
@@ -36,9 +54,12 @@ export function useDeliveryCoordinates(): UseDeliveryCoordinatesResult {
   // `useMemo` was added.
   return useMemo(() => {
     if (selectedLatitude != null && selectedLongitude != null) {
-      return { coordinates: { latitude: selectedLatitude, longitude: selectedLongitude } }
+      return {
+        coordinates: { latitude: selectedLatitude, longitude: selectedLongitude },
+        isLocating: false,
+      }
     }
 
-    return { coordinates: deviceCoordinates }
-  }, [selectedLatitude, selectedLongitude, deviceCoordinates])
+    return { coordinates: deviceCoordinates, isLocating: isLocatingDevice }
+  }, [selectedLatitude, selectedLongitude, deviceCoordinates, isLocatingDevice])
 }

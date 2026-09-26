@@ -78,10 +78,12 @@ function createCartItem(
 
 export function ShopDetailsPage() {
   const { shopId = '' } = useParams()
-  // `?search=` prefills the in-shop search — cross-shop search links here with "+N more at
-  // <shop>" when a shop matched more products than the search page could show.
+  // `?search=` prefills the in-shop search and `?inStock=1` the in-stock toggle — cross-shop
+  // search links here with both ("+N more at <shop>") when a shop matched more products than the
+  // search page could show, and its counts are in-stock matches.
   const [searchParams] = useSearchParams()
   const urlSearch = searchParams.get('search') ?? ''
+  const urlInStockOnly = searchParams.get('inStock') === '1'
   const [shop, setShop] = useState<PublicShopDetail | null>(null)
   const [products, setProducts] = useState<PublicCatalogProduct[]>([])
   const [categories, setCategories] = useState<
@@ -90,6 +92,7 @@ export function ShopDetailsPage() {
   const [filters, setFilters] = useState<CatalogFiltersState>(() => ({
     ...initialFilters,
     search: urlSearch,
+    inStockOnly: urlInStockOnly,
   }))
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -133,15 +136,15 @@ export function ShopDetailsPage() {
       currentFilters.search === urlSearch &&
       currentFilters.category === initialFilters.category &&
       currentFilters.brand === initialFilters.brand &&
-      currentFilters.inStockOnly === initialFilters.inStockOnly &&
+      currentFilters.inStockOnly === urlInStockOnly &&
       currentFilters.sort === initialFilters.sort
         ? currentFilters
-        : { ...initialFilters, search: urlSearch },
+        : { ...initialFilters, search: urlSearch, inStockOnly: urlInStockOnly },
     )
     setShop(null)
     setProducts([])
     setCategories([])
-  }, [shopId, urlSearch])
+  }, [shopId, urlSearch, urlInStockOnly])
 
   useEffect(() => {
     let isMounted = true

@@ -39,6 +39,8 @@ export function useLoadMore<T>({
   getKey = getRowId,
 }: UseLoadMoreOptions<T>) {
   const [loadedPage, setLoadedPage] = useState(1)
+  const loadedPageRef = useRef(loadedPage)
+  loadedPageRef.current = loadedPage
   const [hasMore, setHasMore] = useState(false)
   const [totalCount, setTotalCount] = useState<number | null>(null)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -46,6 +48,10 @@ export function useLoadMore<T>({
   const fetchPageRef = useRef(fetchPage)
   fetchPageRef.current = fetchPage
   const isMountedRef = useRef(true)
+  // Bumped by every `resetFromFirstPage`. A "Load more" that was in flight when the list was
+  // reloaded (filters changed, an approval was decided) belongs to the old list: appending it
+  // would mix in the old filter's rows and advance `loadedPage`, skipping the new list's page 2.
+  const generationRef = useRef(0)
 
   useEffect(() => {
     isMountedRef.current = true
@@ -65,14 +71,34 @@ export function useLoadMore<T>({
 
   const resetFromFirstPage = useCallback(
     (response: PagedResponse<T>) => {
+      generationRef.current += 1
       setLoadedPage(1)
+      setIsLoadingMore(false)
       setLoadMoreError(null)
       readMeta(response)
     },
     [readMeta],
   )
 
+  // Refreshes `hasMore`/the total from a re-fetched first page (e.g. a background poll) without
+  // discarding the pages already loaded.
+  const refreshMetaFromFirstPage = useCallback(
+    (response: PagedResponse<T>) => {
+      const total = response.meta[countField]
+      const limit = response.meta.limit
+
+      if (loadedPageRef.current === 1) {
+        setHasMore(response.meta.hasMore ?? false)
+      } else if (total != null && limit != null) {
+        setHasMore(loadedPageRef.current * limit < total)
+      }
+      setTotalCount(total ?? null)
+    },
+    [countField],
+  )
+
   async function loadMore() {
+    const generation = generationRef.current
     const nextPage = loadedPage + 1
     setIsLoadingMore(true)
     setLoadMoreError(null)
@@ -80,7 +106,7 @@ export function useLoadMore<T>({
     try {
       const response = await fetchPageRef.current(nextPage)
 
-      if (!isMountedRef.current) {
+      if (!isMountedRef.current || generation !== generationRef.current) {
         return
       }
 
@@ -88,15 +114,23 @@ export function useLoadMore<T>({
       setLoadedPage(nextPage)
       readMeta(response)
     } catch (error) {
-      if (isMountedRef.current) {
+      if (isMountedRef.current && generation === generationRef.current) {
         setLoadMoreError(getApiErrorMessage(error, errorMessage))
       }
     } finally {
-      if (isMountedRef.current) {
+      if (isMountedRef.current && generation === generationRef.current) {
         setIsLoadingMore(false)
       }
     }
   }
 
-  return { hasMore, totalCount, isLoadingMore, loadMoreError, loadMore, resetFromFirstPage }
+  return {
+    hasMore,
+    totalCount,
+    isLoadingMore,
+    loadMoreError,
+    loadMore,
+    resetFromFirstPage,
+    refreshMetaFromFirstPage,
+  }
 }

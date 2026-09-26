@@ -20,6 +20,10 @@ export function HeaderSearchBar() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
+  // Latches on the first open. This bar is in the layout of every page (login, cart, checkout...),
+  // so it must not ask for the device location — and trigger the browser prompt — until the
+  // customer actually starts searching.
+  const [hasOpened, setHasOpened] = useState(false)
   const [searchResults, setSearchResults] = useState<PublicSearchResultItem[]>([])
   const [trendingResults, setTrendingResults] = useState<PublicSearchResultItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -34,13 +38,15 @@ export function HeaderSearchBar() {
   const isSearchActive = debouncedQuery.length >= MIN_QUERY_LENGTH
   // Suggestions only from shops that deliver to the customer's location (same rule as the shop
   // list); without it the dropdown offered products from shops that can't deliver here.
-  const { coordinates } = useDeliveryCoordinates()
+  const { coordinates, isLocating } = useDeliveryCoordinates({ enableDeviceLocation: hasOpened })
   const latitude = coordinates?.latitude
   const longitude = coordinates?.longitude
   const coordinatesKey = latitude != null && longitude != null ? `${latitude},${longitude}` : ''
 
   useEffect(() => {
-    if (!isSearchActive) {
+    // Wait for the location to settle so a GPS-only customer gets one scoped request, not an
+    // unscoped one followed by a scoped one seconds later.
+    if (!isSearchActive || isLocating) {
       // Stale results are harmless here — `displayItems` below only reads `searchResults`
       // while `isSearchActive` is true, so there is nothing to synchronously reset.
       return
@@ -77,10 +83,10 @@ export function HeaderSearchBar() {
     return () => {
       isMounted = false
     }
-  }, [debouncedQuery, isSearchActive, latitude, longitude])
+  }, [debouncedQuery, isSearchActive, isLocating, latitude, longitude])
 
   useEffect(() => {
-    if (!isOpen || isSearchActive || loadedTrendingKey === coordinatesKey) {
+    if (!isOpen || isSearchActive || isLocating || loadedTrendingKey === coordinatesKey) {
       return
     }
 
@@ -109,7 +115,7 @@ export function HeaderSearchBar() {
     return () => {
       isMounted = false
     }
-  }, [isOpen, isSearchActive, loadedTrendingKey, coordinatesKey, latitude, longitude])
+  }, [isOpen, isSearchActive, isLocating, loadedTrendingKey, coordinatesKey, latitude, longitude])
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
@@ -166,7 +172,7 @@ export function HeaderSearchBar() {
 
   const displayItems = isSearchActive ? searchResults : trendingResults
   const sectionLabel = isSearchActive ? 'Products' : 'Popular right now'
-  const showLoading = isSearchActive && isLoading
+  const showLoading = isSearchActive && (isLoading || isLocating)
 
   return (
     <div className="relative w-full max-w-md" ref={containerRef}>
@@ -180,8 +186,12 @@ export function HeaderSearchBar() {
             onChange={(event) => {
               setQuery(event.target.value)
               setIsOpen(true)
+              setHasOpened(true)
             }}
-            onFocus={() => setIsOpen(true)}
+            onFocus={() => {
+              setIsOpen(true)
+              setHasOpened(true)
+            }}
             placeholder="Search products across shops..."
             type="search"
             value={query}

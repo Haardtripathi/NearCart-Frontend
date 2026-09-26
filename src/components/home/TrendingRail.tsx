@@ -27,11 +27,17 @@ export function TrendingRail({
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   // Only products from shops that deliver to the customer — same rule as "Shops near you".
-  const { coordinates } = useDeliveryCoordinates()
+  const { coordinates, isLocating } = useDeliveryCoordinates()
   const latitude = coordinates?.latitude
   const longitude = coordinates?.longitude
 
   useEffect(() => {
+    // Wait for the device location to settle, so a GPS-only customer gets one scoped request
+    // instead of an unscoped one followed by a scoped one seconds later.
+    if (isLocating) {
+      return
+    }
+
     let isMounted = true
 
     async function loadTrending() {
@@ -66,7 +72,7 @@ export function TrendingRail({
     return () => {
       isMounted = false
     }
-  }, [category, city, limit, latitude, longitude])
+  }, [category, city, limit, isLocating, latitude, longitude])
 
   if (!isLoading && !hasError && items.length === 0) {
     return null

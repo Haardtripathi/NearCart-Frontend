@@ -26,7 +26,7 @@ interface UseGeolocationResult {
  * the unfiltered shop list) exactly like before this hook existed, never block or error the
  * page on a missing/declined location.
  */
-export function useGeolocation(): UseGeolocationResult {
+export function useGeolocation(enabled = true): UseGeolocationResult {
   const [coordinates, setCoordinates] = useState<GeolocationCoordinates | null>(null)
   // Both of these start from what is already knowable at first render rather than being pushed in
   // by a synchronous setState inside the effect below. Whether the browser exposes geolocation at
@@ -35,13 +35,17 @@ export function useGeolocation(): UseGeolocationResult {
   // earlier, and avoids the extra mount-time render pass that setting them in the effect body
   // caused (flagged by react-hooks/set-state-in-effect).
   const isSupported = typeof navigator !== 'undefined' && Boolean(navigator.geolocation)
-  const [isLocating, setIsLocating] = useState(isSupported)
+  // `isLocating` is derived (below) rather than stored, so it is already true on the very render
+  // where `enabled` flips on — no synchronous setState in the effect to get there.
+  const [hasSettled, setHasSettled] = useState(false)
   const [isUnavailable, setIsUnavailable] = useState(!isSupported)
 
   useEffect(() => {
     let isCancelled = false
 
-    if (!isSupported) {
+    // `enabled: false` lets a caller that doesn't need the device fix yet (or already has a
+    // chosen address) avoid triggering the browser's permission prompt at all.
+    if (!isSupported || !enabled) {
       return
     }
 
@@ -57,7 +61,7 @@ export function useGeolocation(): UseGeolocationResult {
 
       settled = true
       setIsUnavailable(true)
-      setIsLocating(false)
+      setHasSettled(true)
     }, 9000)
 
     navigator.geolocation.getCurrentPosition(
@@ -73,7 +77,7 @@ export function useGeolocation(): UseGeolocationResult {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         })
-        setIsLocating(false)
+        setHasSettled(true)
       },
       () => {
         // Permission denied, position unavailable, or timed out — all treated the same: no
@@ -85,7 +89,7 @@ export function useGeolocation(): UseGeolocationResult {
         settled = true
         window.clearTimeout(watchdog)
         setIsUnavailable(true)
-        setIsLocating(false)
+        setHasSettled(true)
       },
       { enableHighAccuracy: false, maximumAge: 5 * 60 * 1000, timeout: 8000 },
     )
@@ -94,9 +98,13 @@ export function useGeolocation(): UseGeolocationResult {
       isCancelled = true
       window.clearTimeout(watchdog)
     }
-    // `isSupported` is a static fact about the environment, so this still runs exactly once on
-    // mount — it's listed only to satisfy exhaustive-deps honestly rather than suppress it.
-  }, [isSupported])
+    // `isSupported` is a static fact about the environment, so this runs once per time `enabled`
+    // turns on.
+  }, [isSupported, enabled])
 
-  return { coordinates, isLocating, isUnavailable }
+  return {
+    coordinates,
+    isLocating: enabled && isSupported && !hasSettled,
+    isUnavailable,
+  }
 }

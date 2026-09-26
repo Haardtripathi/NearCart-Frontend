@@ -23,11 +23,17 @@ export function CategoryChips({ activeCategory, onSelect, className = '' }: Cate
   const [isLoading, setIsLoading] = useState(true)
   // Only shop types that have a shop delivering to the customer, so a chip never leads to an
   // empty "No shops found" list.
-  const { coordinates } = useDeliveryCoordinates()
+  const { coordinates, isLocating } = useDeliveryCoordinates()
   const latitude = coordinates?.latitude
   const longitude = coordinates?.longitude
 
   useEffect(() => {
+    // Wait for the device location to settle, so a GPS-only customer gets one scoped request
+    // instead of an unscoped one followed by a scoped one seconds later.
+    if (isLocating) {
+      return
+    }
+
     let isMounted = true
 
     async function loadCategories() {
@@ -53,7 +59,7 @@ export function CategoryChips({ activeCategory, onSelect, className = '' }: Cate
     return () => {
       isMounted = false
     }
-  }, [latitude, longitude])
+  }, [isLocating, latitude, longitude])
 
   function handleSelect(category: string) {
     if (onSelect) {
