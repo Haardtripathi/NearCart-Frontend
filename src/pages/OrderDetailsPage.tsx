@@ -438,6 +438,9 @@ export function OrderDetailsPage() {
                       </span>
                     </div>
                   ) : null}
+                  {/* COUPONS DISABLED 2026-09-26 (owner): deliberately left live — it only renders when a
+                      PAST order really carried a coupon discount (the server no longer applies any),
+                      so old bills still add up. Nothing to uncomment here. */}
                   {(() => {
                     // `order.discountAmount` is a combined coupon+loyalty figure (see
                     // backend `orders.service.ts`), so the coupon-only portion shown here has

@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { Country, State, City } from 'country-state-city'
 
-import { getCustomerAddresses, getCustomerLoyalty, getCustomerProfile, validateCoupon } from '@/api/customer'
+import { getCustomerAddresses, getCustomerLoyalty, getCustomerProfile /* , validateCoupon — COUPONS DISABLED 2026-09-26 (owner) */ } from '@/api/customer'
 import { createOrder } from '@/api/orders'
 import { validateCart } from '@/api/shops'
 import { AddressMapPicker } from '@/components/location/AddressMapPicker'
@@ -628,6 +628,8 @@ export function CheckoutPage() {
   void handleApplyLoyaltyPoints
   void handleRemoveLoyaltyPoints
 
+  // COUPONS DISABLED 2026-09-26 (owner): coupons are off for now — uncomment to bring back.
+  /*
   async function handleApplyCoupon() {
     const code = couponInput.trim()
 
@@ -669,6 +671,13 @@ export function CheckoutPage() {
     setCouponError(null)
     setFormValues((currentState) => ({ ...currentState, couponCode: '' }))
   }
+  */
+  // Referenced only so the unused-locals check passes while the coupon box is commented out.
+  void couponInput
+  void setCouponInput
+  void isApplyingCoupon
+  void setIsApplyingCoupon
+  void couponError
 
   function updateField<Key extends keyof CheckoutFormValues>(
     field: Key,
@@ -859,7 +868,9 @@ export function CheckoutPage() {
         longitude: formValues.longitude,
         notes: formValues.notes,
         paymentMethod: formValues.paymentMethod,
-        couponCode: formValues.couponCode,
+        // COUPONS DISABLED 2026-09-26 (owner): no coupon is sent (the server ignores one anyway) — uncomment to bring back.
+        // couponCode: formValues.couponCode,
+        couponCode: '',
         useLoyaltyPoints: formValues.useLoyaltyPoints,
         items: validationResponse.item.appliedItems.map((item) => ({
           productId: item.productId,
@@ -1359,6 +1370,7 @@ export function CheckoutPage() {
                       </span>
                     </div>
                   ) : null}
+                  {/* COUPONS DISABLED 2026-09-26 (owner): coupons are off for now — uncomment to bring back.
                   {couponPreview ? (
                     <div className="flex justify-between text-sm">
                       <span className="text-emerald-600">
@@ -1375,7 +1387,7 @@ export function CheckoutPage() {
                         </motion.span>
                       </span>
                     </div>
-                  ) : null}
+                  ) : null} */}
                   {/* LOYALTY DISABLED 2026-09-26 (owner): rewards are off for now — uncomment to bring back.
                   {loyaltyDiscountAmount > 0 ? (
                     <div className="flex justify-between text-sm">
@@ -1396,6 +1408,7 @@ export function CheckoutPage() {
                   ) : null} */}
                 </div>
 
+                {/* COUPONS DISABLED 2026-09-26 (owner): coupons are off for now — uncomment to bring back.
                 <div className="space-y-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-ink-400">
                     Coupon code
@@ -1446,7 +1459,7 @@ export function CheckoutPage() {
                   {couponError ? (
                     <p className="text-xs font-medium text-rose-500">{couponError}</p>
                   ) : null}
-                </div>
+                </div> */}
 
                 {/* LOYALTY DISABLED 2026-09-26 (owner): rewards are off for now — uncomment to bring back.
                 {loyaltyBalance > 0 ? (
@@ -1532,12 +1545,13 @@ export function CheckoutPage() {
                       the order.
                     </p>
                   )}
+                  {/* COUPONS DISABLED 2026-09-26 (owner): coupons are off for now — uncomment to bring back.
                   {couponPreview && (
                     <p className="mt-3 text-[10px] font-medium opacity-60 leading-relaxed">
                       Coupon savings shown here are an estimate — the exact discount is confirmed
                       when your order is placed.
                     </p>
-                  )}
+                  )} */}
                 </div>
 
                 <button
