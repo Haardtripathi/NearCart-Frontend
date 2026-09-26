@@ -12,6 +12,7 @@ import { getApiErrorMessage } from '@/utils/api'
 
 const DEFAULT_CENTER = { lat: 20.5937, lng: 78.9629 } // India, used until a location is picked
 const DEFAULT_ZOOM = 5
+const DEVICE_ZOOM = 14
 const PICKED_ZOOM = 16
 const SEARCH_DEBOUNCE_MS = 350
 const mapContainerStyle = { width: '100%', height: '280px', borderRadius: '1.35rem' }
@@ -82,10 +83,32 @@ export const AddressMapPicker = memo(function AddressMapPicker({
   const sessionTokenRef = useRef<string | null>(null)
 
   const hasPin = latitude !== null && longitude !== null
+  // Where the browser says the user is — only used to decide where an empty picker opens, never
+  // written as the address pin (that still needs an explicit search/tap/drag/"use my location").
+  const [deviceCenter, setDeviceCenter] = useState<{ lat: number; lng: number } | null>(null)
   const center = useMemo(
-    () => (hasPin ? { lat: latitude as number, lng: longitude as number } : DEFAULT_CENTER),
-    [hasPin, latitude, longitude],
+    () => (hasPin ? { lat: latitude as number, lng: longitude as number } : deviceCenter ?? DEFAULT_CENTER),
+    [hasPin, latitude, longitude, deviceCenter],
   )
+
+  useEffect(() => {
+    if (hasPin || typeof navigator === 'undefined' || !navigator.geolocation) return
+    let cancelled = false
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (!cancelled) setDeviceCenter({ lat: position.coords.latitude, lng: position.coords.longitude })
+      },
+      () => {
+        // Denied/unavailable: stay on the country-wide default.
+      },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 5 * 60_000 },
+    )
+    return () => {
+      cancelled = true
+    }
+    // Mount-only: where the picker first opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -430,7 +453,7 @@ export const AddressMapPicker = memo(function AddressMapPicker({
               mapContainerStyle={mapContainerStyle}
               onClick={handleMapClick}
               options={mapOptions}
-              zoom={hasPin ? PICKED_ZOOM : DEFAULT_ZOOM}
+              zoom={hasPin ? PICKED_ZOOM : deviceCenter ? DEVICE_ZOOM : DEFAULT_ZOOM}
             >
               {hasPin ? (
                 <Marker
