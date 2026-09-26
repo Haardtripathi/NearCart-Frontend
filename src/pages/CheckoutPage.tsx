@@ -289,9 +289,13 @@ export function CheckoutPage() {
   // customer is typing (kept separate from `formValues.useLoyaltyPoints`, same "typing box vs.
   // confirmed-applied value" split the coupon fields above already use) so a stray keystroke
   // can't silently change what gets submitted until "Apply" is actually pressed.
-  const [loyaltyBalance, setLoyaltyBalance] = useState(0)
+  // LOYALTY DISABLED 2026-09-26 (owner): the setter is unused while rewards are off.
+  const [loyaltyBalance] = useState(0)
   const [loyaltyInput, setLoyaltyInput] = useState('')
   const [loyaltyError, setLoyaltyError] = useState<string | null>(null)
+  // LOYALTY DISABLED 2026-09-26 (owner): kept (not deleted) so rewards can be switched back on;
+  // referenced here only so the unused-locals check passes while the points box is commented out.
+  void loyaltyError
 
   const hasItems = items.length > 0
   const subtotal = getCartSubtotal()
@@ -375,7 +379,9 @@ export function CheckoutPage() {
           return
         }
 
-        setLoyaltyBalance(loyaltyResponse.item.balance)
+        // LOYALTY DISABLED 2026-09-26 (owner): balance kept at 0 so the points box never shows.
+        // setLoyaltyBalance(loyaltyResponse.item.balance)
+        void loyaltyResponse
 
         // Which address this checkout defaults to, most specific first:
         //  1. the one the header location bar is already set to, when that's a SAVED address —
@@ -618,6 +624,9 @@ export function CheckoutPage() {
     setLoyaltyError(null)
     setFormValues((currentState) => ({ ...currentState, useLoyaltyPoints: 0 }))
   }
+  // LOYALTY DISABLED 2026-09-26 (owner): see `void loyaltyError` above.
+  void handleApplyLoyaltyPoints
+  void handleRemoveLoyaltyPoints
 
   async function handleApplyCoupon() {
     const code = couponInput.trim()
@@ -1367,6 +1376,7 @@ export function CheckoutPage() {
                       </span>
                     </div>
                   ) : null}
+                  {/* LOYALTY DISABLED 2026-09-26 (owner): rewards are off for now — uncomment to bring back.
                   {loyaltyDiscountAmount > 0 ? (
                     <div className="flex justify-between text-sm">
                       <span className="text-amber-600">
@@ -1383,7 +1393,7 @@ export function CheckoutPage() {
                         </motion.span>
                       </span>
                     </div>
-                  ) : null}
+                  ) : null} */}
                 </div>
 
                 <div className="space-y-2">
@@ -1438,6 +1448,7 @@ export function CheckoutPage() {
                   ) : null}
                 </div>
 
+                {/* LOYALTY DISABLED 2026-09-26 (owner): rewards are off for now — uncomment to bring back.
                 {loyaltyBalance > 0 ? (
                   <div className="space-y-2">
                     <span className="text-xs font-bold uppercase tracking-wider text-ink-400">
@@ -1499,7 +1510,7 @@ export function CheckoutPage() {
                       </p>
                     ) : null}
                   </div>
-                ) : null}
+                ) : null} */}
 
                 <div className="rounded-2xl bg-ink-900 p-6 text-white shadow-lg">
                   <div className="flex items-center justify-between">

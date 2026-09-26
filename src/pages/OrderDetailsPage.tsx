@@ -456,6 +456,7 @@ export function OrderDetailsPage() {
                       </div>
                     ) : null
                   })()}
+                  {/* LOYALTY DISABLED 2026-09-26 (owner): rewards are off for now — uncomment to bring back.
                   {order.loyaltyRedemption && order.loyaltyRedemption.discountAmount > 0 ? (
                     <div className="flex justify-between text-xs">
                       <span className="text-amber-600">
@@ -465,7 +466,7 @@ export function OrderDetailsPage() {
                         -{formatCurrency(order.loyaltyRedemption.discountAmount)}
                       </span>
                     </div>
-                  ) : null}
+                  ) : null} */}
                   <div className="flex justify-between text-xs">
                     <span className="text-ink-400">Payment</span>
                     <span className="font-bold text-ink-900 uppercase tracking-tight">{order.paymentMethod.replaceAll('_', ' ')}</span>
@@ -477,12 +478,13 @@ export function OrderDetailsPage() {
                     <span className="text-lg font-bold">{formatCurrency(order.totalAmount)}</span>
                   </div>
                 </div>
+                {/* LOYALTY DISABLED 2026-09-26 (owner): rewards are off for now — uncomment to bring back.
                 {order.loyaltyPointsEarned != null ? (
                   <div className="flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3 text-xs">
                     <span className="font-bold text-amber-700">Loyalty points earned</span>
                     <span className="font-bold text-amber-700">+{order.loyaltyPointsEarned}</span>
                   </div>
-                ) : null}
+                ) : null} */}
                 <Link
                   className="flex h-11 items-center justify-center rounded-xl border border-ink-100 bg-white text-xs font-bold text-ink-700 transition hover:bg-ink-50 active:scale-95"
                   to="/shops"
