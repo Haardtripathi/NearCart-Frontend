@@ -2,6 +2,9 @@ export interface ApiMeta {
   timestamp: string
 }
 
+/** Saver = cheaper, may take ~10 min longer, the driver may carry other customers' orders. */
+export type DeliverySpeed = 'STANDARD' | 'SAVER'
+
 // Paged list endpoints (shops directory, customer orders, admin lists) add these to `meta`.
 // Optional so a response from an older backend still type-checks; treat a missing `hasMore` as
 // "no more pages".
@@ -260,6 +263,14 @@ export interface PublicCartValidationResponse {
       currencyCode: string
       subtotal: number
       deliveryFee: number
+      /** Saver delivery (backend a9e13d3). What the server actually applied — SAVER is quietly
+       *  downgraded to STANDARD where `saverAvailable` is false. Optional for older backends. */
+      deliverySpeed?: DeliverySpeed
+      /** False when shop/customer coordinates are missing or delivery is disabled. */
+      saverAvailable?: boolean
+      /** Whole rupees. Already subtracted from `deliveryFee` when SAVER was applied; otherwise
+       *  what choosing Saver WOULD save. */
+      saverDiscount?: number
       /** 0 / 20 / 40 (rupees) — rain/weather-driven delivery surcharge. */
       weatherSurchargeFee: number
       /** e.g. "Clear" / "Rain" / "Thunderstorm" / "unknown". */

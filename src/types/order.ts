@@ -1,5 +1,5 @@
 import type { CartItem } from '@/types/cart'
-import type { ApiMeta } from '@/types/api'
+import type { ApiMeta, DeliverySpeed } from '@/types/api'
 
 export type PaymentMethod = 'COD' | 'ONLINE' | 'PAY_ON_PICKUP'
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED'
@@ -63,6 +63,11 @@ export interface CreateOrderPayload extends CheckoutFormValues {
       expectedMrp?: number | null
     }
   >
+  /** STANDARD (default) or SAVER. The server ignores SAVER where it isn't available. */
+  deliverySpeed?: DeliverySpeed
+  /** One random id per checkout attempt, the same on every shop's POST /orders of that checkout.
+   *  Must match /^[A-Za-z0-9_-]{8,64}$/. */
+  checkoutGroupId?: string
 }
 
 export interface OrderItem {
@@ -115,6 +120,13 @@ export interface Order {
   notes: string | null
   subtotal: number
   deliveryFee: number
+  /** Saver delivery (backend a9e13d3) — optional for older backends. `saverDiscount` is already
+   *  reflected in `deliveryFee`. */
+  deliverySpeed?: DeliverySpeed
+  saverDiscount?: number
+  checkoutGroupId?: string | null
+  /** True when this order was priced as one shared trip with other shops' orders. */
+  combinedDelivery?: boolean
   /** 0 / 20 / 40 (rupees), snapshotted at order-placement time. */
   weatherSurchargeFee: number
   /** e.g. "Clear" / "Rain" / "Thunderstorm" / "unknown", snapshotted at order-placement time. */

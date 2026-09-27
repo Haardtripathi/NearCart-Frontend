@@ -408,6 +408,21 @@ export function OrderDetailsPage() {
                     "{order.notes}"
                   </div>
                 )}
+                {order.deliverySpeed === 'SAVER' || order.combinedDelivery ? (
+                  <div className="flex flex-wrap gap-2">
+                    {order.deliverySpeed === 'SAVER' ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
+                        🌿 Saver delivery
+                        {(order.saverDiscount ?? 0) > 0 ? ` · saved ${formatCurrency(order.saverDiscount ?? 0)}` : ''}
+                      </span>
+                    ) : null}
+                    {order.combinedDelivery ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-nearkart-50 px-3 py-1 text-[11px] font-bold text-nearkart-700">
+                        🛵 One trip with your other shop&apos;s order
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </article>
 
@@ -423,11 +438,20 @@ export function OrderDetailsPage() {
                     <span className="font-bold text-ink-900">{formatCurrency(order.subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-ink-400">Delivery Fee</span>
+                    <span className="text-ink-400">
+                      {order.deliverySpeed === 'SAVER' ? 'Delivery Fee · Saver' : 'Delivery Fee'}
+                    </span>
                     <span className="font-bold text-ink-900">
                       {order.deliveryFee > 0 ? formatCurrency(order.deliveryFee) : 'Free'}
                     </span>
                   </div>
+                  {/* Informational — `deliveryFee` above is already net of the Saver discount. */}
+                  {order.deliverySpeed === 'SAVER' && (order.saverDiscount ?? 0) > 0 ? (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-emerald-600">Saver saving (included)</span>
+                      <span className="font-bold text-emerald-600">−{formatCurrency(order.saverDiscount ?? 0)}</span>
+                    </div>
+                  ) : null}
                   {order.weatherSurchargeFee > 0 ? (
                     <div className="flex justify-between text-xs">
                       <span className="text-ink-400">

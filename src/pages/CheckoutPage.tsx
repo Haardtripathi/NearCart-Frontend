@@ -13,7 +13,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { useAddressStore } from '@/store/addressStore'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
-import type { ShopTodayStatus, ValidatedCartItem } from '@/types/api'
+import type { DeliverySpeed, PublicCartValidationResponse, ShopTodayStatus, ValidatedCartItem } from '@/types/api'
 import type { Address } from '@/types/customer'
 import type { CheckoutFormValues } from '@/types/order'
 import { getApiErrorMessage } from '@/utils/api'
@@ -236,6 +236,51 @@ function buildCartItemFromValidatedItem(
   }
 }
 
+const GROUP_ID_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+
+/**
+ * One random id per checkout attempt, sent on every shop's `POST /orders` of that checkout so the
+ * server can keep a combined basket on one driver. 24 chars of [A-Za-z0-9] from the browser's
+ * CSPRNG (Math.random fallback) — inside the server's /^[A-Za-z0-9_-]{8,64}$/. Not a secret.
+ */
+function newCheckoutGroupId(): string {
+  const bytes = new Uint8Array(24)
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    crypto.getRandomValues(bytes)
+  } else {
+    for (let index = 0; index < bytes.length; index += 1) bytes[index] = Math.floor(Math.random() * 256)
+  }
+  return Array.from(bytes, (byte) => GROUP_ID_ALPHABET[byte % GROUP_ID_ALPHABET.length]).join('')
+}
+
+type CheckoutCartSummary = {
+  deliveryFee: number
+  weatherSurchargeFee: number
+  weatherCondition: string
+  totalAmount: number
+  todayStatus: ShopTodayStatus
+  todayStatusReason: string | null
+  /** What the server actually applied — SAVER only where `saverAvailable`. */
+  deliverySpeed: DeliverySpeed
+  saverAvailable: boolean
+  /** Already off `deliveryFee` when SAVER was applied; otherwise what Saver WOULD save. */
+  saverDiscount: number
+}
+
+function toCheckoutCartSummary(item: PublicCartValidationResponse['item']): CheckoutCartSummary {
+  return {
+    deliveryFee: item.summary.deliveryFee,
+    weatherSurchargeFee: item.summary.weatherSurchargeFee,
+    weatherCondition: item.summary.weatherCondition,
+    totalAmount: item.summary.totalAmount,
+    todayStatus: item.shop.todayStatus,
+    todayStatusReason: item.shop.todayStatusReason,
+    deliverySpeed: item.summary.deliverySpeed ?? 'STANDARD',
+    saverAvailable: item.summary.saverAvailable ?? false,
+    saverDiscount: item.summary.saverDiscount ?? 0,
+  }
+}
+
 export function CheckoutPage() {
   const navigate = useNavigate()
   const prefersReducedMotion = useReducedMotion()
@@ -265,14 +310,11 @@ export function CheckoutPage() {
   // status, off `item.shop`) — the delivery fee, weather surcharge, and real total are only known
   // server-side (shop delivery config + live weather), so until the first successful validation
   // completes we have nothing to show for them but the item subtotal.
-  const [cartSummary, setCartSummary] = useState<{
-    deliveryFee: number
-    weatherSurchargeFee: number
-    weatherCondition: string
-    totalAmount: number
-    todayStatus: ShopTodayStatus
-    todayStatusReason: string | null
-  } | null>(null)
+  const [cartSummary, setCartSummary] = useState<CheckoutCartSummary | null>(null)
+  // Saver delivery is opt-in; Standard is the default (owner decision 2026-09-26).
+  const [deliverySpeed, setDeliverySpeed] = useState<DeliverySpeed>('STANDARD')
+  // Generated once per checkout attempt (this page's lifetime) and sent with the order.
+  const [checkoutGroupId] = useState(newCheckoutGroupId)
 
   // Coupon UI state, deliberately separate from `formValues.couponCode` (the box the customer is
   // typing into vs. the code that's actually been confirmed-applied and will be sent with the
@@ -458,11 +500,17 @@ export function CheckoutPage() {
     }
   }, [user])
 
+  // Delivery coordinates, as a primitive key. Saver is only quoted once the server knows where the
+  // order is going, so the validation below re-runs when the address resolves (it used to only run
+  // on cart changes, i.e. typically once, before the saved address had even loaded).
+  const coordinatesKey = `${formValues.latitude ?? ''},${formValues.longitude ?? ''}`
+
   useEffect(() => {
     let isMounted = true
 
     async function runInitialCartValidation() {
       const currentItems = itemsRef.current
+      const runKey = `${cartValidationKey}::${deliverySpeed}::${coordinatesKey}`
 
       if (!shopId || !shopName || currentItems.length === 0) {
         lastValidatedCartKeyRef.current = null
@@ -470,11 +518,11 @@ export function CheckoutPage() {
         return
       }
 
-      if (lastValidatedCartKeyRef.current === cartValidationKey) {
+      if (lastValidatedCartKeyRef.current === runKey) {
         return
       }
 
-      lastValidatedCartKeyRef.current = cartValidationKey
+      lastValidatedCartKeyRef.current = runKey
 
       setIsValidatingCart(true)
 
@@ -494,6 +542,8 @@ export function CheckoutPage() {
           // is set yet (e.g. first render, before the address effect above has resolved).
           latitude: formValuesRef.current.latitude,
           longitude: formValuesRef.current.longitude,
+          // Re-validated on every speed change so the fee and total shown are the server's own.
+          deliverySpeed,
         })
 
         if (!isMounted) {
@@ -512,14 +562,10 @@ export function CheckoutPage() {
           ),
         })
 
-        setCartSummary({
-          deliveryFee: response.item.summary.deliveryFee,
-          weatherSurchargeFee: response.item.summary.weatherSurchargeFee,
-          weatherCondition: response.item.summary.weatherCondition,
-          totalAmount: response.item.summary.totalAmount,
-          todayStatus: response.item.shop.todayStatus,
-          todayStatusReason: response.item.shop.todayStatusReason,
-        })
+        setCartSummary(toCheckoutCartSummary(response.item))
+        // This run now also fires when the delivery coordinates change, so a service-area warning
+        // from a previous address no longer applies once this one validates cleanly.
+        setServiceAreaMessage(null)
 
         if (
           response.item.invalidItems.length > 0 ||
@@ -571,7 +617,19 @@ export function CheckoutPage() {
       // same-render dependency-unchanged case never runs this cleanup), so it's safe.
       lastValidatedCartKeyRef.current = null
     }
-  }, [cartValidationKey, replaceCart, shopId, shopName])
+  }, [cartValidationKey, coordinatesKey, deliverySpeed, replaceCart, shopId, shopName])
+
+  // Saver is offered only when the shop supports it for this address and it actually saves money.
+  const saverOffered = Boolean(cartSummary?.saverAvailable && cartSummary.saverDiscount > 0)
+  const saverAppliedSaving = cartSummary?.deliverySpeed === 'SAVER' ? cartSummary.saverDiscount : 0
+
+  // If Saver stops making sense (new address, nothing to save), fall back to Standard rather than
+  // placing a slower order that saves nothing.
+  useEffect(() => {
+    if (deliverySpeed === 'SAVER' && cartSummary && !isValidatingCart && !saverOffered) {
+      setDeliverySpeed('STANDARD')
+    }
+  }, [deliverySpeed, cartSummary, isValidatingCart, saverOffered])
 
   // A coupon's eligibility (min order amount, discount ceiling) was only checked against the
   // subtotal at the moment it was applied — if the cart changes afterwards (qty edit, an item
@@ -752,6 +810,7 @@ export function CheckoutPage() {
         // used for `createOrder`'s 400, one call earlier than before.
         latitude: formValues.latitude,
         longitude: formValues.longitude,
+        deliverySpeed,
       })
 
       // Capture what the customer actually had on screen *before* this submit-time validate call
@@ -772,14 +831,7 @@ export function CheckoutPage() {
         ),
       })
 
-      setCartSummary({
-        deliveryFee: validationResponse.item.summary.deliveryFee,
-        weatherSurchargeFee: validationResponse.item.summary.weatherSurchargeFee,
-        weatherCondition: validationResponse.item.summary.weatherCondition,
-        totalAmount: validationResponse.item.summary.totalAmount,
-        todayStatus: validationResponse.item.shop.todayStatus,
-        todayStatusReason: validationResponse.item.shop.todayStatusReason,
-      })
+      setCartSummary(toCheckoutCartSummary(validationResponse.item))
 
       if (validationResponse.item.appliedItems.length === 0) {
         setSubmitError('Your cart is empty after live validation. Please add items again.')
@@ -872,6 +924,10 @@ export function CheckoutPage() {
         // couponCode: formValues.couponCode,
         couponCode: '',
         useLoyaltyPoints: formValues.useLoyaltyPoints,
+        // Same speed the validate call above priced; the group id is shared by every shop's order
+        // of this checkout (the web cart is single-shop, so it's one call here).
+        deliverySpeed,
+        checkoutGroupId,
         items: validationResponse.item.appliedItems.map((item) => ({
           productId: item.productId,
           variantId: item.variantId,
@@ -1284,10 +1340,58 @@ export function CheckoutPage() {
             </div>
           </div>
 
-          {/* Section 3: Payment */}
+          {/* Section 3: Delivery speed — only when Saver is available for this shop + address. */}
+          {saverOffered || deliverySpeed === 'SAVER' ? (
+            <div className="rounded-[2.5rem] border border-ink-100 bg-white p-8 sm:p-10 shadow-sm">
+              <div className="mb-8 flex items-center gap-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-900 text-sm font-bold text-white">3</div>
+                <h3 className="font-display text-xl font-bold text-ink-900">Delivery Speed</h3>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2" role="radiogroup" aria-label="Delivery speed">
+                {(['STANDARD', 'SAVER'] as const).map((speed) => {
+                  const selected = deliverySpeed === speed
+                  const isSaver = speed === 'SAVER'
+                  return (
+                    <button
+                      key={speed}
+                      aria-checked={selected}
+                      className={`flex flex-col items-start gap-1 rounded-3xl border-2 p-5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-60 ${selected
+                        ? 'border-nearkart-500 bg-nearkart-50 shadow-sm'
+                        : 'border-ink-100 bg-white hover:border-ink-200 hover:bg-ink-50/50'
+                        }`}
+                      disabled={isSubmitting}
+                      onClick={() => setDeliverySpeed(speed)}
+                      role="radio"
+                      type="button"
+                    >
+                      <span className={`text-sm font-bold ${selected ? 'text-nearkart-700' : 'text-ink-900'}`}>
+                        {isSaver ? (
+                          <>
+                            Saver · <span className="text-emerald-600">save {formatCurrency(cartSummary?.saverDiscount ?? 0)}</span>
+                          </>
+                        ) : (
+                          'Standard'
+                        )}
+                      </span>
+                      <span className="text-xs font-medium leading-relaxed text-ink-500">
+                        {isSaver
+                          ? 'Cheaper, may take ~10 min longer — your driver may carry other orders on the way.'
+                          : 'Delivered at the usual speed.'}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Section 4 (3 without Saver): Payment */}
           <div className="rounded-[2.5rem] border border-ink-100 bg-white p-8 sm:p-10 shadow-sm">
             <div className="mb-8 flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-900 text-sm font-bold text-white">3</div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-900 text-sm font-bold text-white">
+                {saverOffered || deliverySpeed === 'SAVER' ? 4 : 3}
+              </div>
               <h3 className="font-display text-xl font-bold text-ink-900">Payment Method</h3>
             </div>
 
@@ -1339,7 +1443,9 @@ export function CheckoutPage() {
                     <span className="font-bold text-ink-900">{formatCurrency(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-ink-400">Delivery Fee</span>
+                    <span className="text-ink-400">
+                      {cartSummary?.deliverySpeed === 'SAVER' ? 'Delivery Fee · Saver' : 'Delivery Fee'}
+                    </span>
                     <span className="inline-flex overflow-hidden font-bold text-ink-900">
                       <motion.span
                         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -1355,6 +1461,13 @@ export function CheckoutPage() {
                       </motion.span>
                     </span>
                   </div>
+                  {/* Informational — already taken off the delivery fee above. */}
+                  {saverAppliedSaving > 0 ? (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-emerald-600">Saver saving (included)</span>
+                      <span className="font-bold text-emerald-600">−{formatCurrency(saverAppliedSaving)}</span>
+                    </div>
+                  ) : null}
                   {cartSummary && cartSummary.weatherSurchargeFee > 0 ? (
                     <div className="flex justify-between text-sm">
                       <span className="text-ink-400">

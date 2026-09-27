@@ -1,5 +1,6 @@
 import { httpClient } from '@/api/http'
 import type {
+  DeliverySpeed,
   PublicCartValidationResponse,
   PublicCatalogProductResponse,
   PublicCatalogResponse,
@@ -147,6 +148,9 @@ export async function validateCart(payload: {
   // — the backend skips only the radius check in that case, not the shop-open check.
   latitude?: number | null
   longitude?: number | null
+  // Saver delivery — applied only where the shop reports `saverAvailable`; the summary echoes
+  // what was actually applied.
+  deliverySpeed?: DeliverySpeed
 }) {
   const { data } = await httpClient.post<PublicCartValidationResponse>(
     '/public/cart/validate',
