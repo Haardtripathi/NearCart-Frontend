@@ -1292,7 +1292,9 @@ export function CheckoutPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
-              {(['COD', 'ONLINE', 'PAY_ON_PICKUP'] as const).map((method) => (
+              {/* ONLINE PAYMENT DISABLED 2026-09-26 (owner): no payment gateway yet — was ['COD', 'ONLINE']; Pay on
+                  pickup removed (delivery-only). Add 'ONLINE' back once a gateway is integrated. */}
+              {(['COD'] as const).map((method) => (
                 <button
                   key={method}
                   className={`flex flex-col items-center justify-center gap-3 rounded-3xl border-2 p-6 transition-all ${formValues.paymentMethod === method
